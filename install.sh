@@ -28,7 +28,7 @@ if [ -z "$BRANCH" ]; then
     BRANCH="main"
     
     # Check if script was sourced from development branch
-    if curl -s --head "https://raw.githubusercontent.com/Lordgrim77/3x-ui-premium-theme/development/install.sh" | grep -q "200 OK"; then
+    if curl -s --head "https://raw.githubusercontent.com/xLordGrim/3X-SUB/development/install.sh" | grep -q "200 OK"; then
         # If user explicitly downloaded from development, detect it
         if [ -f "/tmp/xui_installer_dev" ]; then
             BRANCH="development"
@@ -37,7 +37,7 @@ if [ -z "$BRANCH" ]; then
 fi
 
 echo -e "${BLUE}Using branch: ${GREEN}${BRANCH}${NC}"
-REPO_URL="https://raw.githubusercontent.com/Lordgrim77/3x-ui-premium-theme/${BRANCH}"
+REPO_URL="https://raw.githubusercontent.com/xLordGrim/3X-SUB/${BRANCH}"
 
 mkdir -p "$ASSETS_PATH/js"
 mkdir -p "$ASSETS_PATH/css"
