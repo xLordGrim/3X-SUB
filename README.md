@@ -1,7 +1,7 @@
 # 3X-UI Subscription Theme(v2.0.12) 🎨
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Lordgrim77/3x-ui-premium-theme/refs/heads/main/screenshots/screenshot-2.jpg" alt="English UI" width="30%">
-  <img src="https://raw.githubusercontent.com/Lordgrim77/3x-ui-premium-theme/refs/heads/main/screenshots/screenshot-1.jpg" alt="Persian UI" width="40%">
+  <img src="https://raw.githubusercontent.com/xLordgrim/3X-SUB/refs/heads/main/screenshots/screenshot-2.jpg" alt="English UI" width="30%">
+  <img src="https://raw.githubusercontent.com/xLordGrim/3X-SUB/refs/heads/main/screenshots/screenshot-1.jpg" alt="Persian UI" width="40%">
 </p>
 
 ##  Disclaimer ❗
@@ -27,14 +27,14 @@ Dark/light theme, glassmorphism,smooth transitions, toast notifications, Animate
 3. Run the following command on your 3x-ui server to install or update:
 
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/Lordgrim77/3x-ui-premium-theme/main/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/install.sh)
 ```
 
 ## 🧹 Uninstallation
 If you wish to return to the Stock Version, run:
 
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/Lordgrim77/3x-ui-premium-theme/main/uninstall.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/uninstall.sh)
 ```
 > [!WARNING]
 > This will update your x-ui panel to the latest version(no data loss)
