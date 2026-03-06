@@ -1,5 +1,5 @@
 <div align="center">
-<h1>3𝕏-SUB𖹭.ᐟ</h1> 
+<h1>3𝕏-SUB</h1> 
 <p><b>A Custom Subscription Page for 3X-UI</b></p>
 <p>
   <img src="https://raw.githubusercontent.com/xLordgrim/3X-SUB/refs/heads/main/screenshots/screenshot-2.jpg" alt="English UI" width="40%">
@@ -47,7 +47,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/uninstal
 - **Recommendation**: For extreme high-security environments, consider manual source-code integration.
   
 ## 👨‍💻 Author
-Made with ❤️ by 𝙇𝙊𝙍𝘿𝙂𝙍𝙄𝙈
+Made with ❤️ by 𝙇𝙊𝙍𝘿𝙂𝙍𝙄𝙈 𖹭.ᐟ
 
 ## 📄 License
 This project is licensed under the **Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**.
