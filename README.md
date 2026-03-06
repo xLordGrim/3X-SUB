@@ -1,9 +1,11 @@
+<div align="center">
 <h1>3X-SUB</h1> 
 <p><b>A Custom Subscription Page Theme for 3X-UI</b></p>
-<p align="center">
+<p>
   <img src="https://raw.githubusercontent.com/xLordgrim/3X-SUB/refs/heads/main/screenshots/screenshot-2.jpg" alt="English UI" width="30%">
   <img src="https://raw.githubusercontent.com/xLordGrim/3X-SUB/refs/heads/main/screenshots/screenshot-1.jpg" alt="Persian UI" width="40%">
 </p>
+</div>
 
 ##  Disclaimer ❗
 
