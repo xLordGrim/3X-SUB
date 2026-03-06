@@ -1,5 +1,5 @@
 <div align="center">
-<h1>ᛝ3𝕏-SUBᛝ</h1> 
+<h1>## ᛝ3𝕏-SUBᛝ</h1> 
 <p><b>A Custom Subscription Page for 3X-UI</b></p>
 <p>
   <img src="https://raw.githubusercontent.com/xLordgrim/3X-SUB/refs/heads/main/screenshots/screenshot-2.jpg" alt="English UI" width="40%">
