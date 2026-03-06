@@ -1,4 +1,4 @@
-<h1 align="center">3X-SUB 🎨</h1> 
+<h1 align="center">3X-SUB</h1> 
 <p align="center">
   <img src="https://raw.githubusercontent.com/xLordgrim/3X-SUB/refs/heads/main/screenshots/screenshot-2.jpg" alt="English UI" width="30%">
   <img src="https://raw.githubusercontent.com/xLordGrim/3X-SUB/refs/heads/main/screenshots/screenshot-1.jpg" alt="Persian UI" width="40%">
