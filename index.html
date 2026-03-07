@@ -2143,6 +2143,7 @@ ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpkZW1vLXBhc3N3b3Jk@nl-01.example.com:8443#NL%
       el.setAttribute('data-lastonline', s.onl*1000);
       document.querySelectorAll('.scenario-btn').forEach(b => b.classList.toggle('active', b.dataset.scenario===k));
       if (!isInit) {
+        window.location.hash = k;
         if(window.__reinitApp) window.__reinitApp(); else window.location.reload();
       }
     }
