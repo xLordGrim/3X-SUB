@@ -47,7 +47,7 @@ const html = `<!DOCTYPE html>
     #scenario-switcher { position:fixed; bottom:24px; right:24px; z-index:10000; display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
     .scenario-btn { font-family:Inter,sans-serif; font-size:13px; font-weight:600; border:none; border-radius:10px; padding:7px 16px; cursor:pointer; }
     .scenario-btn.active { outline:2px solid #fff; }
-    [data-scenario="active"]{background:#10b981;color:#fff;} [data-scenario="expired"]{background:#ff3131;color:#fff;} [data-scenario="depleted"]{background:#f59e0b;color:#1a1100;} [data-scenario="unlimited"]{background:#06b6d4;color:#fff;}
+    [data-scenario="active"]{background:#10b981;color:#fff;} [data-scenario="expired"]{background:#f5bc2b;color:#1a1100;} [data-scenario="depleted"]{background:#ff3131;color:#fff;} [data-scenario="unlimited"]{background:#06b6d4;color:#fff;}
     #init-loader { position:fixed; inset:0; z-index:99998; background:#020617; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; font-family:'Inter',sans-serif; color:rgba(255,255,255,.5); font-size:.85rem; letter-spacing:.08em; transition:opacity .5s; }
     .init-spinner { width:32px; height:32px; border:3px solid rgba(99,102,241,.2); border-top-color:#6366f1; border-radius:50%; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
