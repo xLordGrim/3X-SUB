@@ -2135,19 +2135,21 @@ ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpkZW1vLXBhc3N3b3Jk@nl-01.example.com:8443#NL%
       unlimited: { total:0, up:12*GB, down:83*GB, exp:0, onl:Math.floor(Date.now()/1000)-30 }
     };
     let currentScenario = 'active';
-    function setScenario(k) {
+    function setScenario(k, isInit) {
       currentScenario = k;
       let s = SCENARIOS[k], el = document.getElementById('subscription-data');
       el.setAttribute('data-totalbyte', s.total); el.setAttribute('data-uploadbyte', s.up);
       el.setAttribute('data-downloadbyte', s.down); el.setAttribute('data-expire', s.exp);
       el.setAttribute('data-lastonline', s.onl*1000);
       document.querySelectorAll('.scenario-btn').forEach(b => b.classList.toggle('active', b.dataset.scenario===k));
-      if(window.__reinitApp) window.__reinitApp(); else window.location.reload();
+      if (!isInit) {
+        if(window.__reinitApp) window.__reinitApp(); else window.location.reload();
+      }
     }
     (function() {
       var hash = window.location.hash.replace('#', '');
       if (SCENARIOS[hash]) currentScenario = hash;
-      setScenario(currentScenario);
+      setScenario(currentScenario, true);
     })();
     let _rf = window.fetch.bind(window);
     window.fetch = function(url,opts) {
