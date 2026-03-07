@@ -2,7 +2,7 @@
 <h1>ᛝ 3𝕏-SUB ᛝ</h1> 
 <p><b>A Custom Subscription Page for 3X-UI</b></p>
 <p>
-  <img src="https://raw.githubusercontent.com/xLordgrim/3X-SUB/refs/heads/main/screenshots/screenshot-2.jpg" alt="Mobile UI" width="30%">
+  <img src="https://raw.githubusercontent.com/xLordgrim/3X-SUB/refs/heads/main/screenshots/screenshot-2.jpg" alt="Mobile UI" width="35%">
   <img src="https://raw.githubusercontent.com/xLordGrim/3X-SUB/refs/heads/main/screenshots/screenshot-1.jpg" alt="Desktop UI" width="50%">
 </p>
 </div>
