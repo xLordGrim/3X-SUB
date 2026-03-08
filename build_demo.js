@@ -74,14 +74,14 @@ vmess://eyJ2IjoiMiIsInBzIjoiVVMgTG9zIEFuZ2VsZXMgMDEiLCJhZGQiOiJ1cy1sYS5leGFtcGxl
 vless://12345678-abcd-ef01-2345-6789abcdef01@sg-01.example.com:443?type=ws&security=tls&host=sg-01.example.com&path=%2Fwss&sni=sg-01.example.com#SG%20Singapore%2001
 trojan://demo-password-secure@jp-01.example.com:443?type=tcp&security=tls&sni=jp-01.example.com#JP%20Tokyo%20Premium
 vless://fedcba09-8765-4321-fedc-ba0987654321@de-fra.example.com:443?type=grpc&security=tls&serviceName=proxy&sni=de-fra.example.com#DE%20Frankfurt%2002
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpkZW1vLXBhc3N3b3Jk@nl-01.example.com:8443#NL%20Amsterdam%2001
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpkZW1vLXBhc3N3b3Jk@nl-01.example.com:8443#NODE-5
   </textarea>
 
   <div id="scenario-switcher">
-    <button class="scenario-btn active" data-scenario="active" onclick="setScenario('active')">✅ Active</button>
-    <button class="scenario-btn" data-scenario="expired" onclick="setScenario('expired')">🔴 Expired</button>
-    <button class="scenario-btn" data-scenario="depleted" onclick="setScenario('depleted')">🚫 Depleted</button>
-    <button class="scenario-btn" data-scenario="unlimited" onclick="setScenario('unlimited')">♾ Unlimited</button>
+    <button class="scenario-btn active" data-scenario="active" onclick="setScenario('active')">Active</button>
+    <button class="scenario-btn" data-scenario="expired" onclick="setScenario('expired')">Expired</button>
+    <button class="scenario-btn" data-scenario="depleted" onclick="setScenario('depleted')">Depleted</button>
+    <button class="scenario-btn" data-scenario="unlimited" onclick="setScenario('unlimited')">Unlimited</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
