@@ -5,6 +5,9 @@
   <img src="https://raw.githubusercontent.com/xLordgrim/3X-SUB/refs/heads/main/screenshots/screenshot-2.jpg" alt="Mobile UI" width="35%">
   <img src="https://raw.githubusercontent.com/xLordGrim/3X-SUB/refs/heads/main/screenshots/screenshot-1.jpg" alt="Desktop UI" width="55%">
 </p>
+  <p>
+    <a href="https://xlordgrim.github.io/3X-SUB"> Live Demo ⚙️</a>
+  </p>
 </div>
 
 ##  Disclaimer ❗
