@@ -436,6 +436,7 @@ body.premium-theme.ready .dashboard-header {
 }
 
 .username-display {
+    position: relative;
     font-size: 1.5rem;
     font-weight: 800;
     background: linear-gradient(90deg, var(--text-primary) 0%, var(--accent) 50%, var(--text-primary) 100%);
@@ -459,6 +460,49 @@ body.premium-theme.ready .dashboard-header {
         transform: translateY(0) scale(1);
         background-position: 0% center;
     }
+}
+
+/* User Title Glitch Effect */
+.username-display::before,
+.username-display::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: none;
+    -webkit-text-fill-color: initial;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.username-display::before {
+    color: #0ff;
+    z-index: 1;
+    animation: title-glitch-anim-1 5s infinite linear alternate-reverse;
+}
+
+.username-display::after {
+    color: #f0f;
+    z-index: 2;
+    animation: title-glitch-anim-2 5s infinite linear alternate-reverse;
+}
+
+@keyframes title-glitch-anim-1 {
+    0%, 95%, 100% { opacity: 0; clip-path: inset(0 0 0 0); transform: translate(0, 0); }
+    96% { opacity: 0.8; clip-path: inset(20% 0 70% 0); transform: translate(-4px, 0); text-shadow: -2px 0 #0ff; }
+    97% { opacity: 0.8; clip-path: inset(60% 0 20% 0); transform: translate(3px, 0); text-shadow: 2px 0 #0ff; }
+    98% { opacity: 0; clip-path: inset(50% 0 50% 0); transform: translate(0, 0); }
+}
+
+@keyframes title-glitch-anim-2 {
+    0%, 95%, 100% { opacity: 0; clip-path: inset(0 0 0 0); transform: translate(0, 0); }
+    96.5% { opacity: 0.8; clip-path: inset(10% 0 80% 0); transform: translate(4px, 0); text-shadow: 2px 0 #f0f; }
+    97.5% { opacity: 0.8; clip-path: inset(80% 0 10% 0); transform: translate(-3px, 0); text-shadow: -2px 0 #f0f; }
+    98.5% { opacity: 0; clip-path: inset(50% 0 50% 0); transform: translate(0, 0); }
 }
 
 .user-main-row {
