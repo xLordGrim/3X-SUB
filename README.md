@@ -27,9 +27,9 @@ Dark/light theme, glassmorphism,smooth transitions, toast notifications, Animate
 - **🔒 Security**: no external APIs, safe defaults
 - **⚡ Performance**: Minimal bundle, efficient polling.
 
-## 🚀 Installation
+## 🚀 Requirements & Installation
 1. Make sure to take a backup of the system before doing anything.
-2. Make sure you are on the Latest Version of 3X-UI to avoid any incompatibilities.
+2. 3X-SUB only supports 3X-UI v2.8.4 or later.
 3. Run the following command on your 3x-ui server to install or update:
 
 ```bash
