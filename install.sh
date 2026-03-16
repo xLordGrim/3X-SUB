@@ -55,7 +55,14 @@ if ! command -v unzip &> /dev/null; then
 fi
 
 # Attempt to detect local x-ui version to fetch compatible assets
-LOCAL_VER=$(/usr/local/x-ui/x-ui -v 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+# Make grep extremely forgiving, grab just the decimal version, then prefix 'v' manually
+# Crucially: use 2>&1 because Go binaries often print version info to stderr!
+RAW_VER=$( (/usr/local/x-ui/x-ui -v 2>&1 || /usr/local/x-ui/x-ui --version 2>&1 || /usr/local/x-ui/x-ui version 2>&1) | grep -iEo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+
+LOCAL_VER=""
+if [[ -n "$RAW_VER" ]]; then
+    LOCAL_VER="v${RAW_VER}"
+fi
 ARCHIVE_URL="https://github.com/MHSanaei/3x-ui/archive/refs/heads/main.zip"
 EXTRACT_FOLDER="3x-ui-main"
 
