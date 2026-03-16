@@ -69,13 +69,17 @@
                     let pY = (y * spacing) + jitterY;
                     
                     let size = (Math.random() * 2.0) + 1.0; // Slightly smaller dots
-                    let dirX = (Math.random() * 0.3) - 0.15; // Slower drift
-                    let dirY = (Math.random() * 0.3) - 0.15;
+                    let orbitRadiusX = (Math.random() * 30) + 15;
+                    let orbitRadiusY = (Math.random() * 30) + 15;
+                    let orbitSpeed = 0.0005 + Math.random() * 0.001;
+                    let timeOffset = Math.random() * Math.PI * 2;
                     let pulseSpeed = 0.01 + Math.random() * 0.02;
                     
                     this.particles.push({ 
                         x: pX, y: pY, 
-                        dirX, dirY, 
+                        baseX: pX, baseY: pY,
+                        vx: 0, vy: 0,
+                        orbitRadiusX, orbitRadiusY, orbitSpeed, timeOffset,
                         size, baseSize: size, 
                         angle: Math.random() * 6.28, 
                         pulseSpeed 
@@ -110,13 +114,26 @@
             }
 
             // Particles
+            let time = Date.now();
             for (let i = 0; i < this.particles.length; i++) {
                 let p = this.particles[i];
-                p.x += p.dirX;
-                p.y += p.dirY;
-
-                if (p.x > innerWidth || p.x < 0) p.dirX *= -1;
-                if (p.y > innerHeight || p.y < 0) p.dirY *= -1;
+                
+                // Calculate target orbital position around the base anchor
+                let targetX = p.baseX + Math.sin(time * p.orbitSpeed + p.timeOffset) * p.orbitRadiusX;
+                let targetY = p.baseY + Math.cos(time * p.orbitSpeed + p.timeOffset) * p.orbitRadiusY;
+                
+                // Apply spring force pulling particle to target
+                let ax = (targetX - p.x) * 0.02;
+                let ay = (targetY - p.y) * 0.02;
+                p.vx += ax;
+                p.vy += ay;
+                
+                // Apply friction
+                p.vx *= 0.9;
+                p.vy *= 0.9;
+                
+                p.x += p.vx;
+                p.y += p.vy;
 
                 if (p.angle !== undefined) {
                     p.angle += (p.pulseSpeed || 0.02);
