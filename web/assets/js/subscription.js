@@ -872,7 +872,7 @@
       grd.addColorStop(0.85, "#3d0055");
       grd.addColorStop(1, "#ff003c");
       ctx.fillStyle = grd;
-      ctx.fillRect(0, 0, this.w, this.horizon);
+      ctx.fillRect(0, 0, this.w, this.horizon + this.h * 0.12); // Extend to ensure no gaps behind curve
     }
     drawStars(ctx) {
       for (const s of this.stars) {
@@ -885,8 +885,10 @@
       }
     }
     drawSun(ctx) {
+      // Align sun with the peak of the curved horizon
+      const curvature = this.h * 0.08;
       const cx = this.vanishX;
-      const cy = this.horizon;
+      const cy = this.horizon - curvature * 0.3;
       const r = Math.min(this.w, this.h) * 0.12;
 
       // Outer glow
@@ -895,7 +897,7 @@
       glowGrd.addColorStop(0.3, "rgba(255,100,0,0.15)");
       glowGrd.addColorStop(1, "rgba(255,0,60,0)");
       ctx.fillStyle = glowGrd;
-      ctx.fillRect(0, this.horizon - r * 3, this.w, r * 6);
+      ctx.fillRect(0, cy - r * 3, this.w, r * 6);
 
       // Sun body
       const sunGrd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
