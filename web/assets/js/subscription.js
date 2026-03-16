@@ -64,7 +64,6 @@
             }
         }
         animate() {
-            if (this.isScrolling) { requestAnimationFrame(this.animate); return; }
             requestAnimationFrame(this.animate);
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             const connectDist = 160, connectDistSq = connectDist * connectDist;
