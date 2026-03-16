@@ -54,13 +54,33 @@
         }
         initParticles() {
             this.particles = [];
-            let n = (window.innerWidth * window.innerHeight) / 10000; // Increased density (was 13000)
-            for (let i = 0; i < n; i++) {
-                let size = (Math.random() * 2.5) + 1.5;
-                let x = Math.random() * (innerWidth - size * 2) + size * 2;
-                let y = Math.random() * (innerHeight - size * 2) + size * 2;
-                let dirX = (Math.random() * 0.4) - 0.2, dirY = (Math.random() * 0.4) - 0.2, pulseSpeed = 0.02 + Math.random() * 0.02;
-                this.particles.push({ x, y, dirX, dirY, size, baseSize: size, angle: Math.random() * 6.28, pulseSpeed })
+            // Calculate a grid structure based on screen size
+            const spacing = 120; // Target distance between nodes
+            const cols = Math.ceil(window.innerWidth / spacing) + 1;
+            const rows = Math.ceil(window.innerHeight / spacing) + 1;
+            
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    // Start in a grid but add some jitter for organic tech feel
+                    let jitterX = (Math.random() * 60) - 30;
+                    let jitterY = (Math.random() * 60) - 30;
+                    
+                    let pX = (x * spacing) + jitterX;
+                    let pY = (y * spacing) + jitterY;
+                    
+                    let size = (Math.random() * 2.0) + 1.0; // Slightly smaller dots
+                    let dirX = (Math.random() * 0.3) - 0.15; // Slower drift
+                    let dirY = (Math.random() * 0.3) - 0.15;
+                    let pulseSpeed = 0.01 + Math.random() * 0.02;
+                    
+                    this.particles.push({ 
+                        x: pX, y: pY, 
+                        dirX, dirY, 
+                        size, baseSize: size, 
+                        angle: Math.random() * 6.28, 
+                        pulseSpeed 
+                    });
+                }
             }
         }
         animate() {
