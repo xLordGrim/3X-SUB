@@ -79,9 +79,9 @@ mkdir -p $(dirname "$SUBPAGE_PATH")
 curl -Ls "$REPO_URL/web/html/settings/panel/subscription/subpage.html?v=$VERSION" -o "$SUBPAGE_PATH"
 
 # CACHE BUSTING: Inject installation timestamp to force browser update
-# Regex ensures it replaces ANY existing query string or template tag
-sed -i -E "s|assets/css/premium.css(\?[^\"']*)?|assets/css/premium.css?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
-sed -i -E "s|assets/js/subscription.js(\?[^\"']*)?|assets/js/subscription.js?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
+# Replace the Go template versioning with our timestamp to bust client caches
+sed -i "s|assets/css/premium.css?{{ .cur_ver }}|assets/css/premium.css?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
+sed -i "s|assets/js/subscription.js?{{ .cur_ver }}|assets/js/subscription.js?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
 
 # Internal JS Cache Busting (Inject into the file itself)
 sed -i "s|__VERSION__|$TIMESTAMP|g" "$ASSETS_PATH/js/subscription.js"
