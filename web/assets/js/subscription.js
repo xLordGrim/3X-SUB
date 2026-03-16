@@ -925,31 +925,49 @@
       const horizon = this.horizon;
       const bottom = this.h;
       const vanishX = this.vanishX;
+      const curvature = this.h * 0.08; // how much the horizon curves down at edges
 
-      // Ground fill
+      // Helper: get curved Y at a given x position for a base Y level
+      const curvedY = (baseY, depth) => {
+        const dx = 0; // not used per-point; curvature is in the bezier
+        return baseY;
+      };
+
+      // Ground fill with curved top edge
+      ctx.beginPath();
+      ctx.moveTo(0, horizon + curvature);
+      ctx.quadraticCurveTo(vanishX, horizon - curvature * 0.3, this.w, horizon + curvature);
+      ctx.lineTo(this.w, bottom);
+      ctx.lineTo(0, bottom);
+      ctx.closePath();
       const groundGrd = ctx.createLinearGradient(0, horizon, 0, bottom);
       groundGrd.addColorStop(0, "#1a0030");
       groundGrd.addColorStop(0.3, "#0a0012");
       groundGrd.addColorStop(1, "#050005");
       ctx.fillStyle = groundGrd;
-      ctx.fillRect(0, horizon, this.w, bottom - horizon);
+      ctx.fill();
 
       ctx.strokeStyle = this.accentColor;
       ctx.lineWidth = 1;
 
-      // Vertical perspective lines
+      // Vertical perspective lines (curved outward via quadratic)
       const numVLines = 30;
       for (let i = -numVLines; i <= numVLines; i++) {
         const bottomX = vanishX + i * (this.w / numVLines) * 2.5;
         const alpha = 1 - Math.abs(i) / numVLines;
         ctx.globalAlpha = alpha * 0.5;
+
+        // Control point bows the line outward
+        const midY = horizon + (bottom - horizon) * 0.5;
+        const bowX = bottomX + (bottomX - vanishX) * 0.15;
+
         ctx.beginPath();
         ctx.moveTo(vanishX, horizon);
-        ctx.lineTo(bottomX, bottom);
+        ctx.quadraticCurveTo(bowX, midY, bottomX, bottom);
         ctx.stroke();
       }
 
-      // Horizontal lines (scrolling towards viewer)
+      // Horizontal lines (scrolling towards viewer) - CURVED
       ctx.globalAlpha = 1;
       const numHLines = 25;
       this.gridOffset += 0.004;
@@ -957,15 +975,18 @@
 
       for (let i = 0; i < numHLines; i++) {
         const t = (i / numHLines + this.gridOffset) % 1;
-        // Exponential distribution for realistic perspective spacing
         const perspT = t * t;
-        const y = horizon + perspT * (bottom - horizon);
+        const baseY = horizon + perspT * (bottom - horizon);
         const spread = perspT * this.w * 2.0;
         const alpha = perspT * 0.7;
+
+        // Curvature scales with distance from horizon (more curve near viewer)
+        const lineCurve = curvature * perspT;
+
         ctx.globalAlpha = alpha;
         ctx.beginPath();
-        ctx.moveTo(vanishX - spread, y);
-        ctx.lineTo(vanishX + spread, y);
+        ctx.moveTo(vanishX - spread, baseY + lineCurve);
+        ctx.quadraticCurveTo(vanishX, baseY - lineCurve * 0.3, vanishX + spread, baseY + lineCurve);
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
@@ -1014,14 +1035,17 @@
       }
       ctx.globalAlpha = 1;
 
-      // Horizon glow line
+      // Horizon glow line (curved)
       ctx.save();
-      const horizonGrd = ctx.createLinearGradient(0, horizon - 2, 0, horizon + 4);
-      horizonGrd.addColorStop(0, "rgba(255,0,60,0)");
-      horizonGrd.addColorStop(0.5, "rgba(255,0,60,0.8)");
-      horizonGrd.addColorStop(1, "rgba(255,0,60,0)");
-      ctx.fillStyle = horizonGrd;
-      ctx.fillRect(0, horizon - 2, this.w, 6);
+      const horizCurve = this.h * 0.08;
+      ctx.strokeStyle = "rgba(255,0,60,0.8)";
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = "#ff003c";
+      ctx.beginPath();
+      ctx.moveTo(0, horizon + horizCurve);
+      ctx.quadraticCurveTo(vanishX, horizon - horizCurve * 0.3, this.w, horizon + horizCurve);
+      ctx.stroke();
       ctx.restore();
 
       // Random ground grit/sparks near the bottom
