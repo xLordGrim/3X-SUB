@@ -664,10 +664,10 @@
       for (let i = 0; i < 18; i++) {
         this.roadObjects.push({
           type: types[i % types.length],
-          t: Math.random(),                    // depth position 0=horizon 1=bottom
-          side: Math.random() < 0.5 ? -1 : 1,  // left or right of road
-          lane: 0.22 + Math.random() * 0.25,    // lateral distance from center
-          seed: Math.random(),                  // for variation
+          t: Math.random(),
+          side: Math.random() < 0.5 ? -1 : 1,
+          laneSlot: 8 + Math.floor(Math.random() * 8), // grid line index 8-15 out of 30 (outside road)
+          seed: Math.random(),
         });
       }
     }
@@ -675,29 +675,37 @@
       const horizon = this.horizon;
       const bottom = this.h;
       const vanishX = this.vanishX;
+      const numVLines = 30; // must match drawGrid's numVLines
 
       // Sort by depth (farthest first)
       this.roadObjects.sort((a, b) => a.t - b.t);
 
       for (const obj of this.roadObjects) {
-        // Scroll objects towards viewer
-        obj.t += 0.0012;
-        if (obj.t > 1) {
-          obj.t -= 1;
+        // Scroll at same speed as grid
+        obj.t += 0.004;
+        if (obj.t > 1.3) {
+          obj.t = Math.random() * 0.1;
           obj.side = Math.random() < 0.5 ? -1 : 1;
-          obj.lane = 0.22 + Math.random() * 0.25;
+          obj.laneSlot = 8 + Math.floor(Math.random() * 8);
           obj.seed = Math.random();
+          const types = ['palm', 'palm', 'pylon', 'pylon', 'building', 'building', 'antenna', 'rock'];
+          obj.type = types[Math.floor(Math.random() * types.length)];
         }
 
-        const perspT = obj.t * obj.t;
+        // Clamp t for rendering (allow > 1 for off-screen travel)
+        const renderT = Math.min(obj.t, 1);
+        const perspT = renderT * renderT;
         const y = horizon + perspT * (bottom - horizon);
-        const scale = perspT; // 0 at horizon, 1 at bottom
-        if (scale < 0.01) continue; // Too small to render
+        const scale = perspT;
+        if (scale < 0.005) continue;
 
-        // X position: perspective-correct lateral offset
-        const xOff = obj.side * obj.lane * this.w * perspT * 1.2;
-        const x = vanishX + xOff;
-        const alpha = Math.min(1, scale * 1.5);
+        // X position: use the SAME formula as the grid's vertical lines
+        // Grid uses: bottomX = vanishX + i * (this.w / numVLines) * 1.8
+        // Interpolate between vanishX (at horizon) and bottomX (at bottom)
+        const bottomX = vanishX + obj.side * obj.laneSlot * (this.w / numVLines) * 1.8;
+        const x = vanishX + (bottomX - vanishX) * perspT;
+
+        const alpha = Math.min(1, scale * 2);
         ctx.globalAlpha = alpha;
 
         switch (obj.type) {
