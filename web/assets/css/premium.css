@@ -25,6 +25,19 @@
     --theme-ping: #10b981;
 }
 
+/* Global Smooth Theme Crossfade */
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *:before,
+.theme-transitioning *:after {
+    transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                fill 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                stroke 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
 html.premium-theme,
 body.premium-theme {
     overflow: auto !important;
