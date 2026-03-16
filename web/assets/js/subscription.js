@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const VERSION = "v2.0.14";
+  const VERSION = "v2.0.13";
   const STATE = {
     theme: localStorage.getItem("xui_theme") || "dark",
     lang: localStorage.getItem("xui_lang") || "en",
@@ -178,7 +178,8 @@
     grid.appendChild(renderInfrastructureSection());
     app.appendChild(grid);
     const footer = mkEl("div", "custom-footer");
-    footer.innerHTML = `Powered with <span class="heart-pulse">❤️</span> by&nbsp;<a class="footer-link" href="https://github.com/xLordgrim/3X-SUB/" target="_blank" rel="noopener noreferrer">3𝕏 SUB</a>`;
+    const footerText = "Powered with ❤️ by 3𝕏 SUB";
+    footer.innerHTML = `<div class="footer-glitch-wrap" data-text="${footerText}">Powered with <span class="heart-pulse">❤️</span> by&nbsp;<a class="footer-link" href="https://github.com/xLordgrim/3X-SUB/" target="_blank" rel="noopener noreferrer">3𝕏 SUB</a></div>`;
     app.appendChild(footer);
     app.appendChild(renderQRModal());
     app.appendChild(renderToast());
