@@ -608,6 +608,8 @@
 
       this.resize();
       this.initStars();
+      this.roadObjects = [];
+      this.initRoadObjects();
 
       if (!this.handlersBound) {
         window.addEventListener("resize", () => {
@@ -642,6 +644,7 @@
       this.horizon = this.h * 0.42;
       this.vanishX = this.w / 2;
       this.initStars();
+      this.initRoadObjects();
     }
     initStars() {
       this.stars = [];
@@ -654,6 +657,206 @@
           speed: 0.02 + Math.random() * 0.04,
         });
       }
+    }
+    initRoadObjects() {
+      this.roadObjects = [];
+      const types = ['palm', 'palm', 'pylon', 'pylon', 'building', 'building', 'antenna', 'rock'];
+      for (let i = 0; i < 18; i++) {
+        this.roadObjects.push({
+          type: types[i % types.length],
+          t: Math.random(),                    // depth position 0=horizon 1=bottom
+          side: Math.random() < 0.5 ? -1 : 1,  // left or right of road
+          lane: 0.22 + Math.random() * 0.25,    // lateral distance from center
+          seed: Math.random(),                  // for variation
+        });
+      }
+    }
+    drawRoadObjects(ctx) {
+      const horizon = this.horizon;
+      const bottom = this.h;
+      const vanishX = this.vanishX;
+
+      // Sort by depth (farthest first)
+      this.roadObjects.sort((a, b) => a.t - b.t);
+
+      for (const obj of this.roadObjects) {
+        // Scroll objects towards viewer
+        obj.t += 0.0012;
+        if (obj.t > 1) {
+          obj.t -= 1;
+          obj.side = Math.random() < 0.5 ? -1 : 1;
+          obj.lane = 0.22 + Math.random() * 0.25;
+          obj.seed = Math.random();
+        }
+
+        const perspT = obj.t * obj.t;
+        const y = horizon + perspT * (bottom - horizon);
+        const scale = perspT; // 0 at horizon, 1 at bottom
+        if (scale < 0.01) continue; // Too small to render
+
+        // X position: perspective-correct lateral offset
+        const xOff = obj.side * obj.lane * this.w * perspT * 1.2;
+        const x = vanishX + xOff;
+        const alpha = Math.min(1, scale * 1.5);
+        ctx.globalAlpha = alpha;
+
+        switch (obj.type) {
+          case 'palm':
+            this._drawPalm(ctx, x, y, scale);
+            break;
+          case 'pylon':
+            this._drawPylon(ctx, x, y, scale);
+            break;
+          case 'building':
+            this._drawBuilding(ctx, x, y, scale, obj.seed);
+            break;
+          case 'antenna':
+            this._drawAntenna(ctx, x, y, scale);
+            break;
+          case 'rock':
+            this._drawRock(ctx, x, y, scale, obj.seed);
+            break;
+        }
+      }
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+    }
+    _drawPalm(ctx, x, y, scale) {
+      const h = scale * 80 + 10;
+      const trunkW = scale * 2 + 0.5;
+      // Trunk
+      ctx.strokeStyle = this.accentColor;
+      ctx.lineWidth = trunkW;
+      ctx.shadowBlur = 4;
+      ctx.shadowColor = this.accentColor;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - scale * 3, y - h);
+      ctx.stroke();
+      // Fronds (3 lines fanning out from top)
+      const topX = x - scale * 3;
+      const topY = y - h;
+      const frondLen = scale * 30 + 5;
+      for (let a = -0.8; a <= 0.8; a += 0.4) {
+        ctx.beginPath();
+        ctx.moveTo(topX, topY);
+        ctx.quadraticCurveTo(
+          topX + Math.cos(a - 1.2) * frondLen * 0.6,
+          topY + Math.sin(a - 1.2) * frondLen * 0.3 - frondLen * 0.2,
+          topX + Math.cos(a - 0.5) * frondLen,
+          topY + frondLen * 0.3
+        );
+        ctx.stroke();
+      }
+      ctx.shadowBlur = 0;
+    }
+    _drawPylon(ctx, x, y, scale) {
+      const h = scale * 100 + 15;
+      const baseW = scale * 20 + 3;
+      // Two legs
+      ctx.strokeStyle = this.accentColor;
+      ctx.lineWidth = scale * 1.5 + 0.5;
+      ctx.shadowBlur = 3;
+      ctx.shadowColor = this.accentColor;
+      ctx.beginPath();
+      ctx.moveTo(x - baseW / 2, y);
+      ctx.lineTo(x - baseW * 0.1, y - h);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x + baseW / 2, y);
+      ctx.lineTo(x + baseW * 0.1, y - h);
+      ctx.stroke();
+      // Cross beams
+      for (let i = 0.2; i < 0.9; i += 0.3) {
+        const beamY = y - h * i;
+        const leftX = x - baseW / 2 + (baseW * 0.4) * i;
+        const rightX = x + baseW / 2 - (baseW * 0.4) * i;
+        ctx.beginPath();
+        ctx.moveTo(leftX, beamY);
+        ctx.lineTo(rightX, beamY);
+        ctx.stroke();
+      }
+      // Top light (blinking red)
+      const blink = Math.sin(this.time * 3) > 0 ? 0.9 : 0.2;
+      ctx.fillStyle = `rgba(255,0,60,${blink})`;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#ff003c';
+      ctx.beginPath();
+      ctx.arc(x, y - h, scale * 3 + 1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    _drawBuilding(ctx, x, y, scale, seed) {
+      const bw = scale * 40 + 8;
+      const bh = scale * (60 + seed * 80) + 10;
+      // Building silhouette
+      ctx.fillStyle = '#0a0015';
+      ctx.fillRect(x - bw / 2, y - bh, bw, bh);
+      // Neon outline
+      ctx.strokeStyle = this.accentColor;
+      ctx.lineWidth = scale * 1 + 0.5;
+      ctx.shadowBlur = 5;
+      ctx.shadowColor = this.accentColor;
+      ctx.strokeRect(x - bw / 2, y - bh, bw, bh);
+      // Windows (small lit rectangles)
+      const winSize = Math.max(1, scale * 4);
+      const winGap = winSize * 2.5;
+      ctx.shadowBlur = 0;
+      for (let wy = y - bh + winGap; wy < y - winGap; wy += winGap) {
+        for (let wx = x - bw / 2 + winGap; wx < x + bw / 2 - winGap; wx += winGap) {
+          const lit = Math.sin(wx * 13.7 + wy * 7.3 + seed * 100) > 0;
+          ctx.fillStyle = lit ? 'rgba(0,243,255,0.6)' : 'rgba(0,0,0,0.3)';
+          ctx.fillRect(wx, wy, winSize, winSize);
+        }
+      }
+      ctx.shadowBlur = 0;
+    }
+    _drawAntenna(ctx, x, y, scale) {
+      const h = scale * 60 + 8;
+      // Thin vertical pole
+      ctx.strokeStyle = this.accentColor;
+      ctx.lineWidth = scale + 0.5;
+      ctx.shadowBlur = 3;
+      ctx.shadowColor = this.accentColor;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y - h);
+      ctx.stroke();
+      // Dish/arms
+      const armLen = scale * 12 + 2;
+      ctx.beginPath();
+      ctx.moveTo(x - armLen, y - h * 0.7);
+      ctx.lineTo(x + armLen, y - h * 0.7);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - armLen * 0.6, y - h * 0.85);
+      ctx.lineTo(x + armLen * 0.6, y - h * 0.85);
+      ctx.stroke();
+      // Top blinking light
+      const blink = Math.sin(this.time * 5 + x) > 0.3 ? 0.8 : 0.15;
+      ctx.fillStyle = `rgba(255,0,60,${blink})`;
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = '#ff003c';
+      ctx.beginPath();
+      ctx.arc(x, y - h, scale * 2 + 0.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    _drawRock(ctx, x, y, scale, seed) {
+      const rw = scale * 18 + 3;
+      const rh = scale * 10 + 2;
+      ctx.fillStyle = '#0a0015';
+      ctx.beginPath();
+      ctx.moveTo(x - rw / 2, y);
+      ctx.lineTo(x - rw * 0.3, y - rh);
+      ctx.lineTo(x + rw * 0.1, y - rh * 1.2);
+      ctx.lineTo(x + rw / 2, y - rh * 0.4);
+      ctx.lineTo(x + rw / 2, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = this.accentColor;
+      ctx.lineWidth = scale * 0.5 + 0.3;
+      ctx.stroke();
     }
     drawSky(ctx) {
       const grd = ctx.createLinearGradient(0, 0, 0, this.horizon);
@@ -838,6 +1041,7 @@
       this.drawStars(ctx);
       this.drawSun(ctx);
       this.drawGrid(ctx);
+      this.drawRoadObjects(ctx);
       this.drawRoadDetails(ctx);
     }
   }
