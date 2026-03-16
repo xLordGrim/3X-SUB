@@ -54,13 +54,34 @@ if ! command -v unzip &> /dev/null; then
     apt-get install unzip -y >/dev/null 2>&1 || yum install unzip -y >/dev/null 2>&1
 fi
 
-TEMP_ZIP="/tmp/3x-ui-main.zip"
-curl -Ls "https://github.com/MHSanaei/3x-ui/archive/refs/heads/main.zip" -o "$TEMP_ZIP"
+# Attempt to detect local x-ui version to fetch compatible assets
+LOCAL_VER=$(/usr/local/x-ui/x-ui -v 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+ARCHIVE_URL="https://github.com/MHSanaei/3x-ui/archive/refs/heads/main.zip"
+EXTRACT_FOLDER="3x-ui-main"
+
+if [[ -n "$LOCAL_VER" ]]; then
+    echo -e "${BLUE}Detected local 3x-ui version: ${GREEN}${LOCAL_VER}${NC}"
+    # Verify if this specific version tag exists on the GitHub repo
+    TAG_URL="https://github.com/MHSanaei/3x-ui/archive/refs/tags/${LOCAL_VER}.zip"
+    if curl -s --head "$TAG_URL" | head -n 1 | grep -E "200|301|302" >/dev/null; then
+        ARCHIVE_URL="$TAG_URL"
+        RAW_VER="${LOCAL_VER#v}" # Remove 'v' prefix for extraction folder name
+        EXTRACT_FOLDER="3x-ui-${RAW_VER}"
+        echo -e "${GREEN}Downloading version-matched assets to ensure compatibility.${NC}"
+    else
+        echo -e "${RED}Version tag not found on GitHub. Falling back to latest main branch.${NC}"
+    fi
+else
+    echo -e "${RED}Could not detect 3x-ui version. Falling back to latest main branch.${NC}"
+fi
+
+TEMP_ZIP="/tmp/3x-ui-assets.zip"
+curl -Ls "$ARCHIVE_URL" -o "$TEMP_ZIP"
 mkdir -p "/tmp/3x-ui-extract"
 unzip -qo "$TEMP_ZIP" -d "/tmp/3x-ui-extract"
 
 # Copy official web folder to local x-ui root
-cp -rf /tmp/3x-ui-extract/3x-ui-main/web/* "$BASE_PATH/"
+cp -rf "/tmp/3x-ui-extract/${EXTRACT_FOLDER}/web/"* "$BASE_PATH/"
 rm -rf "$TEMP_ZIP" "/tmp/3x-ui-extract"
 
 echo -e "${BLUE}Fetching assets...${NC}"
