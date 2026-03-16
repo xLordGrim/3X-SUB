@@ -54,37 +54,25 @@
         }
         initParticles() {
             this.particles = [];
-            // Calculate a grid structure based on screen size
-            const spacing = 120; // Target distance between nodes
-            const cols = Math.ceil(window.innerWidth / spacing) + 1;
-            const rows = Math.ceil(window.innerHeight / spacing) + 1;
-            
-            for (let y = 0; y < rows; y++) {
-                for (let x = 0; x < cols; x++) {
-                    // Start in a grid but add some jitter for organic tech feel
-                    let jitterX = (Math.random() * 60) - 30;
-                    let jitterY = (Math.random() * 60) - 30;
-                    
-                    let pX = (x * spacing) + jitterX;
-                    let pY = (y * spacing) + jitterY;
-                    
-                    let size = (Math.random() * 2.0) + 1.0; // Slightly smaller dots
-                    let orbitRadiusX = (Math.random() * 50) + 25;
-                    let orbitRadiusY = (Math.random() * 50) + 25;
-                    let orbitSpeed = 0.0002 + Math.random() * 0.0005;
-                    let timeOffset = Math.random() * Math.PI * 2;
-                    let pulseSpeed = 0.01 + Math.random() * 0.02;
-                    
-                    this.particles.push({ 
-                        x: pX, y: pY, 
-                        baseX: pX, baseY: pY,
-                        vx: 0, vy: 0,
-                        orbitRadiusX, orbitRadiusY, orbitSpeed, timeOffset,
-                        size, baseSize: size, 
-                        angle: Math.random() * 6.28, 
-                        pulseSpeed 
-                    });
-                }
+            // Revert back to screen area density mapping for more natural spread
+            let n = (window.innerWidth * window.innerHeight) / 11000;
+            for (let i = 0; i < n; i++) {
+                let size = (Math.random() * 2.0) + 1.0;
+                let x = Math.random() * window.innerWidth;
+                let y = Math.random() * window.innerHeight;
+                
+                // Continuous slow drifting velocity
+                let vx = (Math.random() - 0.5) * 0.6;
+                let vy = (Math.random() - 0.5) * 0.6;
+                let pulseSpeed = 0.01 + Math.random() * 0.02;
+                
+                this.particles.push({ 
+                    x, y, 
+                    vx, vy, 
+                    size, baseSize: size, 
+                    angle: Math.random() * 6.28, 
+                    pulseSpeed 
+                });
             }
         }
         animate() {
@@ -114,35 +102,26 @@
             }
 
             // Particles
-            let time = Date.now();
             for (let i = 0; i < this.particles.length; i++) {
                 let p = this.particles[i];
                 
-                // Calculate target orbital position around the base anchor
-                let targetX = p.baseX + Math.sin(time * p.orbitSpeed + p.timeOffset) * p.orbitRadiusX;
-                let targetY = p.baseY + Math.cos(time * p.orbitSpeed + p.timeOffset) * p.orbitRadiusY;
-                
-                // Apply gentle spring force pulling particle to target
-                let ax = (targetX - p.x) * 0.004;
-                let ay = (targetY - p.y) * 0.004;
-                p.vx += ax;
-                p.vy += ay;
-                
-                // Apply friction (coast longer)
-                p.vx *= 0.95;
-                p.vy *= 0.95;
-                
+                // Apply constant, natural drift
                 p.x += p.vx;
                 p.y += p.vy;
+                
+                // Soft edge bounce
+                if (p.x < 0 || p.x > window.innerWidth) p.vx *= -1;
+                if (p.y < 0 || p.y > window.innerHeight) p.vy *= -1;
 
                 if (p.angle !== undefined) {
                     p.angle += (p.pulseSpeed || 0.02);
-                    p.size = (p.baseSize || p.size) + Math.sin(p.angle) * 0.6
+                    p.size = (p.baseSize || p.size) + Math.sin(p.angle) * 0.6;
                 }
 
-                // Mouse Repulsion
+                // Mouse Repulsion (smooth slide)
                 if (this.mouse.x != null) {
-                    let dx = p.x - this.mouse.x, dy = p.y - this.mouse.y, dist = Math.sqrt(dx * dx + dy * dy);
+                    let dx = p.x - this.mouse.x, dy = p.y - this.mouse.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < this.mouse.radius) {
                         let force = (this.mouse.radius - dist) / this.mouse.radius;
                         let angle = Math.atan2(dy, dx);
@@ -151,23 +130,37 @@
                     }
                 }
 
-                // Anti-Clustering
+                // Personal Space (Fluid Anti-Clustering)
                 for (let j = i + 1; j < this.particles.length; j++) {
                     let p2 = this.particles[j];
                     let dx = p.x - p2.x, dy = p.y - p2.y;
                     let dist = Math.sqrt(dx * dx + dy * dy);
-                    let minDist = 70;
-                    if (dist < minDist && dist > 0) {
-                        let force = (minDist - dist) / minDist;
-                        let angle = Math.atan2(dy, dx);
-                        let push = force * 0.5;
-                        p.x += Math.cos(angle) * push;
-                        p.y += Math.sin(angle) * push;
-                        p2.x -= Math.cos(angle) * push;
-                        p2.y -= Math.sin(angle) * push;
+                    let personalSpace = 85; 
+                    if (dist < personalSpace && dist > 0) {
+                        let force = (personalSpace - dist) / personalSpace;
+                        // Gentle nudge apart to maintain biological web feel
+                        let push = force * 0.03; 
+                        p.vx += (dx / dist) * push;
+                        p.vy += (dy / dist) * push;
+                        p2.vx -= (dx / dist) * push;
+                        p2.vy -= (dy / dist) * push;
                     }
                 }
-
+                
+                // Velocity Cap (Limit max chaotic speed to keep it calming)
+                let speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+                let maxSpeed = 0.7;
+                if (speed > maxSpeed) {
+                    p.vx = (p.vx / speed) * maxSpeed;
+                    p.vy = (p.vy / speed) * maxSpeed;
+                }
+                
+                // Ensure nodes don't get completely stuck
+                if (speed < 0.1) {
+                    p.vx += (Math.random() - 0.5) * 0.05;
+                    p.vy += (Math.random() - 0.5) * 0.05;
+                }
+                
                 this.ctx.beginPath();
                 this.ctx.arc(p.x, p.y, Math.max(0, p.size), 0, Math.PI * 2, false);
                 this.ctx.fillStyle = `rgba(${pColor},0.85)`;
