@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  const VERSION = "v2.0.13";
+  const VERSION = "v2.0.14";
   const STATE = {
     theme: localStorage.getItem("xui_theme") || "dark",
     lang: localStorage.getItem("xui_lang") || "en",
