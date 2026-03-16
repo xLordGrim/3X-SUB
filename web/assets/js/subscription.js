@@ -886,9 +886,9 @@
     }
     drawSun(ctx) {
       const cx = this.vanishX;
-      // Align sun center with the peak of the curved horizon
-      const cy = this.horizon;
       const r = Math.min(this.w, this.h) * 0.12;
+      // Sink the sun slightly into the horizon peak for a more natural look
+      const cy = this.horizon + r * 0.4;
 
       // Outer glow
       const glowGrd = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 3);
@@ -926,7 +926,8 @@
       const horizon = this.horizon;
       const bottom = this.h;
       const vanishX = this.vanishX;
-      const curvature = this.h * 0.12; // Deeper curvature for ultrawide feel
+      // Responsive curvature: scales with width to look consistent on mobile vs desktop
+      const curvature = this.w * 0.07;
 
       // Helper: get curved Y at a given x position for a base Y level
       const curvedY = (baseY, depth) => {
@@ -981,8 +982,8 @@
         const spread = perspT * this.w * 2.0;
         const alpha = perspT * 0.7;
 
-        // Curvature scales with distance from horizon (more curve near viewer)
-        const lineCurve = curvature * perspT;
+        // Flatten the curvature slightly near the viewer to look more natural
+        const lineCurve = curvature * perspT * 0.7;
 
         ctx.globalAlpha = alpha;
         ctx.beginPath();
@@ -1024,7 +1025,8 @@
         const baseY = horizon + perspT * (bottom - horizon);
         const dashWidth = perspT * 3 + 1;
         const alpha = perspT * 0.8;
-        const lineCurve = (this.h * 0.12) * perspT;
+        // Match the flattened curvature scaling: 7% of width, scaled by perspT * 0.7
+        const lineCurve = (this.w * 0.07) * perspT * 0.7;
 
         if (alpha < 0.1) continue;
 
@@ -1039,11 +1041,11 @@
         const nextT = t + segmentLen;
         const nextPerspT = nextT * nextT;
         const nextY = horizon + nextPerspT * (bottom - horizon);
-        const nextCurve = (this.h * 0.12) * nextPerspT;
+        const nextCurve = (this.w * 0.07) * nextPerspT * 0.7;
 
         ctx.beginPath();
         ctx.moveTo(vanishX, baseY - lineCurve);
-        ctx.quadraticCurveTo(vanishX, nextY - nextCurve, vanishX, nextY - nextCurve); // Small segment, keep it simple but aligned
+        ctx.quadraticCurveTo(vanishX, nextY - nextCurve, vanishX, nextY - nextCurve);
         ctx.stroke();
         ctx.shadowBlur = 0;
       }
@@ -1051,14 +1053,14 @@
 
       // Horizon glow line (curved)
       ctx.save();
-      const horizCurve = this.h * 0.12;
-      ctx.strokeStyle = "rgba(255,0,60,0.8)";
-      ctx.lineWidth = 3;
-      ctx.shadowBlur = 15;
+      const finalHorizCurve = this.w * 0.07;
+      ctx.strokeStyle = "rgba(255,0,60,0.9)";
+      ctx.lineWidth = 4;
+      ctx.shadowBlur = 20;
       ctx.shadowColor = "#ff003c";
       ctx.beginPath();
-      ctx.moveTo(0, horizon + horizCurve);
-      ctx.quadraticCurveTo(vanishX, horizon - horizCurve, this.w, horizon + horizCurve);
+      ctx.moveTo(0, horizon + finalHorizCurve);
+      ctx.quadraticCurveTo(vanishX, horizon - finalHorizCurve, this.w, horizon + finalHorizCurve);
       ctx.stroke();
       ctx.restore();
 
