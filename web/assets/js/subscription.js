@@ -69,9 +69,9 @@
                     let pY = (y * spacing) + jitterY;
                     
                     let size = (Math.random() * 2.0) + 1.0; // Slightly smaller dots
-                    let orbitRadiusX = (Math.random() * 30) + 15;
-                    let orbitRadiusY = (Math.random() * 30) + 15;
-                    let orbitSpeed = 0.0005 + Math.random() * 0.001;
+                    let orbitRadiusX = (Math.random() * 50) + 25;
+                    let orbitRadiusY = (Math.random() * 50) + 25;
+                    let orbitSpeed = 0.0002 + Math.random() * 0.0005;
                     let timeOffset = Math.random() * Math.PI * 2;
                     let pulseSpeed = 0.01 + Math.random() * 0.02;
                     
@@ -122,15 +122,15 @@
                 let targetX = p.baseX + Math.sin(time * p.orbitSpeed + p.timeOffset) * p.orbitRadiusX;
                 let targetY = p.baseY + Math.cos(time * p.orbitSpeed + p.timeOffset) * p.orbitRadiusY;
                 
-                // Apply spring force pulling particle to target
-                let ax = (targetX - p.x) * 0.02;
-                let ay = (targetY - p.y) * 0.02;
+                // Apply gentle spring force pulling particle to target
+                let ax = (targetX - p.x) * 0.004;
+                let ay = (targetY - p.y) * 0.004;
                 p.vx += ax;
                 p.vy += ay;
                 
-                // Apply friction
-                p.vx *= 0.9;
-                p.vy *= 0.9;
+                // Apply friction (coast longer)
+                p.vx *= 0.95;
+                p.vy *= 0.95;
                 
                 p.x += p.vx;
                 p.y += p.vy;
