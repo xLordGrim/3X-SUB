@@ -585,14 +585,13 @@
         this.ctx = this.canvas.getContext("2d");
       }
       this.canvas._network = this;
-      this.particles = [];
-      this.packets = [];
-      this.mouse = { x: null, y: null, radius: 220 };
-      this.isScrolling = false;
-      this.styles = { pColor: "99, 102, 241", lColor: "148, 163, 184" };
+      this.gridOffset = 0;
+      this.time = 0;
+      this.stars = [];
+      this.accentColor = "#00f3ff";
+      this.accentMagenta = "#ff003c";
       this.updateStyles();
 
-      // Instant Reactivity: Watch body classes for theme/status changes
       if (!this.observer) {
         this.observer = new MutationObserver(() => this.updateStyles());
         this.observer.observe(document.body, {
@@ -601,7 +600,6 @@
         });
       }
 
-      // Initial Stability: Retry style detection for the first second (accounts for CSS loading)
       let retries = 0;
       const retryStyles = setInterval(() => {
         this.updateStyles();
@@ -609,209 +607,212 @@
       }, 100);
 
       this.resize();
+      this.initStars();
+
       if (!this.handlersBound) {
         window.addEventListener("resize", () => {
           clearTimeout(this.resizeTimeout);
           this.resizeTimeout = setTimeout(() => this.resize(), 200);
         });
-        window.addEventListener("mousemove", (e) => {
-          if (this.isScrolling) return;
-          this.mouse.x = e.x;
-          this.mouse.y = e.y;
-        });
-        window.addEventListener("mouseout", () => {
-          this.mouse.x = null;
-          this.mouse.y = null;
-        });
-        window.addEventListener(
-          "scroll",
-          () => {
-            this.isScrolling = true;
-            this.mouse.x = null;
-            this.mouse.y = null;
-            clearTimeout(this.scrollTimeout);
-            this.scrollTimeout = setTimeout(() => {
-              this.isScrolling = false;
-            }, 200);
-          },
-          { passive: true },
-        );
         this.handlersBound = true;
       }
-      this.initParticles();
       this.animate = this.animate.bind(this);
       if (this.animFrame) cancelAnimationFrame(this.animFrame);
       this.animFrame = requestAnimationFrame(this.animate);
     }
     updateStyles() {
       const style = getComputedStyle(document.body);
-      this.styles.pColor =
-        style.getPropertyValue("--node-color").trim() || "99, 102, 241";
-      this.styles.lColor =
-        style.getPropertyValue("--line-color").trim() || "148, 163, 184";
+      const raw = style.getPropertyValue("--node-color").trim();
+      if (raw) {
+        const parts = raw.split(",").map((s) => parseInt(s.trim()));
+        if (parts.length === 3) {
+          this.accentColor = `rgb(${parts[0]},${parts[1]},${parts[2]})`;
+        }
+      }
     }
     resize() {
       const dpr = window.devicePixelRatio || 1;
-      this.canvas.width = window.innerWidth * dpr;
-      this.canvas.height = window.innerHeight * dpr;
-      this.canvas.style.width = window.innerWidth + "px";
-      this.canvas.style.height = window.innerHeight + "px";
-      this.ctx.scale(dpr, dpr);
-      if (this.particles.length === 0) this.initParticles();
+      this.w = window.innerWidth;
+      this.h = window.innerHeight;
+      this.canvas.width = this.w * dpr;
+      this.canvas.height = this.h * dpr;
+      this.canvas.style.width = this.w + "px";
+      this.canvas.style.height = this.h + "px";
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      this.horizon = this.h * 0.42;
+      this.vanishX = this.w / 2;
+      this.initStars();
     }
-    initParticles() {
-      this.particles = [];
-      // Screen area density mapping for natural spread
-      let n = (window.innerWidth * window.innerHeight) / 11000;
-      for (let i = 0; i < n; i++) {
-        let size = Math.random() * 2.0 + 1.0;
-        let x = Math.random() * window.innerWidth;
-        let y = Math.random() * window.innerHeight;
-
-        // Assign a persistent smooth movement heading and target cruise speed
-        let moveAngle = Math.random() * Math.PI * 2;
-        let baseSpeed = 0.2 + Math.random() * 0.15; // Reliable, slow coasting speed
-        let vx = Math.cos(moveAngle) * baseSpeed;
-        let vy = Math.sin(moveAngle) * baseSpeed;
-        let pulseSpeed = 0.01 + Math.random() * 0.02;
-
-        this.particles.push({
-          x,
-          y,
-          vx,
-          vy,
-          baseSpeed,
-          size,
-          baseSize: size,
-          angle: Math.random() * 6.28,
-          pulseSpeed,
+    initStars() {
+      this.stars = [];
+      for (let i = 0; i < 80; i++) {
+        this.stars.push({
+          x: Math.random() * this.w,
+          y: Math.random() * this.horizon * 0.85,
+          size: Math.random() * 1.5 + 0.3,
+          twinkle: Math.random() * Math.PI * 2,
+          speed: 0.02 + Math.random() * 0.04,
         });
       }
     }
+    drawSky(ctx) {
+      const grd = ctx.createLinearGradient(0, 0, 0, this.horizon);
+      grd.addColorStop(0, "#020005");
+      grd.addColorStop(0.4, "#0a001a");
+      grd.addColorStop(0.7, "#1a0030");
+      grd.addColorStop(0.85, "#3d0055");
+      grd.addColorStop(1, "#ff003c");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, this.w, this.horizon);
+    }
+    drawStars(ctx) {
+      for (const s of this.stars) {
+        s.twinkle += s.speed;
+        const alpha = 0.4 + Math.sin(s.twinkle) * 0.4;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.fill();
+      }
+    }
+    drawSun(ctx) {
+      const cx = this.vanishX;
+      const cy = this.horizon;
+      const r = Math.min(this.w, this.h) * 0.12;
+
+      // Outer glow
+      const glowGrd = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 3);
+      glowGrd.addColorStop(0, "rgba(255,0,60,0.4)");
+      glowGrd.addColorStop(0.3, "rgba(255,100,0,0.15)");
+      glowGrd.addColorStop(1, "rgba(255,0,60,0)");
+      ctx.fillStyle = glowGrd;
+      ctx.fillRect(0, this.horizon - r * 3, this.w, r * 6);
+
+      // Sun body
+      const sunGrd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      sunGrd.addColorStop(0, "#ffcc00");
+      sunGrd.addColorStop(0.3, "#ff6600");
+      sunGrd.addColorStop(0.7, "#ff003c");
+      sunGrd.addColorStop(1, "rgba(255,0,60,0)");
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = sunGrd;
+      ctx.fill();
+
+      // Horizontal scan lines across the sun for that retro feel
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.clip();
+      const lineGap = 4;
+      const scrollOff = (this.time * 20) % (lineGap * 2);
+      for (let ly = cy - r + scrollOff; ly < cy + r; ly += lineGap * 2) {
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.fillRect(cx - r, ly, r * 2, lineGap);
+      }
+      ctx.restore();
+    }
+    drawGrid(ctx) {
+      const horizon = this.horizon;
+      const bottom = this.h;
+      const vanishX = this.vanishX;
+
+      // Ground fill
+      const groundGrd = ctx.createLinearGradient(0, horizon, 0, bottom);
+      groundGrd.addColorStop(0, "#1a0030");
+      groundGrd.addColorStop(0.3, "#0a0012");
+      groundGrd.addColorStop(1, "#050005");
+      ctx.fillStyle = groundGrd;
+      ctx.fillRect(0, horizon, this.w, bottom - horizon);
+
+      ctx.strokeStyle = this.accentColor;
+      ctx.lineWidth = 1;
+
+      // Vertical perspective lines
+      const numVLines = 30;
+      for (let i = -numVLines; i <= numVLines; i++) {
+        const bottomX = vanishX + i * (this.w / numVLines) * 1.8;
+        const alpha = 1 - Math.abs(i) / numVLines;
+        ctx.globalAlpha = alpha * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(vanishX, horizon);
+        ctx.lineTo(bottomX, bottom);
+        ctx.stroke();
+      }
+
+      // Horizontal lines (scrolling towards viewer)
+      ctx.globalAlpha = 1;
+      const numHLines = 25;
+      this.gridOffset += 0.004;
+      if (this.gridOffset >= 1) this.gridOffset -= 1;
+
+      for (let i = 0; i < numHLines; i++) {
+        const t = (i / numHLines + this.gridOffset) % 1;
+        // Exponential distribution for realistic perspective spacing
+        const perspT = t * t;
+        const y = horizon + perspT * (bottom - horizon);
+        const spread = perspT * this.w * 1.2;
+        const alpha = perspT * 0.7;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.moveTo(vanishX - spread, y);
+        ctx.lineTo(vanishX + spread, y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+    drawCar(ctx) {
+      const cx = this.vanishX;
+      const carY = this.horizon + (this.h - this.horizon) * 0.35;
+      const carW = Math.min(this.w * 0.08, 80);
+      const carH = carW * 0.4;
+      const bodyY = carY - carH;
+
+      // Car body silhouette
+      ctx.fillStyle = "#000";
+      ctx.beginPath();
+      ctx.moveTo(cx - carW, carY); // bottom-left
+      ctx.lineTo(cx - carW * 0.95, bodyY + carH * 0.3); // left fender
+      ctx.lineTo(cx - carW * 0.6, bodyY - carH * 0.1); // left windshield base
+      ctx.lineTo(cx - carW * 0.35, bodyY - carH * 0.55); // roof left
+      ctx.lineTo(cx + carW * 0.15, bodyY - carH * 0.55); // roof right
+      ctx.lineTo(cx + carW * 0.45, bodyY - carH * 0.1); // right windshield base
+      ctx.lineTo(cx + carW * 0.9, bodyY + carH * 0.2); // right fender
+      ctx.lineTo(cx + carW, carY); // bottom-right
+      ctx.closePath();
+      ctx.fill();
+
+      // Tail lights
+      const bob = Math.sin(this.time * 2) * 1;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = "#ff003c";
+      ctx.fillStyle = "#ff003c";
+      // Left tail
+      ctx.fillRect(cx - carW * 0.92, bodyY + carH * 0.2 + bob, carW * 0.12, 3);
+      // Right tail
+      ctx.fillRect(cx + carW * 0.8, bodyY + carH * 0.1 + bob, carW * 0.12, 3);
+      ctx.shadowBlur = 0;
+
+      // Windshield reflection
+      ctx.fillStyle = "rgba(0,243,255,0.08)";
+      ctx.beginPath();
+      ctx.moveTo(cx - carW * 0.58, bodyY - carH * 0.05);
+      ctx.lineTo(cx - carW * 0.33, bodyY - carH * 0.50);
+      ctx.lineTo(cx + carW * 0.13, bodyY - carH * 0.50);
+      ctx.lineTo(cx + carW * 0.43, bodyY - carH * 0.05);
+      ctx.closePath();
+      ctx.fill();
+    }
     animate() {
       this.animFrame = requestAnimationFrame(this.animate);
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      const connectDist = 160,
-        connectDistSq = connectDist * connectDist;
-      const { pColor, lColor } = this.styles;
-
-      // Update Packets
-      for (let i = this.packets.length - 1; i >= 0; i--) {
-        let pkt = this.packets[i];
-        pkt.progress += pkt.speed;
-        if (pkt.progress >= 1) {
-          this.packets.splice(i, 1);
-          continue;
-        }
-        let cx = pkt.p1.x + (pkt.p2.x - pkt.p1.x) * pkt.progress;
-        let cy = pkt.p1.y + (pkt.p2.y - pkt.p1.y) * pkt.progress;
-
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, 2, 0, Math.PI * 2);
-        this.ctx.fillStyle = `rgba(${pColor}, 1)`;
-        this.ctx.shadowBlur = 8;
-        this.ctx.shadowColor = `rgba(${pColor}, 0.8)`;
-        this.ctx.fill();
-        this.ctx.shadowBlur = 0;
-      }
-
-      // Particles
-      for (let i = 0; i < this.particles.length; i++) {
-        let p = this.particles[i];
-
-        // Apply constant, natural drift
-        p.x += p.vx;
-        p.y += p.vy;
-
-        // Soft edge bounce
-        if (p.x < 0 || p.x > window.innerWidth) p.vx *= -1;
-        if (p.y < 0 || p.y > window.innerHeight) p.vy *= -1;
-
-        if (p.angle !== undefined) {
-          p.angle += p.pulseSpeed || 0.02;
-          p.size = (p.baseSize || p.size) + Math.sin(p.angle) * 0.6;
-        }
-
-        // Mouse Repulsion (smooth slide)
-        if (this.mouse.x != null) {
-          let dx = p.x - this.mouse.x,
-            dy = p.y - this.mouse.y;
-          let dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < this.mouse.radius) {
-            let force = (this.mouse.radius - dist) / this.mouse.radius;
-            let angle = Math.atan2(dy, dx);
-            p.x += Math.cos(angle) * force * 3;
-            p.y += Math.sin(angle) * force * 3;
-          }
-        }
-
-        // Personal Space (Fluid Anti-Clustering)
-        for (let j = i + 1; j < this.particles.length; j++) {
-          let p2 = this.particles[j];
-          let dx = p.x - p2.x,
-            dy = p.y - p2.y;
-          let dist = Math.sqrt(dx * dx + dy * dy);
-          let personalSpace = 85;
-          if (dist < personalSpace && dist > 0) {
-            let force = (personalSpace - dist) / personalSpace;
-            // Micro-nudge for highly fluid separation without bouncing/jitter
-            let push = force * 0.005;
-            p.vx += (dx / dist) * push;
-            p.vy += (dy / dist) * push;
-            p2.vx -= (dx / dist) * push;
-            p2.vy -= (dy / dist) * push;
-          }
-        }
-
-        // Smooth Steering Behavior (Constant Fluid Flocking)
-        let speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-        if (speed > 0) {
-          let moveAngle = Math.atan2(p.vy, p.vx);
-          // Very subtly wander direction each frame for unforced biological movement
-          moveAngle += (Math.random() - 0.5) * 0.035;
-
-          // Smoothly interpolate real speed towards peaceful target base cruise speed
-          let targetSpeed = p.baseSpeed || 0.25;
-          let newSpeed = speed + (targetSpeed - speed) * 0.015;
-
-          p.vx = Math.cos(moveAngle) * newSpeed;
-          p.vy = Math.sin(moveAngle) * newSpeed;
-        }
-
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, Math.max(0, p.size), 0, Math.PI * 2, false);
-        this.ctx.fillStyle = `rgba(${pColor},0.85)`;
-        this.ctx.fill();
-
-        // Connections
-        for (let j = i + 1; j < this.particles.length; j++) {
-          let p2 = this.particles[j],
-            dx = p.x - p2.x,
-            dy = p.y - p2.y,
-            distSq = dx * dx + dy * dy;
-          if (distSq < connectDistSq) {
-            let dist = Math.sqrt(distSq),
-              opacity = 1 - dist / connectDist;
-            this.ctx.beginPath();
-            this.ctx.strokeStyle = `rgba(${lColor},${opacity * 0.6})`; // Increased opacity
-            this.ctx.lineWidth = 1.2; // Bolder lines
-            this.ctx.moveTo(p.x, p.y);
-            this.ctx.lineTo(p2.x, p2.y);
-            this.ctx.stroke();
-
-            // Random Packet Spawn - ONLY if line is visible
-            // Opacity threshold (0.1) ensures packets don't float in void
-            if (opacity > 0.1 && Math.random() < 0.0015) {
-              this.packets.push({
-                p1: p,
-                p2: p2,
-                progress: 0,
-                speed: 0.02 + Math.random() * 0.03,
-              });
-            }
-          }
-        }
-      }
+      this.time += 0.016;
+      const ctx = this.ctx;
+      ctx.clearRect(0, 0, this.w, this.h);
+      this.drawSky(ctx);
+      this.drawStars(ctx);
+      this.drawSun(ctx);
+      this.drawGrid(ctx);
+      this.drawCar(ctx);
     }
   }
   function applyTheme() {
