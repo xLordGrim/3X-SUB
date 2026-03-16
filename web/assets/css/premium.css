@@ -482,27 +482,27 @@ body.premium-theme.ready .dashboard-header {
 .username-display::before {
     color: #0ff;
     z-index: 1;
-    animation: title-glitch-anim-1 5s infinite linear alternate-reverse;
+    animation: title-glitch-anim-1 4s infinite linear alternate-reverse;
 }
 
 .username-display::after {
     color: #f0f;
     z-index: 2;
-    animation: title-glitch-anim-2 5s infinite linear alternate-reverse;
+    animation: title-glitch-anim-2 4s infinite linear alternate-reverse;
 }
 
 @keyframes title-glitch-anim-1 {
-    0%, 95%, 100% { opacity: 0; clip-path: inset(0 0 0 0); transform: translate(0, 0); }
-    96% { opacity: 0.8; clip-path: inset(20% 0 70% 0); transform: translate(-4px, 0); text-shadow: -2px 0 #0ff; }
-    97% { opacity: 0.8; clip-path: inset(60% 0 20% 0); transform: translate(3px, 0); text-shadow: 2px 0 #0ff; }
-    98% { opacity: 0; clip-path: inset(50% 0 50% 0); transform: translate(0, 0); }
+    0%, 19%, 21%, 49%, 51%, 89%, 91%, 100% { opacity: 0; clip-path: inset(0 0 0 0); transform: translate(0, 0); }
+    20% { opacity: 1; clip-path: inset(40% 0 10% 0); transform: translate(-8px, 2px); text-shadow: -3px 0 #0ff; }
+    50% { opacity: 1; clip-path: inset(10% 0 70% 0); transform: translate(12px, -2px); text-shadow: 3px 0 #0ff; }
+    90% { opacity: 1; clip-path: inset(60% 0 20% 0); transform: translate(-15px, 0); text-shadow: -5px 0 #0ff; }
 }
 
 @keyframes title-glitch-anim-2 {
-    0%, 95%, 100% { opacity: 0; clip-path: inset(0 0 0 0); transform: translate(0, 0); }
-    96.5% { opacity: 0.8; clip-path: inset(10% 0 80% 0); transform: translate(4px, 0); text-shadow: 2px 0 #f0f; }
-    97.5% { opacity: 0.8; clip-path: inset(80% 0 10% 0); transform: translate(-3px, 0); text-shadow: -2px 0 #f0f; }
-    98.5% { opacity: 0; clip-path: inset(50% 0 50% 0); transform: translate(0, 0); }
+    0%, 24%, 26%, 54%, 56%, 94%, 96%, 100% { opacity: 0; clip-path: inset(0 0 0 0); transform: translate(0, 0); }
+    25% { opacity: 1; clip-path: inset(10% 0 40% 0); transform: translate(8px, -2px); text-shadow: 3px 0 #f0f; }
+    55% { opacity: 1; clip-path: inset(70% 0 10% 0); transform: translate(-12px, 2px); text-shadow: -3px 0 #f0f; }
+    95% { opacity: 1; clip-path: inset(20% 0 60% 0); transform: translate(15px, 0); text-shadow: 5px 0 #f0f; }
 }
 
 .user-main-row {
