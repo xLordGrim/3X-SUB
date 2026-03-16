@@ -674,19 +674,41 @@
           obj.type = types[Math.floor(Math.random() * types.length)];
         }
 
-        // Clamp t for rendering (allow > 1 for off-screen travel)
         const renderT = Math.min(obj.t, 1);
         const perspT = renderT * renderT;
-        const y = horizon + perspT * (bottom - horizon);
         const scale = perspT;
         if (scale < 0.005) continue;
 
-        // X position: use the SAME formula as the grid's vertical lines
+        // X position: follows the EXACT quadratic path of the vertical grid lines
         const bottomX = vanishX + obj.side * obj.laneSlot * (this.w / numVLines) * 2.5;
-        const x = vanishX + (bottomX - vanishX) * perspT;
+        const midY = horizon + (bottom - horizon) * 0.5;
+        const bowX = bottomX + (bottomX - vanishX) * 0.15;
 
-        const alpha = Math.min(1, scale * 2);
+        // Quadratic Bezier Formula: B(t) = (1-t)^2*P0 + 2(1-t)t*P1 + t^2*P2
+        const invT = 1 - renderT;
+        const x = invT * invT * vanishX + 2 * invT * renderT * bowX + perspT * bottomX;
+        const baseY = invT * invT * horizon + 2 * invT * renderT * midY + perspT * bottom;
+
+        // Planetary bulge offset (must match horizontal line curvature)
+        const curvature = this.w * 0.07;
+        const lineCurve = curvature * perspT * 0.7;
+        const currentSpread = perspT * this.w * 2.0;
+
+        // Quadratic bulge: vertex at vanishX,y=baseY; ends at vanishX+/-spread,y=baseY+lineCurve
+        const relX = (currentSpread > 0) ? (x - vanishX) / currentSpread : 0;
+        const bulgeOffset = lineCurve * (relX * relX);
+        const y = baseY + bulgeOffset;
+
+        // Radial Tilting: Objects lean away from the center for wide-angle feel
+        const tilt = (x - vanishX) / vanishX * 0.25;
+
+        const alpha = Math.min(1, scale * 2.5);
         ctx.globalAlpha = alpha;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(tilt);
+        ctx.translate(-x, -y);
 
         switch (obj.type) {
           case 'palm':
@@ -705,6 +727,7 @@
             this._drawRock(ctx, x, y, scale, obj.seed);
             break;
         }
+        ctx.restore();
       }
       ctx.globalAlpha = 1;
       ctx.shadowBlur = 0;
@@ -719,10 +742,10 @@
       ctx.shadowColor = this.accentColor;
       ctx.beginPath();
       ctx.moveTo(x, y);
-      ctx.lineTo(x - scale * 3, y - h);
+      ctx.lineTo(x, y - h);
       ctx.stroke();
       // Fronds (3 lines fanning out from top)
-      const topX = x - scale * 3;
+      const topX = x;
       const topY = y - h;
       const frondLen = scale * 30 + 5;
       for (let a = -0.8; a <= 0.8; a += 0.4) {
