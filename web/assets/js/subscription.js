@@ -158,15 +158,21 @@
                     }
                 }
                 
-                // Continuous calm drift & friction
-                p.vx += (Math.random() - 0.5) * 0.04;
-                p.vy += (Math.random() - 0.5) * 0.04;
-                p.vx *= 0.96; // Friction to slow down explosions quickly
-                p.vy *= 0.96;
+                // Smooth gliding friction
+                p.vx *= 0.98; // Relaxed friction to allow more glide
+                p.vy *= 0.98;
                 
-                // Velocity Cap
                 let speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-                let maxSpeed = 0.5; // Lowered from 0.7 for an even calmer vibe
+                
+                // Active minimum cruise speed (prevents getting glued)
+                let minSpeed = 0.15;
+                if (speed < minSpeed) {
+                    p.vx += (Math.random() - 0.5) * 0.08;
+                    p.vy += (Math.random() - 0.5) * 0.08;
+                }
+                
+                // Velocity Cap (prevents explosions)
+                let maxSpeed = 0.5;
                 if (speed > maxSpeed) {
                     p.vx = (p.vx / speed) * maxSpeed;
                     p.vy = (p.vy / speed) * maxSpeed;
