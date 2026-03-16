@@ -54,13 +54,41 @@ if ! command -v unzip &> /dev/null; then
     apt-get install unzip -y >/dev/null 2>&1 || yum install unzip -y >/dev/null 2>&1
 fi
 
-TEMP_ZIP="/tmp/3x-ui-main.zip"
-curl -Ls "https://github.com/MHSanaei/3x-ui/archive/refs/heads/main.zip" -o "$TEMP_ZIP"
+# Attempt to detect local x-ui version to fetch compatible assets
+# Make grep extremely forgiving, grab just the decimal version, then prefix 'v' manually
+# Crucially: use 2>&1 because Go binaries often print version info to stderr!
+RAW_VER=$( (/usr/local/x-ui/x-ui -v 2>&1 || /usr/local/x-ui/x-ui --version 2>&1 || /usr/local/x-ui/x-ui version 2>&1) | grep -iEo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+
+LOCAL_VER=""
+if [[ -n "$RAW_VER" ]]; then
+    LOCAL_VER="v${RAW_VER}"
+fi
+ARCHIVE_URL="https://github.com/MHSanaei/3x-ui/archive/refs/heads/main.zip"
+EXTRACT_FOLDER="3x-ui-main"
+
+if [[ -n "$LOCAL_VER" ]]; then
+    echo -e "${BLUE}Detected local 3x-ui version: ${GREEN}${LOCAL_VER}${NC}"
+    # Verify if this specific version tag exists on the GitHub repo
+    TAG_URL="https://github.com/MHSanaei/3x-ui/archive/refs/tags/${LOCAL_VER}.zip"
+    if curl -s --head "$TAG_URL" | head -n 1 | grep -E "200|301|302" >/dev/null; then
+        ARCHIVE_URL="$TAG_URL"
+        RAW_VER="${LOCAL_VER#v}" # Remove 'v' prefix for extraction folder name
+        EXTRACT_FOLDER="3x-ui-${RAW_VER}"
+        echo -e "${GREEN}Downloading version-matched assets to ensure compatibility.${NC}"
+    else
+        echo -e "${RED}Version tag not found on GitHub. Falling back to latest main branch.${NC}"
+    fi
+else
+    echo -e "${RED}Could not detect 3x-ui version. Falling back to latest main branch.${NC}"
+fi
+
+TEMP_ZIP="/tmp/3x-ui-assets.zip"
+curl -Ls "$ARCHIVE_URL" -o "$TEMP_ZIP"
 mkdir -p "/tmp/3x-ui-extract"
 unzip -qo "$TEMP_ZIP" -d "/tmp/3x-ui-extract"
 
 # Copy official web folder to local x-ui root
-cp -rf /tmp/3x-ui-extract/3x-ui-main/web/* "$BASE_PATH/"
+cp -rf "/tmp/3x-ui-extract/${EXTRACT_FOLDER}/web/"* "$BASE_PATH/"
 rm -rf "$TEMP_ZIP" "/tmp/3x-ui-extract"
 
 echo -e "${BLUE}Fetching assets...${NC}"
@@ -79,9 +107,9 @@ mkdir -p $(dirname "$SUBPAGE_PATH")
 curl -Ls "$REPO_URL/web/html/settings/panel/subscription/subpage.html?v=$VERSION" -o "$SUBPAGE_PATH"
 
 # CACHE BUSTING: Inject installation timestamp to force browser update
-# Regex ensures it replaces ANY existing query string or template tag
-sed -i -E "s|assets/css/premium.css(\?[^\"']*)?|assets/css/premium.css?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
-sed -i -E "s|assets/js/subscription.js(\?[^\"']*)?|assets/js/subscription.js?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
+# Replace the Go template versioning with our timestamp to bust client caches
+sed -i "s|assets/css/premium.css?{{ .cur_ver }}|assets/css/premium.css?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
+sed -i "s|assets/js/subscription.js?{{ .cur_ver }}|assets/js/subscription.js?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
 
 # Internal JS Cache Busting (Inject into the file itself)
 sed -i "s|__VERSION__|$TIMESTAMP|g" "$ASSETS_PATH/js/subscription.js"
