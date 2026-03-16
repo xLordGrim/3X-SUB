@@ -417,7 +417,48 @@ body.premium-theme.ready .dashboard-header {
     letter-spacing: 0.2em;
     color: var(--text-secondary);
     font-weight: 700;
-    opacity: 0.8;
+    opacity: 0;
+    will-change: transform, opacity, letter-spacing;
+    animation: titleReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+}
+
+@keyframes titleReveal {
+    0% {
+        opacity: 0;
+        transform: translateY(8px);
+        letter-spacing: 0.05em;
+    }
+    100% {
+        opacity: 0.8;
+        transform: translateY(0);
+        letter-spacing: 0.2em;
+    }
+}
+
+.username-display {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--text-primary) 0%, var(--accent) 50%, var(--text-primary) 100%);
+    background-size: 200% auto;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    opacity: 0;
+    will-change: transform, opacity, background-position;
+    animation: usernameReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+}
+
+@keyframes usernameReveal {
+    0% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+        background-position: 200% center;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        background-position: 0% center;
+    }
 }
 
 .user-main-row {
