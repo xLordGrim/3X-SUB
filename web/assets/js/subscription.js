@@ -2,7 +2,7 @@
   "use strict";
   const VERSION = "v2.0.13";
   const STATE = {
-    theme: localStorage.getItem("xui_theme") || "dark",
+    theme: "dark",
     lang: localStorage.getItem("xui_lang") || "en",
     subUrl: "",
     raw: null,
@@ -217,26 +217,8 @@
     const s = getStatusInfo();
     const profile = mkEl("div", "user-profile");
     profile.innerHTML = `<div class="avatar">${dispName.substring(0, 1).toUpperCase()}</div><div class="user-text-group"><div class="dashboard-title">User Dashboard</div><div class="user-main-row"><div class="username-display" data-text="${dispName}">${dispName}</div><div class="status-indicator-wrap"><span class="status-text-inline" style="color: ${s.color}">${s.label}</span><div class="status-dot-inline" style="background:${s.color}; box-shadow: 0 0 10px ${s.color}; border-color: ${s.color}44;"></div></div></div></div>`;
-    const ctrls = mkEl("div", "controls");
-    ctrls.style.position = "relative";
-    ctrls.style.zIndex = "200";
-    const themeBtn = mkEl("div", "icon-btn");
-    themeBtn.innerHTML =
-      STATE.theme === "dark"
-        ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`
-        : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-    themeBtn.onclick = (e) => {
-      themeBtn.style.animation =
-        "bounce 0.6s cubic-bezier(0.68,-0.55,0.265,1.55)";
-      setTimeout(() => {
-        themeBtn.style.animation = "";
-      }, 600);
-      toggleTheme(e);
-    };
-    themeBtn.id = "theme-btn";
-    ctrls.appendChild(themeBtn);
     h.appendChild(profile);
-    h.appendChild(ctrls);
+    return h;
     return h;
   }
   function renderUsageCard() {
@@ -1105,45 +1087,6 @@
     document.body.classList.add(`status-${s.state}`);
     const bg = getEl("canvas-bg");
     if (bg && bg._network) bg._network.updateStyles();
-  }
-  function toggleTheme(e) {
-    const nextTheme = STATE.theme === "dark" ? "light" : "dark";
-    const status = getStatusInfo().state,
-      mockClass = `premium-theme ${nextTheme === "dark" ? "s-dark" : "s-light"} status-${status}`,
-      dummy = document.createElement("div");
-    dummy.className = mockClass;
-    dummy.style.display = "none";
-    document.body.appendChild(dummy);
-    const burstColor =
-      getComputedStyle(dummy).getPropertyValue("--bg-main").trim() ||
-      (nextTheme === "dark" ? "#020617" : "#f8fafc");
-    document.body.removeChild(dummy);
-    const btn = e.currentTarget,
-      rect = btn.getBoundingClientRect(),
-      burst = mkEl("div", "theme-burst");
-    burst.style.background = burstColor;
-    burst.style.left = rect.left + rect.width / 2 + "px";
-    burst.style.top = rect.top + rect.height / 2 + "px";
-    document.body.appendChild(burst);
-    // Add global transition class to soften all color swaps
-    document.documentElement.classList.add("theme-transitioning");
-
-    setTimeout(() => {
-      STATE.theme = nextTheme;
-      localStorage.setItem("xui_theme", STATE.theme);
-      applyTheme();
-      const btnIcon = getEl("theme-btn");
-      if (btnIcon)
-        btnIcon.innerHTML =
-          STATE.theme === "dark"
-            ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`
-            : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-    }, 250); // Fast snap behind burst
-
-    setTimeout(() => {
-      document.documentElement.classList.remove("theme-transitioning");
-      burst.remove();
-    }, 1600);
   }
   function showToast(msg) {
     const toastEl = getEl("toast");
