@@ -66,21 +66,23 @@
         }
         initParticles() {
             this.particles = [];
-            // Revert back to screen area density mapping for more natural spread
+            // Screen area density mapping for natural spread
             let n = (window.innerWidth * window.innerHeight) / 11000;
             for (let i = 0; i < n; i++) {
                 let size = (Math.random() * 2.0) + 1.0;
                 let x = Math.random() * window.innerWidth;
                 let y = Math.random() * window.innerHeight;
                 
-                // Continuous slow drifting velocity
-                let vx = (Math.random() - 0.5) * 0.6;
-                let vy = (Math.random() - 0.5) * 0.6;
+                // Assign a persistent smooth movement heading and target cruise speed
+                let moveAngle = Math.random() * Math.PI * 2;
+                let baseSpeed = 0.2 + Math.random() * 0.15; // Reliable, slow coasting speed
+                let vx = Math.cos(moveAngle) * baseSpeed;
+                let vy = Math.sin(moveAngle) * baseSpeed;
                 let pulseSpeed = 0.01 + Math.random() * 0.02;
                 
                 this.particles.push({ 
                     x, y, 
-                    vx, vy, 
+                    vx, vy, baseSpeed,
                     size, baseSize: size, 
                     angle: Math.random() * 6.28, 
                     pulseSpeed 
@@ -150,7 +152,8 @@
                     let personalSpace = 85; 
                     if (dist < personalSpace && dist > 0) {
                         let force = (personalSpace - dist) / personalSpace;
-                        let push = force * 0.02; // Reduced push force
+                        // Micro-nudge for highly fluid separation without bouncing/jitter
+                        let push = force * 0.005; 
                         p.vx += (dx / dist) * push;
                         p.vy += (dy / dist) * push;
                         p2.vx -= (dx / dist) * push;
@@ -158,24 +161,19 @@
                     }
                 }
                 
-                // Smooth gliding friction
-                p.vx *= 0.98; // Relaxed friction to allow more glide
-                p.vy *= 0.98;
-                
+                // Smooth Steering Behavior (Constant Fluid Flocking)
                 let speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-                
-                // Active minimum cruise speed (prevents getting glued)
-                let minSpeed = 0.15;
-                if (speed < minSpeed) {
-                    p.vx += (Math.random() - 0.5) * 0.08;
-                    p.vy += (Math.random() - 0.5) * 0.08;
-                }
-                
-                // Velocity Cap (prevents explosions)
-                let maxSpeed = 0.5;
-                if (speed > maxSpeed) {
-                    p.vx = (p.vx / speed) * maxSpeed;
-                    p.vy = (p.vy / speed) * maxSpeed;
+                if (speed > 0) {
+                    let moveAngle = Math.atan2(p.vy, p.vx);
+                    // Very subtly wander direction each frame for unforced biological movement
+                    moveAngle += (Math.random() - 0.5) * 0.035; 
+                    
+                    // Smoothly interpolate real speed towards peaceful target base cruise speed
+                    let targetSpeed = p.baseSpeed || 0.25;
+                    let newSpeed = speed + ((targetSpeed - speed) * 0.015);
+                    
+                    p.vx = Math.cos(moveAngle) * newSpeed;
+                    p.vy = Math.sin(moveAngle) * newSpeed;
                 }
                 
                 this.ctx.beginPath();
