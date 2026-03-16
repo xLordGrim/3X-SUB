@@ -761,58 +761,84 @@
       }
       ctx.globalAlpha = 1;
     }
-    drawCar(ctx) {
-      const cx = this.vanishX;
-      const carY = this.horizon + (this.h - this.horizon) * 0.35;
-      const carW = Math.min(this.w * 0.08, 80);
-      const carH = carW * 0.4;
-      const bodyY = carY - carH;
+    drawRoadDetails(ctx) {
+      const horizon = this.horizon;
+      const bottom = this.h;
+      const vanishX = this.vanishX;
 
-      // Car body silhouette
-      ctx.fillStyle = "#000";
-      ctx.beginPath();
-      ctx.moveTo(cx - carW, carY); // bottom-left
-      ctx.lineTo(cx - carW * 0.95, bodyY + carH * 0.3); // left fender
-      ctx.lineTo(cx - carW * 0.6, bodyY - carH * 0.1); // left windshield base
-      ctx.lineTo(cx - carW * 0.35, bodyY - carH * 0.55); // roof left
-      ctx.lineTo(cx + carW * 0.15, bodyY - carH * 0.55); // roof right
-      ctx.lineTo(cx + carW * 0.45, bodyY - carH * 0.1); // right windshield base
-      ctx.lineTo(cx + carW * 0.9, bodyY + carH * 0.2); // right fender
-      ctx.lineTo(cx + carW, carY); // bottom-right
-      ctx.closePath();
-      ctx.fill();
+      // Road edge glow lines (left and right)
+      const edgeSpread = 0.15; // 15% from center
+      for (const side of [-1, 1]) {
+        ctx.save();
+        ctx.strokeStyle = this.accentColor;
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = this.accentColor;
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(vanishX, horizon);
+        ctx.lineTo(vanishX + side * this.w * edgeSpread * 1.8, bottom);
+        ctx.stroke();
+        ctx.restore();
+      }
 
-      // Tail lights
-      const bob = Math.sin(this.time * 2) * 1;
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = "#ff003c";
-      ctx.fillStyle = "#ff003c";
-      // Left tail
-      ctx.fillRect(cx - carW * 0.92, bodyY + carH * 0.2 + bob, carW * 0.12, 3);
-      // Right tail
-      ctx.fillRect(cx + carW * 0.8, bodyY + carH * 0.1 + bob, carW * 0.12, 3);
-      ctx.shadowBlur = 0;
+      // Center dashed line (scrolling)
+      const numDashes = 20;
+      for (let i = 0; i < numDashes; i++) {
+        const t = ((i / numDashes) + this.gridOffset * 2) % 1;
+        const perspT = t * t;
+        const y = horizon + perspT * (bottom - horizon);
+        const nextT = (((i + 0.3) / numDashes) + this.gridOffset * 2) % 1;
+        const nextPerspT = nextT * nextT;
+        const nextY = horizon + nextPerspT * (bottom - horizon);
 
-      // Windshield reflection
-      ctx.fillStyle = "rgba(0,243,255,0.08)";
-      ctx.beginPath();
-      ctx.moveTo(cx - carW * 0.58, bodyY - carH * 0.05);
-      ctx.lineTo(cx - carW * 0.33, bodyY - carH * 0.50);
-      ctx.lineTo(cx + carW * 0.13, bodyY - carH * 0.50);
-      ctx.lineTo(cx + carW * 0.43, bodyY - carH * 0.05);
-      ctx.closePath();
-      ctx.fill();
+        if (nextY <= y) continue;
+
+        const dashWidth = perspT * 3 + 1;
+        const alpha = perspT * 0.8;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "#fcee0a";
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = "#fcee0a";
+        ctx.fillRect(vanishX - dashWidth / 2, y, dashWidth, Math.max(1, nextY - y - 2));
+        ctx.shadowBlur = 0;
+      }
+      ctx.globalAlpha = 1;
+
+      // Horizon glow line
+      ctx.save();
+      const horizonGrd = ctx.createLinearGradient(0, horizon - 2, 0, horizon + 4);
+      horizonGrd.addColorStop(0, "rgba(255,0,60,0)");
+      horizonGrd.addColorStop(0.5, "rgba(255,0,60,0.8)");
+      horizonGrd.addColorStop(1, "rgba(255,0,60,0)");
+      ctx.fillStyle = horizonGrd;
+      ctx.fillRect(0, horizon - 2, this.w, 6);
+      ctx.restore();
+
+      // Random ground grit/sparks near the bottom
+      ctx.save();
+      for (let i = 0; i < 15; i++) {
+        const gx = Math.random() * this.w;
+        const gy = horizon + (bottom - horizon) * (0.5 + Math.random() * 0.5);
+        const gAlpha = Math.random() * 0.15;
+        ctx.fillStyle = `rgba(0,243,255,${gAlpha})`;
+        ctx.fillRect(gx, gy, 1, 1);
+      }
+      ctx.restore();
     }
     animate() {
       this.animFrame = requestAnimationFrame(this.animate);
       this.time += 0.016;
       const ctx = this.ctx;
+      const dpr = window.devicePixelRatio || 1;
+      // Reset transform to prevent scroll-related accumulation
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, this.w, this.h);
       this.drawSky(ctx);
       this.drawStars(ctx);
       this.drawSun(ctx);
       this.drawGrid(ctx);
-      this.drawCar(ctx);
+      this.drawRoadDetails(ctx);
     }
   }
   function applyTheme() {
