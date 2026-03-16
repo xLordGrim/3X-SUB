@@ -175,65 +175,65 @@ body.premium-theme.s-light {
 }
 
 body.premium-theme.s-light.status-active {
-    --accent: #10b981;
-    --accent-glow: rgba(16, 185, 129, 0.15);
-    --accent-hover: #059669;
-    --gradient-overlay: radial-gradient(circle at top right, rgba(16, 185, 129, 0.03), transparent 40%);
+    --accent: #00f3ff;
+    --accent-glow: rgba(0, 243, 255, 0.25);
+    --accent-hover: #00b3cc;
+    --gradient-overlay: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 243, 255, 0.05) 2px, rgba(0, 243, 255, 0.05) 4px);
     --bg-main: #f0fdf4;
-    --bg-card: rgba(255, 255, 255, 0.8);
+    --bg-card: rgba(255, 255, 255, 0.9);
     --bg-sec: #f0fdf4;
-    --card-bg: rgba(255, 255, 255, 0.75);
-    --card-border: rgba(16, 185, 129, 0.12);
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --card-border: rgba(0, 243, 255, 0.3);
     --usage-active: var(--accent);
-    --node-color: 16, 185, 129;
-    --line-color: 16, 185, 129;
+    --node-color: 0, 243, 255;
+    --line-color: 0, 243, 255;
 }
 
 body.premium-theme.s-light.status-warn {
-    --accent: #d97706;
-    --accent-glow: rgba(217, 119, 6, 0.1);
-    --accent-hover: #b45309;
-    --gradient-overlay: radial-gradient(circle at top right, rgba(217, 119, 6, 0.05), transparent 40%);
+    --accent: #fcee0a;
+    --accent-glow: rgba(252, 238, 10, 0.25);
+    --accent-hover: #b4aa00;
+    --gradient-overlay: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(252, 238, 10, 0.05) 2px, rgba(252, 238, 10, 0.05) 4px);
     --bg-main: #fffcf0;
-    --bg-card: rgba(254, 252, 232, 0.9);
+    --bg-card: rgba(254, 252, 232, 0.95);
     --bg-sec: #fefce8;
-    --card-bg: rgba(254, 252, 232, 0.8);
-    --card-border: rgba(217, 119, 6, 0.15);
+    --card-bg: rgba(254, 252, 232, 0.9);
+    --card-border: rgba(252, 238, 10, 0.3);
     --usage-active: var(--accent);
     --usage-expired: var(--accent);
-    --node-color: 217, 119, 6;
-    --line-color: 180, 83, 9;
+    --node-color: 252, 238, 10;
+    --line-color: 180, 160, 0;
 }
 
 body.premium-theme.status-depleted.s-light {
-    --accent: #ff3131;
-    --accent-glow: rgba(255, 49, 49, 0.15);
-    --accent-hover: #ff5c5c;
-    --gradient-overlay: radial-gradient(circle at top right, rgba(255, 49, 49, 0.1), transparent 40%);
+    --accent: #ff003c;
+    --accent-glow: rgba(255, 0, 60, 0.25);
+    --accent-hover: #cc0030;
+    --gradient-overlay: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 0, 60, 0.05) 2px, rgba(255, 0, 60, 0.05) 4px);
     --bg-main: #fff5f5;
-    --bg-card: rgba(255, 245, 245, 0.95);
+    --bg-card: rgba(255, 245, 245, 0.98);
     --bg-sec: #fff5f5;
-    --card-bg: rgba(255, 245, 245, 0.85);
-    --card-border: rgba(255, 49, 49, 0.25);
+    --card-bg: rgba(255, 245, 245, 0.95);
+    --card-border: rgba(255, 0, 60, 0.3);
     --usage-active: var(--accent);
     --usage-depleted: var(--accent);
-    --node-color: 255, 49, 49;
-    --line-color: 255, 80, 80;
+    --node-color: 255, 0, 60;
+    --line-color: 255, 0, 60;
 }
 
 body.premium-theme.s-light.status-unlimited {
-    --accent: #0891b2;
-    --accent-glow: rgba(8, 145, 178, 0.12);
-    --accent-hover: #0e7490;
-    --gradient-overlay: radial-gradient(circle at top right, rgba(8, 145, 178, 0.04), transparent 40%);
+    --accent: #00f3ff;
+    --accent-glow: rgba(0, 243, 255, 0.25);
+    --accent-hover: #00b3cc;
+    --gradient-overlay: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 243, 255, 0.05) 2px, rgba(0, 243, 255, 0.05) 4px);
     --bg-main: #ecfeff;
-    --bg-card: rgba(255, 255, 255, 0.85);
+    --bg-card: rgba(255, 255, 255, 0.98);
     --bg-sec: #cffafe;
-    --card-bg: rgba(255, 255, 255, 0.82);
-    --card-border: rgba(8, 145, 178, 0.12);
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --card-border: rgba(0, 243, 255, 0.3);
     --usage-active: var(--accent);
-    --node-color: 8, 145, 178;
-    --line-color: 3, 105, 161;
+    --node-color: 0, 243, 255;
+    --line-color: 0, 243, 255;
 }
 
 .theme-burst {
@@ -680,8 +680,32 @@ body.s-dark .icon-btn {
     background: rgba(var(--node-color, 255, 255, 255), 0.12);
     border-color: var(--accent);
     color: var(--accent);
-    transform: translate3d(0, -3px, 0);
-    box-shadow: 0 8px 25px var(--accent-glow);
+    transform: translate3d(0, -2px, 0);
+    box-shadow: inset 0 0 10px var(--accent-glow);
+}
+
+.icon-btn::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--accent-glow), transparent);
+    opacity: 0;
+    transition: 0s;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.icon-btn:hover::before {
+    animation: holo-scan 1.5s linear infinite;
+    opacity: 1;
+}
+
+@keyframes holo-scan {
+    0% { top: -100%; }
+    100% { top: 100%; }
 }
 
 .lang-select {
@@ -719,11 +743,36 @@ body.s-dark .icon-btn {
     margin-bottom: var(--grid-gap);
 }
 
+.hover-action {
+    position: relative;
+    overflow: hidden;
+}
+
+.hover-action::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--accent-glow), transparent);
+    opacity: 0;
+    transition: 0s;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.hover-action:hover::before {
+    animation: holo-scan 1.5s linear infinite;
+    opacity: 1;
+}
+
 .hover-action:hover {
     background: var(--card-hover);
     border-color: var(--accent);
     cursor: pointer;
-    transform: scale(1.01);
+    transform: translateY(-2px);
+    box-shadow: inset 0 0 20px var(--accent-glow), 0 0 10px var(--accent-glow);
 }
 
 .node-card {
