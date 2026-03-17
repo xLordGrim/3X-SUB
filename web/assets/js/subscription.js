@@ -888,22 +888,21 @@
         p.y += p._jitterY;
       }
 
-      // 1. Heavy Horizontal Slice Displacement
+      // 1. Heavy Horizontal Slice Displacement — Optimized (No getImageData)
       for (const slice of this.glitchSlices) {
         const sliceH = slice.height * intensity;
         const offset = slice.offset * intensity;
         if (Math.abs(offset) < 1 || sliceH < 1) continue;
 
-        try {
-          const sy = Math.max(0, Math.floor(slice.y));
-          const sh = Math.max(1, Math.min(Math.ceil(sliceH), h - sy));
-          const imgData = ctx.getImageData(0, sy, w, sh);
-          // Paint gap fill matching page background
-          ctx.fillStyle = bgMain;
-          ctx.fillRect(0, sy, w, sh);
-          // Displace the slice
-          ctx.putImageData(imgData, offset, sy);
-        } catch(e) {}
+        const sy = Math.max(0, Math.floor(slice.y));
+        const sh = Math.max(1, Math.min(Math.ceil(sliceH), h - sy));
+        
+        // Use drawImage to shift the slice (hardware accelerated)
+        ctx.drawImage(this.canvas, 0, sy, w, sh, offset, sy, w, sh);
+        // Paint gap fill behind the shift
+        ctx.fillStyle = bgMain;
+        if (offset > 0) ctx.fillRect(0, sy, offset, sh);
+        else ctx.fillRect(w + offset, sy, -offset, sh);
       }
 
       // 2. Aggressive Chromatic Aberration (theme-aware)
@@ -928,16 +927,17 @@
         ctx.restore();
       }
 
-      // 3. Scanline Noise (theme-aware)
+      // 3. Scanline Noise — Optimized (Batched blocks instead of per-line loop)
       ctx.save();
       ctx.globalAlpha = (isDark ? 0.18 : 0.1) * intensity;
-      for (let sy = 0; sy < h; sy += 2) {
-        if (Math.random() < 0.5) {
-          ctx.fillStyle = isDark
-            ? (Math.random() > 0.5 ? `rgba(255,255,255,${0.3 * intensity})` : `rgba(0,0,0,${0.5 * intensity})`)
-            : (Math.random() > 0.5 ? `rgba(0,0,0,${0.15 * intensity})` : glitchA + (0.15 * intensity) + ')');
-          ctx.fillRect(0, sy, w, 1);
-        }
+      const numNoiseLines = Math.floor(15 + Math.random() * 10);
+      for (let i = 0; i < numNoiseLines; i++) {
+        const sy = Math.random() * h;
+        const sh = 1 + Math.random() * 2;
+        ctx.fillStyle = isDark
+          ? (Math.random() > 0.5 ? `rgba(255,255,255,${0.3 * intensity})` : `rgba(0,0,0,${0.5 * intensity})`)
+          : (Math.random() > 0.5 ? `rgba(0,0,0,${0.15 * intensity})` : glitchA + (0.15 * intensity) + ')');
+        ctx.fillRect(0, sy, w, sh);
       }
       ctx.restore();
 
