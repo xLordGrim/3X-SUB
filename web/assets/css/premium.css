@@ -2293,6 +2293,8 @@ body.s-light .icon-btn-mini:hover {
 .span-8,
 .span-4 {
     animation: cardFadeIn 0.6s var(--ease-out) forwards, card-glitch-border 12s infinite linear;
+    will-change: transform, border-color, box-shadow;
+    transform: translateZ(0);
 }
 
 @keyframes card-glitch-border {
@@ -2413,7 +2415,11 @@ body.s-light .icon-btn-mini:hover {
 .stat-mini:hover {
     border-color: var(--accent);
     box-shadow: 0 0 10px var(--accent-glow);
-    transform: translateY(-2px);
+    transform: translateY(-2px) translateZ(0);
+}
+
+.stat-mini {
+    will-change: transform, opacity, border-color;
 }
 
 /* Subtle vertical data scan shimmer */
@@ -2480,6 +2486,11 @@ body.s-light .icon-btn-mini:hover {
 .infra-card:hover {
     border-color: var(--accent);
     box-shadow: 0 0 10px var(--accent-glow);
+    transform: translateZ(0);
+}
+
+.infra-card {
+    will-change: transform, border-color;
 }
 
 .infra-card::before {
@@ -2540,7 +2551,11 @@ body.s-light .icon-btn-mini:hover {
 .stat-card-mini:hover {
     border-color: var(--accent);
     box-shadow: 0 0 12px var(--accent-glow);
-    transform: translateY(-2px);
+    transform: translateY(-2px) translateZ(0);
+}
+
+.stat-card-mini {
+    will-change: transform, border-color, box-shadow;
 }
 
 /* Subtle accent sweep across the card */
