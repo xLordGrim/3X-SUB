@@ -868,6 +868,14 @@
       const progress = this.glitchElapsed / this.glitchDuration;
       const intensity = Math.sin(progress * Math.PI);
 
+      // Theme-aware glitch colors
+      const { pColor, lColor } = this.styles;
+      const isDark = document.body.classList.contains('s-dark');
+      const bgMain = isDark ? '#020617' : '#f8fafc';
+      // Derive complementary glitch colors from the theme's node color
+      const glitchA = `rgba(${pColor}, `; // Primary accent channel
+      const glitchB = `rgba(${lColor}, `; // Secondary line channel
+
       // 0. NODE JITTER — physically displace particles during glitch
       for (const p of this.particles) {
         // Undo previous jitter
@@ -890,16 +898,15 @@
           const sy = Math.max(0, Math.floor(slice.y));
           const sh = Math.max(1, Math.min(Math.ceil(sliceH), h - sy));
           const imgData = ctx.getImageData(0, sy, w, sh);
-          // Paint black gap where slice was
-          ctx.fillStyle = '#000';
+          // Paint gap fill matching page background
+          ctx.fillStyle = bgMain;
           ctx.fillRect(0, sy, w, sh);
           // Displace the slice
           ctx.putImageData(imgData, offset, sy);
         } catch(e) {}
       }
 
-      // 2. Aggressive Chromatic Aberration
-      const { pColor } = this.styles;
+      // 2. Aggressive Chromatic Aberration (theme-aware)
       const numAberrations = Math.floor(4 + intensity * 8);
       for (let i = 0; i < numAberrations; i++) {
         const lineY = Math.random() * h;
@@ -907,30 +914,34 @@
         const shift = (Math.random() - 0.5) * 40 * intensity;
 
         ctx.save();
-        ctx.globalAlpha = 0.5 * intensity;
-        ctx.globalCompositeOperation = 'screen';
+        ctx.globalAlpha = (isDark ? 0.5 : 0.35) * intensity;
+        ctx.globalCompositeOperation = isDark ? 'screen' : 'multiply';
 
-        ctx.fillStyle = `rgba(255, 0, 60, ${0.7 * intensity})`;
+        // Primary channel (accent color shifted left)
+        ctx.fillStyle = glitchA + (0.7 * intensity) + ')';
         ctx.fillRect(shift, lineY, w, lineH);
 
-        ctx.fillStyle = `rgba(0, 243, 255, ${0.6 * intensity})`;
+        // Secondary channel (line color shifted right)
+        ctx.fillStyle = glitchB + (0.6 * intensity) + ')';
         ctx.fillRect(-shift, lineY + 3, w, lineH * 0.8);
 
         ctx.restore();
       }
 
-      // 3. Heavy Scanline Noise
+      // 3. Scanline Noise (theme-aware)
       ctx.save();
-      ctx.globalAlpha = 0.18 * intensity;
+      ctx.globalAlpha = (isDark ? 0.18 : 0.1) * intensity;
       for (let sy = 0; sy < h; sy += 2) {
         if (Math.random() < 0.5) {
-          ctx.fillStyle = Math.random() > 0.5 ? `rgba(255,255,255,${0.3 * intensity})` : `rgba(0,0,0,${0.5 * intensity})`;
+          ctx.fillStyle = isDark
+            ? (Math.random() > 0.5 ? `rgba(255,255,255,${0.3 * intensity})` : `rgba(0,0,0,${0.5 * intensity})`)
+            : (Math.random() > 0.5 ? `rgba(0,0,0,${0.15 * intensity})` : glitchA + (0.15 * intensity) + ')');
           ctx.fillRect(0, sy, w, 1);
         }
       }
       ctx.restore();
 
-      // 4. Large Block Corruption
+      // 4. Large Block Corruption (theme-aware)
       if (intensity > 0.3) {
         const numBlocks = 2 + Math.floor(Math.random() * 6);
         for (let b = 0; b < numBlocks; b++) {
@@ -939,20 +950,20 @@
           const bw = 40 + Math.random() * 150;
           const bh = 3 + Math.random() * 15;
           ctx.save();
-          ctx.globalAlpha = 0.25 * intensity;
+          ctx.globalAlpha = (isDark ? 0.25 : 0.15) * intensity;
           ctx.fillStyle = Math.random() > 0.5
-            ? `rgba(${pColor}, ${0.7 * intensity})`
-            : `rgba(255, 0, 60, ${0.5 * intensity})`;
+            ? glitchA + (0.7 * intensity) + ')'
+            : glitchB + (0.5 * intensity) + ')';
           ctx.fillRect(bx, by, bw, bh);
           ctx.restore();
         }
       }
 
-      // 5. Full-Screen Color Flash (on intense peaks)
+      // 5. Full-Screen Color Flash (theme-aware)
       if (intensity > 0.7 && Math.random() < 0.3) {
         ctx.save();
-        ctx.globalAlpha = 0.06 * intensity;
-        ctx.fillStyle = Math.random() > 0.5 ? `rgba(${pColor}, 1)` : 'rgba(255, 0, 60, 1)';
+        ctx.globalAlpha = (isDark ? 0.06 : 0.04) * intensity;
+        ctx.fillStyle = Math.random() > 0.5 ? glitchA + '1)' : glitchB + '1)';
         ctx.fillRect(0, 0, w, h);
         ctx.restore();
       }

@@ -2366,15 +2366,15 @@ body.s-light .icon-btn-mini:hover {
 
 @keyframes node-glitch-flash {
     0% {
-        box-shadow: -2px 0 0 rgba(0, 243, 255, 0.5), 2px 0 0 rgba(255, 0, 60, 0.5);
+        box-shadow: -2px 0 0 var(--accent-glow), 2px 0 0 var(--accent-glow);
         opacity: 1;
     }
     33% {
-        box-shadow: 3px 0 0 rgba(255, 0, 60, 0.4), -3px 0 0 rgba(0, 243, 255, 0.4);
+        box-shadow: 3px 0 0 var(--accent-glow), -3px 0 0 var(--accent-glow);
         opacity: 0.8;
     }
     66% {
-        box-shadow: -1px 0 0 rgba(0, 243, 255, 0.3), 1px 0 0 rgba(255, 0, 60, 0.3);
+        box-shadow: -1px 0 0 var(--accent-glow), 1px 0 0 var(--accent-glow);
         opacity: 0.5;
     }
     100% {
@@ -2440,11 +2440,11 @@ body.s-light .icon-btn-mini:hover {
         transform: translate(0, 0);
     }
     95% {
-        text-shadow: -2px 0 rgba(0, 243, 255, 0.7), 2px 0 rgba(255, 0, 60, 0.7);
+        text-shadow: -2px 0 var(--accent-glow), 2px 0 var(--accent-glow);
         transform: translate(-1px, 0);
     }
     97% {
-        text-shadow: 2px 0 rgba(0, 243, 255, 0.5), -2px 0 rgba(255, 0, 60, 0.5);
+        text-shadow: 2px 0 var(--accent-glow), -2px 0 var(--accent-glow);
         transform: translate(1px, 0);
     }
 }
@@ -2490,9 +2490,9 @@ body.s-light .icon-btn-mini:hover {
 @keyframes infra-border-glitch {
     0%   { border-color: var(--card-border); }
     20%  { border-color: var(--accent); transform: translate(-1px, 0); }
-    40%  { border-color: rgba(255, 0, 60, 0.4); transform: translate(2px, 0); }
+    40%  { border-color: var(--accent-glow); transform: translate(2px, 0); }
     60%  { border-color: var(--accent); transform: translate(0, 1px); }
-    80%  { border-color: rgba(0, 243, 255, 0.4); transform: translate(-1px, -1px); }
+    80%  { border-color: var(--accent-glow); transform: translate(-1px, -1px); }
     100% { border-color: var(--accent); transform: translate(0, 0); }
 }
 
@@ -2538,7 +2538,7 @@ body.s-light .icon-btn-mini:hover {
     }
     91% {
         opacity: 0.3;
-        text-shadow: 0 0 12px var(--accent), -2px 0 rgba(255, 0, 60, 0.6);
+        text-shadow: 0 0 12px var(--accent), -2px 0 var(--accent-glow);
     }
 }
 
@@ -2586,12 +2586,12 @@ body.s-light .icon-btn-mini:hover {
         filter: none;
     }
     93% {
-        text-shadow: -3px 0 rgba(0, 243, 255, 0.8), 3px 0 rgba(255, 0, 60, 0.8);
+        text-shadow: -3px 0 var(--accent-glow), 3px 0 var(--accent-glow);
         transform: translate(-2px, 0) skewX(-2deg);
         filter: brightness(1.5);
     }
     95% {
-        text-shadow: 2px 0 rgba(255, 0, 60, 0.6), -2px 0 rgba(0, 243, 255, 0.6);
+        text-shadow: 2px 0 var(--accent-glow), -2px 0 var(--accent-glow);
         transform: translate(2px, 0) skewX(1deg);
         filter: brightness(1.2);
     }
@@ -2609,11 +2609,11 @@ body.s-light .icon-btn-mini:hover {
         transform: translate(0, 0);
     }
     96% {
-        text-shadow: -2px 0 rgba(0, 243, 255, 0.6), 2px 0 rgba(255, 0, 60, 0.6);
+        text-shadow: -2px 0 var(--accent-glow), 2px 0 var(--accent-glow);
         transform: translate(-1px, 0);
     }
     98% {
-        text-shadow: 1px 0 rgba(255, 0, 60, 0.4), -1px 0 rgba(0, 243, 255, 0.4);
+        text-shadow: 1px 0 var(--accent-glow), -1px 0 var(--accent-glow);
         transform: translate(1px, 0);
     }
 }
