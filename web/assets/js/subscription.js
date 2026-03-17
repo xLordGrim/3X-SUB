@@ -825,7 +825,7 @@
       this._updateGlitch();
     }
     _updateGlitch() {
-      const dt = 1 / 60; // ~16ms per frame
+      const dt = 1 / 60;
       const ctx = this.ctx;
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -833,22 +833,20 @@
       if (!this.glitchActive) {
         this.glitchTimer += dt;
         if (this.glitchTimer >= this.glitchInterval) {
-          // Trigger a new glitch
           this.glitchActive = true;
           this.glitchTimer = 0;
-          this.glitchInterval = 3 + Math.random() * 5;
-          this.glitchDuration = 0.15 + Math.random() * 0.25; // 150-400ms
+          this.glitchInterval = 1.5 + Math.random() * 3; // More frequent: every 1.5-4.5s
+          this.glitchDuration = 0.2 + Math.random() * 0.4; // Longer: 200-600ms
           this.glitchElapsed = 0;
 
-          // Generate random horizontal slices
-          const numSlices = 3 + Math.floor(Math.random() * 5);
+          // Generate many heavy horizontal slices
+          const numSlices = 6 + Math.floor(Math.random() * 8);
           this.glitchSlices = [];
           for (let i = 0; i < numSlices; i++) {
             this.glitchSlices.push({
               y: Math.random() * h,
-              height: 2 + Math.random() * 20,
-              offset: (Math.random() - 0.5) * 40,
-              channel: Math.floor(Math.random() * 3), // 0=R, 1=G, 2=B
+              height: 5 + Math.random() * 50,        // Much taller slices
+              offset: (Math.random() - 0.5) * 120,    // 3x displacement
             });
           }
         }
@@ -859,74 +857,104 @@
       this.glitchElapsed += dt;
       if (this.glitchElapsed >= this.glitchDuration) {
         this.glitchActive = false;
+        // Reset any jittered particles back
+        for (const p of this.particles) {
+          if (p._jitterX) { p.x -= p._jitterX; p._jitterX = 0; }
+          if (p._jitterY) { p.y -= p._jitterY; p._jitterY = 0; }
+        }
         return;
       }
 
       const progress = this.glitchElapsed / this.glitchDuration;
-      // Intensity peaks in the middle and fades out
       const intensity = Math.sin(progress * Math.PI);
 
-      // 1. Horizontal Slice Displacement
+      // 0. NODE JITTER — physically displace particles during glitch
+      for (const p of this.particles) {
+        // Undo previous jitter
+        if (p._jitterX) { p.x -= p._jitterX; }
+        if (p._jitterY) { p.y -= p._jitterY; }
+        // Apply new jitter
+        p._jitterX = (Math.random() - 0.5) * 25 * intensity;
+        p._jitterY = (Math.random() - 0.5) * 12 * intensity;
+        p.x += p._jitterX;
+        p.y += p._jitterY;
+      }
+
+      // 1. Heavy Horizontal Slice Displacement
       for (const slice of this.glitchSlices) {
         const sliceH = slice.height * intensity;
         const offset = slice.offset * intensity;
         if (Math.abs(offset) < 1 || sliceH < 1) continue;
 
         try {
-          const imgData = ctx.getImageData(0, Math.max(0, Math.floor(slice.y)), w, Math.max(1, Math.ceil(sliceH)));
-          // Shift RGB channels independently for chromatic aberration
-          ctx.putImageData(imgData, offset, Math.floor(slice.y));
-        } catch(e) { /* cross-origin safety */ }
+          const sy = Math.max(0, Math.floor(slice.y));
+          const sh = Math.max(1, Math.min(Math.ceil(sliceH), h - sy));
+          const imgData = ctx.getImageData(0, sy, w, sh);
+          // Paint black gap where slice was
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, sy, w, sh);
+          // Displace the slice
+          ctx.putImageData(imgData, offset, sy);
+        } catch(e) {}
       }
 
-      // 2. Chromatic Aberration Lines (shifted color channels)
+      // 2. Aggressive Chromatic Aberration
       const { pColor } = this.styles;
-      const numAberrations = Math.floor(2 + intensity * 3);
+      const numAberrations = Math.floor(4 + intensity * 8);
       for (let i = 0; i < numAberrations; i++) {
         const lineY = Math.random() * h;
-        const lineH = 1 + Math.random() * 3 * intensity;
-        const shift = (Math.random() - 0.5) * 15 * intensity;
+        const lineH = 2 + Math.random() * 8 * intensity;
+        const shift = (Math.random() - 0.5) * 40 * intensity;
 
         ctx.save();
-        ctx.globalAlpha = 0.3 * intensity;
+        ctx.globalAlpha = 0.5 * intensity;
         ctx.globalCompositeOperation = 'screen';
 
-        // Red channel shift
-        ctx.fillStyle = `rgba(255, 0, 60, ${0.4 * intensity})`;
+        ctx.fillStyle = `rgba(255, 0, 60, ${0.7 * intensity})`;
         ctx.fillRect(shift, lineY, w, lineH);
 
-        // Cyan channel shift (opposite direction)
-        ctx.fillStyle = `rgba(0, 243, 255, ${0.3 * intensity})`;
-        ctx.fillRect(-shift, lineY + 2, w, lineH * 0.7);
+        ctx.fillStyle = `rgba(0, 243, 255, ${0.6 * intensity})`;
+        ctx.fillRect(-shift, lineY + 3, w, lineH * 0.8);
 
         ctx.restore();
       }
 
-      // 3. Brief Scanline Noise (thin horizontal lines)
+      // 3. Heavy Scanline Noise
       ctx.save();
-      ctx.globalAlpha = 0.08 * intensity;
-      for (let sy = 0; sy < h; sy += 4) {
-        if (Math.random() < 0.3) {
-          ctx.fillStyle = Math.random() > 0.5 ? '#fff' : '#000';
+      ctx.globalAlpha = 0.18 * intensity;
+      for (let sy = 0; sy < h; sy += 2) {
+        if (Math.random() < 0.5) {
+          ctx.fillStyle = Math.random() > 0.5 ? `rgba(255,255,255,${0.3 * intensity})` : `rgba(0,0,0,${0.5 * intensity})`;
           ctx.fillRect(0, sy, w, 1);
         }
       }
       ctx.restore();
 
-      // 4. Random Block Corruption (small rectangular artifacts)
-      if (intensity > 0.5 && Math.random() < 0.4) {
-        const numBlocks = 1 + Math.floor(Math.random() * 3);
+      // 4. Large Block Corruption
+      if (intensity > 0.3) {
+        const numBlocks = 2 + Math.floor(Math.random() * 6);
         for (let b = 0; b < numBlocks; b++) {
           const bx = Math.random() * w;
           const by = Math.random() * h;
-          const bw = 20 + Math.random() * 60;
-          const bh = 2 + Math.random() * 8;
+          const bw = 40 + Math.random() * 150;
+          const bh = 3 + Math.random() * 15;
           ctx.save();
-          ctx.globalAlpha = 0.15 * intensity;
-          ctx.fillStyle = `rgba(${pColor}, ${0.5 * intensity})`;
+          ctx.globalAlpha = 0.25 * intensity;
+          ctx.fillStyle = Math.random() > 0.5
+            ? `rgba(${pColor}, ${0.7 * intensity})`
+            : `rgba(255, 0, 60, ${0.5 * intensity})`;
           ctx.fillRect(bx, by, bw, bh);
           ctx.restore();
         }
+      }
+
+      // 5. Full-Screen Color Flash (on intense peaks)
+      if (intensity > 0.7 && Math.random() < 0.3) {
+        ctx.save();
+        ctx.globalAlpha = 0.06 * intensity;
+        ctx.fillStyle = Math.random() > 0.5 ? `rgba(${pColor}, 1)` : 'rgba(255, 0, 60, 1)';
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
       }
     }
   }
