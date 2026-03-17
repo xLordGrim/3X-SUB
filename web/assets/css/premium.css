@@ -2396,12 +2396,27 @@ body.s-light .icon-btn-mini:hover {
     100% { transform: translate(0, 0) translateY(-2px); }
 }
 
-/* 4. STAT MINI CARDS — Data corruption shimmer */
+/* 4. STAT MINI CARDS — Usage Overview Tiles */
 .stat-mini {
     position: relative;
     overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.3s var(--ease-out);
 }
 
+.stat-mini:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+    transform: translateY(-2px);
+}
+
+/* Subtle vertical data scan shimmer */
 .stat-mini::after {
     content: '';
     position: absolute;
@@ -2412,40 +2427,42 @@ body.s-light .icon-btn-mini:hover {
     background: linear-gradient(
         180deg,
         transparent 0%,
-        transparent 40%,
-        rgba(var(--node-color, 99, 102, 241), 0.06) 45%,
-        rgba(var(--node-color, 99, 102, 241), 0.12) 50%,
-        rgba(var(--node-color, 99, 102, 241), 0.06) 55%,
-        transparent 60%,
+        transparent 45%,
+        rgba(var(--node-color, 99, 102, 241), 0.04) 50%,
+        transparent 55%,
         transparent 100%
     );
     pointer-events: none;
-    z-index: 5;
-    animation: stat-data-scan 6s linear infinite;
+    z-index: 1;
+    animation: stat-data-scan 10s linear infinite;
 }
 
 @keyframes stat-data-scan {
-    0%   { transform: translateY(-30%); }
-    100% { transform: translateY(30%); }
+    0%   { transform: translateY(-33%); }
+    100% { transform: translateY(33%); }
 }
 
-/* Stat value text flicker */
+/* Stat value text flicker — refined timing */
 .stat-mini .stat-value {
-    animation: stat-text-glitch 5s infinite linear;
+    animation: stat-text-glitch 6s infinite linear;
+    font-weight: 700;
 }
 
 @keyframes stat-text-glitch {
-    0%, 94%, 96%, 98%, 100% {
+    0%, 92%, 96%, 100% {
         text-shadow: none;
         transform: translate(0, 0);
+        opacity: 1;
+    }
+    93% {
+        text-shadow: -1px 0 var(--accent-glow), 1px 0 var(--accent-glow);
+        transform: translate(-1px, 0);
+        opacity: 0.9;
     }
     95% {
-        text-shadow: -2px 0 var(--accent-glow), 2px 0 var(--accent-glow);
-        transform: translate(-1px, 0);
-    }
-    97% {
-        text-shadow: 2px 0 var(--accent-glow), -2px 0 var(--accent-glow);
+        text-shadow: 1px 0 var(--accent-glow), -1px 0 var(--accent-glow);
         transform: translate(1px, 0);
+        opacity: 0.8;
     }
 }
 
@@ -2500,45 +2517,86 @@ body.s-light .icon-btn-mini:hover {
 .stat-card-mini {
     position: relative;
     overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s var(--ease-out);
 }
 
+.stat-card-mini:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+    transform: translateY(-2px);
+}
+
+/* Subtle accent sweep across the card */
 .stat-card-mini::after {
     content: '';
     position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 5;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 3px,
-        rgba(0, 0, 0, 0.08) 3px,
-        rgba(0, 0, 0, 0.08) 4px
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--node-color, 99, 102, 241), 0.05) 40%,
+        rgba(var(--node-color, 99, 102, 241), 0.1) 50%,
+        rgba(var(--node-color, 99, 102, 241), 0.05) 60%,
+        transparent 100%
     );
-    opacity: 0;
-    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 1;
+    animation: stat-card-sweep 8s ease-in-out infinite;
 }
 
-.stat-card-mini:hover::after {
-    opacity: 1;
+@keyframes stat-card-sweep {
+    0%, 60%  { left: -100%; }
+    80%      { left: 150%; }
+    100%     { left: 150%; }
 }
 
+/* Periodic border flicker */
+.stat-card-mini {
+    animation: stat-card-border-flicker 6s infinite linear;
+}
+
+@keyframes stat-card-border-flicker {
+    0%, 93%, 96%, 100% {
+        border-color: var(--card-border);
+    }
+    94% {
+        border-color: var(--accent);
+        box-shadow: 0 0 8px var(--accent-glow);
+    }
+    95% {
+        border-color: var(--accent-glow);
+        box-shadow: 0 0 4px var(--accent-glow);
+    }
+}
+
+/* Readout value subtle text glitch — never too dim */
 .stat-card-mini .stat-mini-value {
-    animation: readout-pulse 4s infinite ease-in-out;
+    animation: readout-pulse 5s infinite ease-in-out;
+    font-weight: 700;
 }
 
 @keyframes readout-pulse {
-    0%, 88%, 92%, 100% {
+    0%, 90%, 94%, 100% {
         opacity: 1;
         text-shadow: none;
     }
-    89% {
-        opacity: 0.6;
-        text-shadow: 0 0 8px var(--accent);
-    }
     91% {
-        opacity: 0.3;
-        text-shadow: 0 0 12px var(--accent), -2px 0 var(--accent-glow);
+        opacity: 0.85;
+        text-shadow: 0 0 6px var(--accent);
+    }
+    93% {
+        opacity: 0.7;
+        text-shadow: -1px 0 var(--accent-glow), 1px 0 var(--accent-glow);
     }
 }
 
