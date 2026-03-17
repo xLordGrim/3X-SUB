@@ -642,6 +642,14 @@
       this.animate = this.animate.bind(this);
       if (this.animFrame) cancelAnimationFrame(this.animFrame);
       this.animFrame = requestAnimationFrame(this.animate);
+
+      // Glitch State
+      this.glitchTimer = 0;
+      this.glitchInterval = 3 + Math.random() * 5; // seconds between glitches
+      this.glitchActive = false;
+      this.glitchDuration = 0;
+      this.glitchElapsed = 0;
+      this.glitchSlices = [];
     }
     updateStyles() {
       const style = getComputedStyle(document.body);
@@ -810,6 +818,114 @@
               });
             }
           }
+        }
+      }
+
+      // Apply glitch effect on top of everything
+      this._updateGlitch();
+    }
+    _updateGlitch() {
+      const dt = 1 / 60; // ~16ms per frame
+      const ctx = this.ctx;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      if (!this.glitchActive) {
+        this.glitchTimer += dt;
+        if (this.glitchTimer >= this.glitchInterval) {
+          // Trigger a new glitch
+          this.glitchActive = true;
+          this.glitchTimer = 0;
+          this.glitchInterval = 3 + Math.random() * 5;
+          this.glitchDuration = 0.15 + Math.random() * 0.25; // 150-400ms
+          this.glitchElapsed = 0;
+
+          // Generate random horizontal slices
+          const numSlices = 3 + Math.floor(Math.random() * 5);
+          this.glitchSlices = [];
+          for (let i = 0; i < numSlices; i++) {
+            this.glitchSlices.push({
+              y: Math.random() * h,
+              height: 2 + Math.random() * 20,
+              offset: (Math.random() - 0.5) * 40,
+              channel: Math.floor(Math.random() * 3), // 0=R, 1=G, 2=B
+            });
+          }
+        }
+        return;
+      }
+
+      // Glitch is active
+      this.glitchElapsed += dt;
+      if (this.glitchElapsed >= this.glitchDuration) {
+        this.glitchActive = false;
+        return;
+      }
+
+      const progress = this.glitchElapsed / this.glitchDuration;
+      // Intensity peaks in the middle and fades out
+      const intensity = Math.sin(progress * Math.PI);
+
+      // 1. Horizontal Slice Displacement
+      for (const slice of this.glitchSlices) {
+        const sliceH = slice.height * intensity;
+        const offset = slice.offset * intensity;
+        if (Math.abs(offset) < 1 || sliceH < 1) continue;
+
+        try {
+          const imgData = ctx.getImageData(0, Math.max(0, Math.floor(slice.y)), w, Math.max(1, Math.ceil(sliceH)));
+          // Shift RGB channels independently for chromatic aberration
+          ctx.putImageData(imgData, offset, Math.floor(slice.y));
+        } catch(e) { /* cross-origin safety */ }
+      }
+
+      // 2. Chromatic Aberration Lines (shifted color channels)
+      const { pColor } = this.styles;
+      const numAberrations = Math.floor(2 + intensity * 3);
+      for (let i = 0; i < numAberrations; i++) {
+        const lineY = Math.random() * h;
+        const lineH = 1 + Math.random() * 3 * intensity;
+        const shift = (Math.random() - 0.5) * 15 * intensity;
+
+        ctx.save();
+        ctx.globalAlpha = 0.3 * intensity;
+        ctx.globalCompositeOperation = 'screen';
+
+        // Red channel shift
+        ctx.fillStyle = `rgba(255, 0, 60, ${0.4 * intensity})`;
+        ctx.fillRect(shift, lineY, w, lineH);
+
+        // Cyan channel shift (opposite direction)
+        ctx.fillStyle = `rgba(0, 243, 255, ${0.3 * intensity})`;
+        ctx.fillRect(-shift, lineY + 2, w, lineH * 0.7);
+
+        ctx.restore();
+      }
+
+      // 3. Brief Scanline Noise (thin horizontal lines)
+      ctx.save();
+      ctx.globalAlpha = 0.08 * intensity;
+      for (let sy = 0; sy < h; sy += 4) {
+        if (Math.random() < 0.3) {
+          ctx.fillStyle = Math.random() > 0.5 ? '#fff' : '#000';
+          ctx.fillRect(0, sy, w, 1);
+        }
+      }
+      ctx.restore();
+
+      // 4. Random Block Corruption (small rectangular artifacts)
+      if (intensity > 0.5 && Math.random() < 0.4) {
+        const numBlocks = 1 + Math.floor(Math.random() * 3);
+        for (let b = 0; b < numBlocks; b++) {
+          const bx = Math.random() * w;
+          const by = Math.random() * h;
+          const bw = 20 + Math.random() * 60;
+          const bh = 2 + Math.random() * 8;
+          ctx.save();
+          ctx.globalAlpha = 0.15 * intensity;
+          ctx.fillStyle = `rgba(${pColor}, ${0.5 * intensity})`;
+          ctx.fillRect(bx, by, bw, bh);
+          ctx.restore();
         }
       }
     }
