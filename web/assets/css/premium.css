@@ -2283,3 +2283,408 @@ body.s-light .icon-btn-mini:hover {
     87% { opacity: 1; clip-path: inset(60% 0 30% 0); transform: translate(-12px, 8px); }
     89% { opacity: 0; clip-path: inset(50% 0 50% 0); transform: translate(0, 0); }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   CARD GLITCH EFFECTS — Professional Digital Interference
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1. PERIODIC BORDER GLITCH — All grid panels (Refined) */
+.span-12,
+.span-8,
+.span-4 {
+    animation: cardFadeIn 0.6s var(--ease-out) forwards, card-glitch-border 12s infinite linear;
+}
+
+@keyframes card-glitch-border {
+    0%, 94%, 97%, 100% {
+        border-color: var(--card-border);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    95% {
+        border-color: var(--accent);
+        box-shadow: 0 0 12px var(--accent-glow), inset 0 0 4px var(--accent-glow);
+    }
+    96% {
+        border-color: var(--accent-glow);
+        box-shadow: 0 0 6px var(--accent-glow);
+    }
+}
+
+/* 2. SCANLINE OVERLAY — Glitchy horizontal interference on hover */
+.span-12::after,
+.span-8::after,
+.span-4::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(var(--node-color, 99, 102, 241), 0.03) 2px,
+        rgba(var(--node-color, 99, 102, 241), 0.03) 4px
+    );
+    transition: opacity 0.3s ease;
+}
+
+.span-12:hover::after,
+.span-8:hover::after,
+.span-4:hover::after {
+    opacity: 1;
+    animation: scanline-sweep 2s linear infinite;
+}
+
+@keyframes scanline-sweep {
+    0%   { background-position: 0 0; }
+    100% { background-position: 0 60px; }
+}
+
+/* 3. NODE CARD — Chromatic glitch on hover */
+.node-card {
+    position: relative;
+}
+
+.node-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.2s;
+}
+
+.node-card:hover::before {
+    opacity: 1;
+    animation: node-glitch-flash 0.6s steps(3) forwards;
+}
+
+@keyframes node-glitch-flash {
+    0% {
+        box-shadow: -2px 0 0 var(--accent-glow), 2px 0 0 var(--accent-glow);
+        opacity: 0.8;
+    }
+    33% {
+        box-shadow: 3px 0 0 var(--accent-glow), -3px 0 0 var(--accent-glow);
+        opacity: 0.5;
+    }
+    66% {
+        box-shadow: -1px 0 0 var(--accent-glow), 1px 0 0 var(--accent-glow);
+        opacity: 0.3;
+    }
+    100% {
+        box-shadow: none;
+        opacity: 0;
+    }
+}
+
+/* Node card displacement jitter on hover */
+.node-card:hover {
+    animation: node-jitter 0.3s steps(4) forwards;
+}
+
+@keyframes node-jitter {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(-2px, 1px); }
+    50%  { transform: translate(1px, -1px); }
+    75%  { transform: translate(-1px, 0px); }
+    100% { transform: translate(0, 0) translateY(-2px); }
+}
+
+/* 4. STAT MINI CARDS — Usage Overview Tiles */
+.stat-mini {
+    position: relative;
+    overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.3s var(--ease-out);
+}
+
+.stat-mini:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+    transform: translateY(-2px);
+}
+
+/* Subtle vertical data scan shimmer */
+.stat-mini::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 300%;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        transparent 45%,
+        rgba(var(--node-color, 99, 102, 241), 0.04) 50%,
+        transparent 55%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    animation: stat-data-scan 12s linear infinite;
+}
+
+@keyframes stat-data-scan {
+    0%   { transform: translateY(-33%); }
+    100% { transform: translateY(33%); }
+}
+
+/* Stat value text flicker — refined timing */
+.stat-mini .stat-value {
+    animation: stat-text-glitch 6s infinite linear;
+    font-weight: 700;
+}
+
+@keyframes stat-text-glitch {
+    0%, 92%, 96%, 100% {
+        text-shadow: none;
+        transform: translate(0, 0);
+        opacity: 1;
+    }
+    93% {
+        text-shadow: -1px 0 var(--accent-glow), 1px 0 var(--accent-glow);
+        transform: translate(-1px, 0);
+        opacity: 0.9;
+    }
+    95% {
+        text-shadow: 1px 0 var(--accent-glow), -1px 0 var(--accent-glow);
+        transform: translate(1px, 0);
+        opacity: 0.8;
+    }
+}
+
+/* 5. INFRASTRUCTURE CARDS — Holographic Shimmer (Refined) */
+.infra-card {
+    position: relative;
+    overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 16px;
+    transition: all 0.3s var(--ease-out);
+}
+
+.infra-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.infra-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 80%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--node-color, 99, 102, 241), 0.04) 40%,
+        rgba(var(--node-color, 99, 102, 241), 0.08) 50%,
+        rgba(var(--node-color, 99, 102, 241), 0.04) 60%,
+        transparent 100%
+    );
+    transform: skewX(-20deg);
+    pointer-events: none;
+    z-index: 1;
+    animation: infra-holo-sweep 12s ease-in-out infinite;
+}
+
+@keyframes infra-holo-sweep {
+    0%, 75%  { left: -150%; }
+    90%      { left: 150%; }
+    100%     { left: 150%; }
+}
+
+/* Infra card border pulse on data */
+.infra-card:hover {
+    animation: infra-border-glitch 0.6s steps(6) forwards;
+}
+
+@keyframes infra-border-glitch {
+    0%   { border-color: var(--card-border); }
+    15%  { border-color: var(--accent); transform: translate(-1px, 0); }
+    30%  { border-color: var(--accent-glow); transform: translate(1px, 0); }
+    45%  { border-color: var(--accent); transform: translate(0, 1px); }
+    60%  { border-color: var(--accent-glow); transform: translate(-1px, -1px); }
+    100% { border-color: var(--accent); transform: translate(0, 0); }
+}
+
+/* 6. STAT CARD MINI (Server Monitor) — Digital readout effect */
+.stat-card-mini {
+    position: relative;
+    overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s var(--ease-out);
+}
+
+.stat-card-mini:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+    transform: translateY(-2px);
+}
+
+/* Subtle accent sweep across the card */
+.stat-card-mini::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--node-color, 99, 102, 241), 0.05) 40%,
+        rgba(var(--node-color, 99, 102, 241), 0.1) 50%,
+        rgba(var(--node-color, 99, 102, 241), 0.05) 60%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    animation: stat-card-sweep 12s ease-in-out infinite;
+}
+
+@keyframes stat-card-sweep {
+    0%, 60%  { left: -100%; }
+    80%      { left: 150%; }
+    100%     { left: 150%; }
+}
+
+/* Periodic border flicker */
+.stat-card-mini {
+    animation: stat-card-border-flicker 12s infinite linear;
+}
+
+@keyframes stat-card-border-flicker {
+    0%, 93%, 96%, 100% {
+        border-color: var(--card-border);
+    }
+    94% {
+        border-color: var(--accent);
+        box-shadow: 0 0 8px var(--accent-glow);
+    }
+    95% {
+        border-color: var(--accent-glow);
+        box-shadow: 0 0 4px var(--accent-glow);
+    }
+}
+
+/* Readout value subtle text glitch — synchronized */
+.stat-card-mini .stat-mini-value {
+    animation: readout-pulse 6s infinite ease-in-out;
+    font-weight: 700;
+}
+
+@keyframes readout-pulse {
+    0%, 90%, 94%, 100% {
+        opacity: 1;
+        text-shadow: none;
+    }
+    91% {
+        opacity: 0.85;
+        text-shadow: 0 0 6px var(--accent);
+    }
+    93% {
+        opacity: 0.7;
+        text-shadow: -1px 0 var(--accent-glow), 1px 0 var(--accent-glow);
+    }
+}
+
+/* 7. USAGE OVERVIEW — Progress bar interference */
+.usage-overview {
+    position: relative;
+    overflow: hidden;
+}
+
+.usage-overview::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--node-color, 99, 102, 241), 0.04) 48%,
+        rgba(var(--node-color, 99, 102, 241), 0.08) 50%,
+        rgba(var(--node-color, 99, 102, 241), 0.04) 52%,
+        transparent 100%
+    );
+    animation: usage-scan-line 4s ease-in-out infinite;
+}
+
+@keyframes usage-scan-line {
+    0%   { transform: translateX(-100%); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+}
+
+/* Usage big number glitch */
+.usage-big-number {
+    animation: usage-num-glitch 6s infinite linear;
+}
+
+@keyframes usage-num-glitch {
+    0%, 94%, 97%, 100% {
+        text-shadow: none;
+        transform: translate(0, 0);
+        filter: none;
+        opacity: 1;
+    }
+    95% {
+        text-shadow: -2px 0 var(--accent-glow), 2px 0 var(--accent-glow);
+        transform: translate(-1px, 0);
+        filter: brightness(1.2);
+        opacity: 0.9;
+    }
+    96% {
+        text-shadow: 1px 0 var(--accent-glow), -1px 0 var(--accent-glow);
+        transform: translate(1px, 0);
+        filter: brightness(1.1);
+        opacity: 0.85;
+    }
+}
+
+/* 8. SECTION HEADERS — Nodes/Infra/Stats titles glitch */
+.nodes-header {
+    position: relative;
+    animation: header-text-glitch 12s infinite linear;
+}
+
+@keyframes header-text-glitch {
+    0%, 95%, 97%, 99%, 100% {
+        text-shadow: none;
+        transform: translate(0, 0);
+    }
+    96% {
+        text-shadow: -2px 0 var(--accent-glow), 2px 0 var(--accent-glow);
+        transform: translate(-1px, 0);
+    }
+    98% {
+        text-shadow: 1px 0 var(--accent-glow), -1px 0 var(--accent-glow);
+        transform: translate(1px, 0);
+    }
+}

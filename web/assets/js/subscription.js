@@ -642,6 +642,14 @@
       this.animate = this.animate.bind(this);
       if (this.animFrame) cancelAnimationFrame(this.animFrame);
       this.animFrame = requestAnimationFrame(this.animate);
+
+      // Glitch State
+      this.glitchTimer = 0;
+      this.glitchInterval = 3 + Math.random() * 5; // seconds between glitches
+      this.glitchActive = false;
+      this.glitchDuration = 0;
+      this.glitchElapsed = 0;
+      this.glitchSlices = [];
     }
     updateStyles() {
       const style = getComputedStyle(document.body);
@@ -811,6 +819,153 @@
             }
           }
         }
+      }
+
+      // Apply glitch effect on top of everything
+      this._updateGlitch();
+    }
+    _updateGlitch() {
+      const dt = 1 / 60;
+      const ctx = this.ctx;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      if (!this.glitchActive) {
+        this.glitchTimer += dt;
+        if (this.glitchTimer >= this.glitchInterval) {
+          this.glitchActive = true;
+          this.glitchTimer = 0;
+          this.glitchInterval = 12 + Math.random() * 6; // Less frequent: every 12-18s (professional rhythm)
+          this.glitchDuration = 0.2 + Math.random() * 0.4; // Longer: 200-600ms
+          this.glitchElapsed = 0;
+
+          // Generate many heavy horizontal slices
+          const numSlices = 6 + Math.floor(Math.random() * 8);
+          this.glitchSlices = [];
+          for (let i = 0; i < numSlices; i++) {
+            this.glitchSlices.push({
+              y: Math.random() * h,
+              height: 5 + Math.random() * 50,        // Much taller slices
+              offset: (Math.random() - 0.5) * 120,    // 3x displacement
+            });
+          }
+        }
+        return;
+      }
+
+      // Glitch is active
+      this.glitchElapsed += dt;
+      if (this.glitchElapsed >= this.glitchDuration) {
+        this.glitchActive = false;
+        // Reset any jittered particles back
+        for (const p of this.particles) {
+          if (p._jitterX) { p.x -= p._jitterX; p._jitterX = 0; }
+          if (p._jitterY) { p.y -= p._jitterY; p._jitterY = 0; }
+        }
+        return;
+      }
+
+      const progress = this.glitchElapsed / this.glitchDuration;
+      const intensity = Math.sin(progress * Math.PI);
+
+      // Theme-aware glitch colors
+      const { pColor, lColor } = this.styles;
+      const isDark = document.body.classList.contains('s-dark');
+      const bgMain = isDark ? '#020617' : '#f8fafc';
+      // Derive complementary glitch colors from the theme's node color
+      const glitchA = `rgba(${pColor}, `; // Primary accent channel
+      const glitchB = `rgba(${lColor}, `; // Secondary line channel
+
+      // 0. NODE JITTER — physically displace particles during glitch
+      for (const p of this.particles) {
+        // Undo previous jitter
+        if (p._jitterX) { p.x -= p._jitterX; }
+        if (p._jitterY) { p.y -= p._jitterY; }
+        // Apply new jitter
+        p._jitterX = (Math.random() - 0.5) * 25 * intensity;
+        p._jitterY = (Math.random() - 0.5) * 12 * intensity;
+        p.x += p._jitterX;
+        p.y += p._jitterY;
+      }
+
+      // 1. Heavy Horizontal Slice Displacement
+      for (const slice of this.glitchSlices) {
+        const sliceH = slice.height * intensity;
+        const offset = slice.offset * intensity;
+        if (Math.abs(offset) < 1 || sliceH < 1) continue;
+
+        try {
+          const sy = Math.max(0, Math.floor(slice.y));
+          const sh = Math.max(1, Math.min(Math.ceil(sliceH), h - sy));
+          const imgData = ctx.getImageData(0, sy, w, sh);
+          // Paint gap fill matching page background
+          ctx.fillStyle = bgMain;
+          ctx.fillRect(0, sy, w, sh);
+          // Displace the slice
+          ctx.putImageData(imgData, offset, sy);
+        } catch(e) {}
+      }
+
+      // 2. Aggressive Chromatic Aberration (theme-aware)
+      const numAberrations = Math.floor(4 + intensity * 8);
+      for (let i = 0; i < numAberrations; i++) {
+        const lineY = Math.random() * h;
+        const lineH = 2 + Math.random() * 8 * intensity;
+        const shift = (Math.random() - 0.5) * 40 * intensity;
+
+        ctx.save();
+        ctx.globalAlpha = (isDark ? 0.5 : 0.35) * intensity;
+        ctx.globalCompositeOperation = isDark ? 'screen' : 'multiply';
+
+        // Primary channel (accent color shifted left)
+        ctx.fillStyle = glitchA + (0.7 * intensity) + ')';
+        ctx.fillRect(shift, lineY, w, lineH);
+
+        // Secondary channel (line color shifted right)
+        ctx.fillStyle = glitchB + (0.6 * intensity) + ')';
+        ctx.fillRect(-shift, lineY + 3, w, lineH * 0.8);
+
+        ctx.restore();
+      }
+
+      // 3. Scanline Noise (theme-aware)
+      ctx.save();
+      ctx.globalAlpha = (isDark ? 0.18 : 0.1) * intensity;
+      for (let sy = 0; sy < h; sy += 2) {
+        if (Math.random() < 0.5) {
+          ctx.fillStyle = isDark
+            ? (Math.random() > 0.5 ? `rgba(255,255,255,${0.3 * intensity})` : `rgba(0,0,0,${0.5 * intensity})`)
+            : (Math.random() > 0.5 ? `rgba(0,0,0,${0.15 * intensity})` : glitchA + (0.15 * intensity) + ')');
+          ctx.fillRect(0, sy, w, 1);
+        }
+      }
+      ctx.restore();
+
+      // 4. Large Block Corruption (theme-aware)
+      if (intensity > 0.3) {
+        const numBlocks = 2 + Math.floor(Math.random() * 6);
+        for (let b = 0; b < numBlocks; b++) {
+          const bx = Math.random() * w;
+          const by = Math.random() * h;
+          const bw = 40 + Math.random() * 150;
+          const bh = 3 + Math.random() * 15;
+          ctx.save();
+          ctx.globalAlpha = (isDark ? 0.25 : 0.15) * intensity;
+          ctx.fillStyle = Math.random() > 0.5
+            ? glitchA + (0.7 * intensity) + ')'
+            : glitchB + (0.5 * intensity) + ')';
+          ctx.fillRect(bx, by, bw, bh);
+          ctx.restore();
+        }
+      }
+
+      // 5. Full-Screen Color Flash (theme-aware)
+      if (intensity > 0.7 && Math.random() < 0.3) {
+        ctx.save();
+        ctx.globalAlpha = (isDark ? 0.06 : 0.04) * intensity;
+        ctx.fillStyle = Math.random() > 0.5 ? glitchA + '1)' : glitchB + '1)';
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
       }
     }
   }
