@@ -2288,25 +2288,25 @@ body.s-light .icon-btn-mini:hover {
    CARD GLITCH EFFECTS — Professional Digital Interference
    ═══════════════════════════════════════════════════════════════ */
 
-/* 1. PERIODIC BORDER GLITCH — All grid panels */
+/* 1. PERIODIC BORDER GLITCH — All grid panels (Refined) */
 .span-12,
 .span-8,
 .span-4 {
-    animation: cardFadeIn 0.6s var(--ease-out) forwards, card-glitch-border 8s infinite linear;
+    animation: cardFadeIn 0.6s var(--ease-out) forwards, card-glitch-border 10s infinite linear;
 }
 
 @keyframes card-glitch-border {
-    0%, 89%, 92%, 100% {
+    0%, 94%, 97%, 100% {
         border-color: var(--card-border);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }
-    90% {
+    95% {
         border-color: var(--accent);
-        box-shadow: 0 0 15px var(--accent-glow), 0 0 30px var(--accent-glow), inset 0 0 8px var(--accent-glow);
+        box-shadow: 0 0 12px var(--accent-glow), inset 0 0 4px var(--accent-glow);
     }
-    91% {
-        border-color: rgba(255, 0, 60, 0.6);
-        box-shadow: 0 0 10px rgba(255, 0, 60, 0.3), inset 0 0 5px rgba(255, 0, 60, 0.2);
+    96% {
+        border-color: var(--accent-glow);
+        box-shadow: 0 0 6px var(--accent-glow);
     }
 }
 
@@ -2340,7 +2340,7 @@ body.s-light .icon-btn-mini:hover {
 
 @keyframes scanline-sweep {
     0%   { background-position: 0 0; }
-    100% { background-position: 0 40px; }
+    100% { background-position: 0 60px; }
 }
 
 /* 3. NODE CARD — Chromatic glitch on hover */
@@ -2367,15 +2367,15 @@ body.s-light .icon-btn-mini:hover {
 @keyframes node-glitch-flash {
     0% {
         box-shadow: -2px 0 0 var(--accent-glow), 2px 0 0 var(--accent-glow);
-        opacity: 1;
+        opacity: 0.8;
     }
     33% {
         box-shadow: 3px 0 0 var(--accent-glow), -3px 0 0 var(--accent-glow);
-        opacity: 0.8;
+        opacity: 0.5;
     }
     66% {
         box-shadow: -1px 0 0 var(--accent-glow), 1px 0 0 var(--accent-glow);
-        opacity: 0.5;
+        opacity: 0.3;
     }
     100% {
         box-shadow: none;
@@ -2466,10 +2466,20 @@ body.s-light .icon-btn-mini:hover {
     }
 }
 
-/* 5. INFRASTRUCTURE CARDS — Holographic shimmer */
+/* 5. INFRASTRUCTURE CARDS — Holographic Shimmer (Refined) */
 .infra-card {
     position: relative;
     overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 16px;
+    transition: all 0.3s var(--ease-out);
+}
+
+.infra-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .infra-card::before {
@@ -2482,34 +2492,34 @@ body.s-light .icon-btn-mini:hover {
     background: linear-gradient(
         90deg,
         transparent 0%,
-        rgba(var(--node-color, 99, 102, 241), 0.08) 40%,
-        rgba(var(--node-color, 99, 102, 241), 0.15) 50%,
-        rgba(var(--node-color, 99, 102, 241), 0.08) 60%,
+        rgba(var(--node-color, 99, 102, 241), 0.04) 40%,
+        rgba(var(--node-color, 99, 102, 241), 0.08) 50%,
+        rgba(var(--node-color, 99, 102, 241), 0.04) 60%,
         transparent 100%
     );
     transform: skewX(-20deg);
     pointer-events: none;
-    z-index: 5;
-    animation: infra-holo-sweep 7s ease-in-out infinite;
+    z-index: 1;
+    animation: infra-holo-sweep 10s ease-in-out infinite;
 }
 
 @keyframes infra-holo-sweep {
-    0%, 70%  { left: -150%; }
-    85%      { left: 150%; }
+    0%, 75%  { left: -150%; }
+    90%      { left: 150%; }
     100%     { left: 150%; }
 }
 
 /* Infra card border pulse on data */
 .infra-card:hover {
-    animation: infra-border-glitch 0.5s steps(5) forwards;
+    animation: infra-border-glitch 0.6s steps(6) forwards;
 }
 
 @keyframes infra-border-glitch {
     0%   { border-color: var(--card-border); }
-    20%  { border-color: var(--accent); transform: translate(-1px, 0); }
-    40%  { border-color: var(--accent-glow); transform: translate(2px, 0); }
-    60%  { border-color: var(--accent); transform: translate(0, 1px); }
-    80%  { border-color: var(--accent-glow); transform: translate(-1px, -1px); }
+    15%  { border-color: var(--accent); transform: translate(-1px, 0); }
+    30%  { border-color: var(--accent-glow); transform: translate(1px, 0); }
+    45%  { border-color: var(--accent); transform: translate(0, 1px); }
+    60%  { border-color: var(--accent-glow); transform: translate(-1px, -1px); }
     100% { border-color: var(--accent); transform: translate(0, 0); }
 }
 
@@ -2638,20 +2648,23 @@ body.s-light .icon-btn-mini:hover {
 }
 
 @keyframes usage-num-glitch {
-    0%, 92%, 94%, 96%, 100% {
+    0%, 94%, 97%, 100% {
         text-shadow: none;
         transform: translate(0, 0);
         filter: none;
-    }
-    93% {
-        text-shadow: -3px 0 var(--accent-glow), 3px 0 var(--accent-glow);
-        transform: translate(-2px, 0) skewX(-2deg);
-        filter: brightness(1.5);
+        opacity: 1;
     }
     95% {
-        text-shadow: 2px 0 var(--accent-glow), -2px 0 var(--accent-glow);
-        transform: translate(2px, 0) skewX(1deg);
+        text-shadow: -2px 0 var(--accent-glow), 2px 0 var(--accent-glow);
+        transform: translate(-1px, 0);
         filter: brightness(1.2);
+        opacity: 0.9;
+    }
+    96% {
+        text-shadow: 1px 0 var(--accent-glow), -1px 0 var(--accent-glow);
+        transform: translate(1px, 0);
+        filter: brightness(1.1);
+        opacity: 0.85;
     }
 }
 
