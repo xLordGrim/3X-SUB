@@ -2292,7 +2292,7 @@ body.s-light .icon-btn-mini:hover {
 .span-12,
 .span-8,
 .span-4 {
-    animation: cardFadeIn 0.6s var(--ease-out) forwards, card-glitch-border 10s infinite linear;
+    animation: cardFadeIn 0.6s var(--ease-out) forwards, card-glitch-border 12s infinite linear;
 }
 
 @keyframes card-glitch-border {
@@ -2434,7 +2434,7 @@ body.s-light .icon-btn-mini:hover {
     );
     pointer-events: none;
     z-index: 1;
-    animation: stat-data-scan 10s linear infinite;
+    animation: stat-data-scan 12s linear infinite;
 }
 
 @keyframes stat-data-scan {
@@ -2500,7 +2500,7 @@ body.s-light .icon-btn-mini:hover {
     transform: skewX(-20deg);
     pointer-events: none;
     z-index: 1;
-    animation: infra-holo-sweep 10s ease-in-out infinite;
+    animation: infra-holo-sweep 12s ease-in-out infinite;
 }
 
 @keyframes infra-holo-sweep {
@@ -2561,7 +2561,7 @@ body.s-light .icon-btn-mini:hover {
     );
     pointer-events: none;
     z-index: 1;
-    animation: stat-card-sweep 8s ease-in-out infinite;
+    animation: stat-card-sweep 12s ease-in-out infinite;
 }
 
 @keyframes stat-card-sweep {
@@ -2572,7 +2572,7 @@ body.s-light .icon-btn-mini:hover {
 
 /* Periodic border flicker */
 .stat-card-mini {
-    animation: stat-card-border-flicker 6s infinite linear;
+    animation: stat-card-border-flicker 12s infinite linear;
 }
 
 @keyframes stat-card-border-flicker {
@@ -2589,9 +2589,9 @@ body.s-light .icon-btn-mini:hover {
     }
 }
 
-/* Readout value subtle text glitch — never too dim */
+/* Readout value subtle text glitch — synchronized */
 .stat-card-mini .stat-mini-value {
-    animation: readout-pulse 5s infinite ease-in-out;
+    animation: readout-pulse 6s infinite ease-in-out;
     font-weight: 700;
 }
 
@@ -2632,7 +2632,7 @@ body.s-light .icon-btn-mini:hover {
         rgba(var(--node-color, 99, 102, 241), 0.04) 52%,
         transparent 100%
     );
-    animation: usage-scan-line 3s ease-in-out infinite;
+    animation: usage-scan-line 4s ease-in-out infinite;
 }
 
 @keyframes usage-scan-line {
@@ -2671,7 +2671,7 @@ body.s-light .icon-btn-mini:hover {
 /* 8. SECTION HEADERS — Nodes/Infra/Stats titles glitch */
 .nodes-header {
     position: relative;
-    animation: header-text-glitch 7s infinite linear;
+    animation: header-text-glitch 12s infinite linear;
 }
 
 @keyframes header-text-glitch {

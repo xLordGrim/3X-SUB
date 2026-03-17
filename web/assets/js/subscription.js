@@ -835,7 +835,7 @@
         if (this.glitchTimer >= this.glitchInterval) {
           this.glitchActive = true;
           this.glitchTimer = 0;
-          this.glitchInterval = 1.5 + Math.random() * 3; // More frequent: every 1.5-4.5s
+          this.glitchInterval = 12 + Math.random() * 6; // Less frequent: every 12-18s (professional rhythm)
           this.glitchDuration = 0.2 + Math.random() * 0.4; // Longer: 200-600ms
           this.glitchElapsed = 0;
 
