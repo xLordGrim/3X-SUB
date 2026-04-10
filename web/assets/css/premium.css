@@ -2300,4 +2300,46 @@ body.s-light .icon-btn-mini:hover {
     89% { opacity: 0; clip-path: inset(50% 0 50% 0); transform: translate(0, 0); }
 }
 
+/* Professional Sweeping Glass Sheen */
+.span-12, .span-8, .span-4 {
+    position: relative;
+    overflow: hidden;
+}
 
+.span-12::after,
+.span-8::after,
+.span-4::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    background: linear-gradient(
+        105deg,
+        transparent 20%,
+        rgba(255, 255, 255, 0.015) 25%,
+        rgba(255, 255, 255, 0.06) 50%,
+        rgba(255, 255, 255, 0.015) 75%,
+        transparent 80%
+    );
+    transform: translateX(-150%) skewX(-15deg);
+    animation: premium-glass-sweep 8s infinite cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@keyframes premium-glass-sweep {
+    0%, 20% { transform: translateX(-150%) skewX(-15deg); }
+    80%, 100% { transform: translateX(200%) skewX(-15deg); }
+}
+
+body.s-light .span-12::after,
+body.s-light .span-8::after,
+body.s-light .span-4::after {
+    background: linear-gradient(
+        105deg,
+        transparent 20%,
+        rgba(255, 255, 255, 0.4) 25%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(255, 255, 255, 0.4) 75%,
+        transparent 80%
+    );
+}
