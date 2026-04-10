@@ -2317,9 +2317,9 @@ body.s-light .icon-btn-mini:hover {
     background: linear-gradient(
         105deg,
         transparent 20%,
-        rgba(255, 255, 255, 0.015) 25%,
-        rgba(255, 255, 255, 0.06) 50%,
-        rgba(255, 255, 255, 0.015) 75%,
+        color-mix(in srgb, var(--accent) 3%, transparent) 25%,
+        color-mix(in srgb, var(--accent) 15%, transparent) 50%,
+        color-mix(in srgb, var(--accent) 3%, transparent) 75%,
         transparent 80%
     );
     transform: translateX(-150%) skewX(-15deg);
@@ -2337,9 +2337,9 @@ body.s-light .span-4::after {
     background: linear-gradient(
         105deg,
         transparent 20%,
-        rgba(255, 255, 255, 0.4) 25%,
-        rgba(255, 255, 255, 0.8) 50%,
-        rgba(255, 255, 255, 0.4) 75%,
+        color-mix(in srgb, var(--accent) 30%, transparent) 25%,
+        color-mix(in srgb, var(--accent) 60%, transparent) 50%,
+        color-mix(in srgb, var(--accent) 30%, transparent) 75%,
         transparent 80%
     );
 }
