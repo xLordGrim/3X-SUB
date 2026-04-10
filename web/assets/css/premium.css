@@ -2337,9 +2337,9 @@ body.s-light .span-4::after {
     background: linear-gradient(
         105deg,
         transparent 20%,
-        color-mix(in srgb, var(--accent) 30%, transparent) 25%,
-        color-mix(in srgb, var(--accent) 60%, transparent) 50%,
-        color-mix(in srgb, var(--accent) 30%, transparent) 75%,
+        color-mix(in srgb, var(--accent) 3%, transparent) 25%,
+        color-mix(in srgb, var(--accent) 12%, transparent) 50%,
+        color-mix(in srgb, var(--accent) 3%, transparent) 75%,
         transparent 80%
     );
 }
