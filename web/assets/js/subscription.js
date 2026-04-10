@@ -626,12 +626,16 @@
         window.addEventListener(
           "scroll",
           () => {
-            this.isScrolling = true;
+            if (!this.isScrolling) {
+              this.isScrolling = true;
+              document.body.classList.add("is-scrolling");
+            }
             this.mouse.x = null;
             this.mouse.y = null;
             clearTimeout(this.scrollTimeout);
             this.scrollTimeout = setTimeout(() => {
               this.isScrolling = false;
+              document.body.classList.remove("is-scrolling");
             }, 200);
           },
           { passive: true },
@@ -698,6 +702,7 @@
     }
     animate() {
       this.animFrame = requestAnimationFrame(this.animate);
+      if (this.isScrolling) return; // Pause network drawing during scroll for better FPS
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       const connectDist = 160,
         connectDistSq = connectDist * connectDist;

@@ -47,6 +47,12 @@ body.premium-theme {
     touch-action: manipulation;
 }
 
+/* Optimization: Completely disable layout repaint and hit-testing on hover when scrolling */
+body.is-scrolling,
+body.is-scrolling * {
+    pointer-events: none !important;
+}
+
 
 body.premium-theme.s-dark {
     --bg-main: #020617;
