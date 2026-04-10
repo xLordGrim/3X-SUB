@@ -1597,7 +1597,7 @@ body.premium-theme .premium-toast {
     z-index: 1000000;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
+    transition: none; /* Disabled on load to prevent FOUC flash */
     padding: 14px 32px;
     min-width: 180px;
     text-align: center;
@@ -1612,6 +1612,10 @@ body.premium-theme .premium-toast {
     color: var(--text-primary);
     pointer-events: none;
     animation: none;
+}
+
+body.premium-theme.ready .premium-toast {
+    transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
 }
 
 body.premium-theme .premium-toast.show {
