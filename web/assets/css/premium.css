@@ -988,6 +988,8 @@ body.s-dark .span-4 {
     letter-spacing: -0.03em;
     line-height: 1.1;
     word-break: break-word;
+    color: var(--text-primary);
+    transition: color 0s !important;
 }
 
 .usage-sub {
@@ -2053,6 +2055,7 @@ body.s-light .icon-btn-mini:hover {
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
+    transition: color 0s !important;
 }
 
 
@@ -2152,6 +2155,7 @@ body.s-light .icon-btn-mini:hover {
     color: var(--text-primary);
     line-height: 1.2;
     word-break: break-all;
+    transition: color 0s !important;
 }
 
 .stat-label {
