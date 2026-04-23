@@ -38,7 +38,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/install.
 ```
 
 ## 🧹 Uninstallation
-If you wish to return to the Stock Version, run:
+If you wish to return to the default 3X-UI subscribe, run:
 
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/uninstall.sh)
