@@ -152,6 +152,7 @@ prev_total=0
 prev_idle=0
 prev_rx=0
 prev_tx=0
+prev_uptime=$(cat /proc/uptime | awk '{print $1}')
 
 detect_infrastructure() {
     if [ ! -s "$ISP_CACHE" ]; then
@@ -210,15 +211,20 @@ while true; do
 
     if [ -n "$INTERFACE" ]; then
         read rx tx < <(grep "$INTERFACE" /proc/net/dev | awk '{print $2, $10}')
+        curr_uptime=$(cat /proc/uptime | awk '{print $1}')
         if [ "$prev_rx" -gt 0 ]; then
-            net_in=$(( (rx - prev_rx) / 1024 / INTERVAL ))
-            net_out=$(( (tx - prev_tx) / 1024 / INTERVAL ))
+            read net_in net_out < <(awk -v rx="$rx" -v prx="$prev_rx" -v tx="$tx" -v ptx="$prev_tx" -v curr="$curr_uptime" -v prev="$prev_uptime" 'BEGIN {
+                dt = curr - prev;
+                if (dt <= 0) dt = 1;
+                printf "%d %d\n", (rx - prx) / 1024 / dt, (tx - ptx) / 1024 / dt
+            }')
         else
             net_in=0
             net_out=0
         fi
         prev_rx=$rx
         prev_tx=$tx
+        prev_uptime=$curr_uptime
     else
         net_in=0
         net_out=0
