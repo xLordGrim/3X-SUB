@@ -137,8 +137,8 @@
           dataEl.getAttribute("data-sid") ||
           "User",
         total: parseInt(dataEl.getAttribute("data-totalbyte") || 0),
-        up: parseInt(dataEl.getAttribute("data-uploadbyte") || 0),
-        down: parseInt(dataEl.getAttribute("data-downloadbyte") || 0),
+        up: parseInt(dataEl.getAttribute("data-downloadbyte") || 0),
+        down: parseInt(dataEl.getAttribute("data-uploadbyte") || 0),
         expire: parseInt(dataEl.getAttribute("data-expire") || 0) * 1000,
         subUrl: dataEl.getAttribute("data-sub-url") || "",
         lastOnline: parseInt(dataEl.getAttribute("data-lastonline") || 0),
@@ -377,9 +377,9 @@
           if (ramEl) ramEl.textContent = data.ram || 0;
           const uploadEl = getEl("upload-val"),
             downloadEl = getEl("download-val");
-          if (uploadEl) uploadEl.textContent = formatSpeed(data.net_out || 0);
+          if (uploadEl) uploadEl.textContent = formatSpeed(data.net_in || 0);
           if (downloadEl)
-            downloadEl.textContent = formatSpeed(data.net_in || 0);
+            downloadEl.textContent = formatSpeed(data.net_out || 0);
           if (data.isp) {
             const ispEl = getEl("infra-isp");
             if (ispEl) ispEl.textContent = data.isp;
