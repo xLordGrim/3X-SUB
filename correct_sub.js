@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   "use strict";
   const VERSION = "v2.0.13";
   const STATE = {
@@ -26,38 +26,38 @@
       copied: "Copied!",
     },
     cn: {
-      title: "µêæτÜäΦ«óΘÿà",
-      limit: "µ╡üΘçÅΘÖÉσê╢",
-      used: "σ╖▓τö¿",
-      rem: "σë⌐Σ╜Ö",
-      exp: "σê░µ£ƒµù╢Θù┤",
-      nodes: "Θàìτ╜«Θô╛µÄÑ",
-      copy: "σñìσê╢Θô╛µÄÑ",
-      qr: "Σ║îτ╗┤τáü",
-      online: "σ£¿τ║┐",
-      offline: "τª╗τ║┐",
-      unlimited: "Σ╕ìΘÖÉµ╡üΘçÅ",
-      refresh: "σê╖µû░τè╢µÇü",
-      upload: "Σ╕èΣ╝á",
-      download: "Σ╕ïΦ╜╜",
-      copied: "σ╖▓σñìσê╢!",
+      title: "我的订阅",
+      limit: "流量限制",
+      used: "已用",
+      rem: "剩余",
+      exp: "到期时间",
+      nodes: "配置链接",
+      copy: "复制链接",
+      qr: "二维码",
+      online: "在线",
+      offline: "离线",
+      unlimited: "不限流量",
+      refresh: "刷新状态",
+      upload: "上传",
+      download: "下载",
+      copied: "已复制!",
     },
     fa: {
-      title: "╪º╪┤╪¬╪▒╪º┌⌐ ┘à┘å",
-      limit: "┘à╪¡╪»┘ê╪»█î╪¬ ╪»╪º╪»┘ç",
-      used: "╪º╪│╪¬┘ü╪º╪»┘ç ╪┤╪»┘ç",
-      rem: "╪¿╪º┘é█îΓÇî┘à╪º┘å╪»┘ç",
-      exp: "╪º┘å┘é╪╢╪º",
-      nodes: "┘ä█î┘å┌⌐ΓÇî┘ç╪º█î ╪º╪¬╪╡╪º┘ä",
-      copy: "┌⌐┘╛█î ┘ä█î┘å┌⌐",
-      qr: "┌⌐╪» QR",
-      online: "╪ó┘å┘ä╪º█î┘å",
-      offline: "╪ó┘ü┘ä╪º█î┘å",
-      unlimited: "┘å╪º┘à╪¡╪»┘ê╪»",
-      refresh: "╪¿╪▒┘ê╪▓╪▒╪│╪º┘å█î ┘ê╪╢╪╣█î╪¬",
-      upload: "╪ó┘╛┘ä┘ê╪»",
-      download: "╪»╪º┘å┘ä┘ê╪»",
-      copied: "┌⌐┘╛█î ╪┤╪»!",
+      title: "اشتراک من",
+      limit: "محدودیت داده",
+      used: "استفاده شده",
+      rem: "باقی‌مانده",
+      exp: "انقضا",
+      nodes: "لینک‌های اتصال",
+      copy: "کپی لینک",
+      qr: "کد QR",
+      online: "آنلاین",
+      offline: "آفلاین",
+      unlimited: "نامحدود",
+      refresh: "بروزرسانی وضعیت",
+      upload: "آپلود",
+      download: "دانلود",
+      copied: "کپی شد!",
     },
   };
   function t(key) {
@@ -74,7 +74,7 @@
     if (!raw) return "User";
     try {
       let name = decodeURIComponent(raw);
-      name = name.replace(/^(Γ¢ö∩╕Å|N\/A|\s|-)+/i, "");
+      name = name.replace(/^(⛔️|N\/A|\s|-)+/i, "");
       name = name.replace(/-\s*\d+(\.\d+)?\s*([GMKT]B|[dhmy]|min|mo).*$/i, "");
       name = name.replace(
         /[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2700}-\u{27BF}\u{1F680}-\u{1F6FF}\u{24C2}-\u{1F251}].*$/u,
@@ -178,8 +178,8 @@
     grid.appendChild(renderInfrastructureSection());
     app.appendChild(grid);
     const footer = mkEl("div", "custom-footer");
-    const footerText = "Powered with Γ¥ñ∩╕Å by 3≡¥òÅ SUB";
-    footer.innerHTML = `<div class="footer-glitch-wrap" data-text="${footerText}">Powered with <span class="heart-pulse">Γ¥ñ∩╕Å</span> by&nbsp;<a class="footer-link" href="https://github.com/xLordgrim/3X-SUB/" target="_blank" rel="noopener noreferrer">3≡¥òÅ SUB</a></div>`;
+    const footerText = "Powered with ❤️ by 3𝕏 SUB";
+    footer.innerHTML = `<div class="footer-glitch-wrap" data-text="${footerText}">Powered with <span class="heart-pulse">❤️</span> by&nbsp;<a class="footer-link" href="https://github.com/xLordgrim/3X-SUB/" target="_blank" rel="noopener noreferrer">3𝕏 SUB</a></div>`;
     app.appendChild(footer);
     app.appendChild(renderQRModal());
     app.appendChild(renderToast());
@@ -248,14 +248,14 @@
   }
   function renderInfoCard() {
     const card = mkEl("div", "span-4 stat-mini-grid");
-    let remText = "Γê₧";
+    let remText = "∞";
     if (STATE.raw.total > 0) {
       const left = STATE.raw.total - (STATE.raw.up + STATE.raw.down);
       remText = formatBytes(left < 0 ? 0 : left);
     }
     const rem = mkEl("div", "stat-mini");
     rem.innerHTML = `<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-rem)"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg></div><div class="stat-value" id="rem-val">${STATE.raw.total > 0 ? "0 B" : remText}</div><div class="stat-label">${t("rem")}</div>`;
-    let expText = "Γê₧";
+    let expText = "∞";
     if (STATE.raw.expire > 0) {
       const diff = STATE.raw.expire - Date.now();
       if (diff < 0) expText = "Expired";
@@ -881,7 +881,7 @@
       const glitchA = `rgba(${pColor}, `; // Primary accent channel
       const glitchB = `rgba(${lColor}, `; // Secondary line channel
 
-      // 0. NODE JITTER ΓÇö physically displace particles during glitch
+      // 0. NODE JITTER — physically displace particles during glitch
       for (const p of this.particles) {
         // Undo previous jitter
         if (p._jitterX) { p.x -= p._jitterX; }
@@ -893,7 +893,7 @@
         p.y += p._jitterY;
       }
 
-      // 1. Heavy Horizontal Slice Displacement ΓÇö Optimized (No getImageData)
+      // 1. Heavy Horizontal Slice Displacement — Optimized (No getImageData)
       for (const slice of this.glitchSlices) {
         const sliceH = slice.height * intensity;
         const offset = slice.offset * intensity;
@@ -932,7 +932,7 @@
         ctx.restore();
       }
 
-      // 3. Scanline Noise ΓÇö Optimized (Batched blocks instead of per-line loop)
+      // 3. Scanline Noise — Optimized (Batched blocks instead of per-line loop)
       ctx.save();
       ctx.globalAlpha = (isDark ? 0.18 : 0.1) * intensity;
       const numNoiseLines = Math.floor(15 + Math.random() * 10);
