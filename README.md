@@ -48,7 +48,6 @@ bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/uninstal
 
 ## 👨‍💻 Author
 Made with ❤️ by 𝙇𝙊𝙍𝘿𝙂𝙍𝙄𝙈 𖹭.ᐟ
-> If you like this project, then consider give this a star ⭐
 
 ## 📄 License
 This project is licensed under the **Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**.
@@ -58,4 +57,7 @@ This project is licensed under the **Attribution-NonCommercial-ShareAlike 4.0 In
 - **Attribution**: You must give appropriate credit.
 - **NonCommercial**: You may **not** use the material for commercial purposes.
 - **ShareAlike**: If you remix, transform, or build upon the material, you must distribute your contributions under the same license.
+
+
+If you like this project, then consider dropping a star ⭐
 
