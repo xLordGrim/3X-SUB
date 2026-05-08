@@ -1,4 +1,4 @@
-<div align="center">
+k<div align="center">
 <h1>ᛝ 3𝕏-SUB ᛝ</h1> 
 <p><b>A Custom Subscription Page for 3X-UI</b></p>
 <p>
@@ -48,7 +48,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/uninstal
 
 ## 👨‍💻 Author
 Made with ❤️ by 𝙇𝙊𝙍𝘿𝙂𝙍𝙄𝙈 𖹭.ᐟ
-• If you like this project, consider give it a star ⭐
+> If you like this project, then consider give this a star ⭐
 
 ## 📄 License
 This project is licensed under the **Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**.
