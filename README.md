@@ -1,4 +1,4 @@
-k<div align="center">
+<div align="center">
 <h1>ᛝ 3𝕏-SUB ᛝ</h1> 
 <p><b>A Custom Subscription Page for 3X-UI</b></p>
 <p>
@@ -59,5 +59,5 @@ This project is licensed under the **Attribution-NonCommercial-ShareAlike 4.0 In
 - **ShareAlike**: If you remix, transform, or build upon the material, you must distribute your contributions under the same license.
 
 
-If you like this project, then consider dropping a star ⭐
+**If you like this project, then consider dropping a star ⭐**
 
