@@ -24,7 +24,6 @@ jobs:
         with:
           repository: MHSanaei/3x-ui
           path: 3x-ui
-          # You can specify a ref here like `ref: v3.0.0` if you want a stable tag
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -34,7 +33,33 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22' # 3x-ui uses 1.22+
+          go-version: '1.22'
+
+      - name: Inject 3X-SUB Theme into Vue Source (BEFORE build)
+        run: |
+          echo "=== Injecting 3X-SUB theme into Vue source files ==="
+
+          # 1. Copy premium.css into the frontend public folder so Vite
+          #    copies it verbatim into dist/ at build time
+          mkdir -p 3x-ui/frontend/public/premium
+          cp 3X-SUB/web/assets/css/premium.css 3x-ui/frontend/public/premium/premium.css
+
+          # 2. Copy our subscription.js into the frontend public folder too
+          cp 3X-SUB/web/assets/js/subscription.js 3x-ui/frontend/public/premium/subscription.js
+
+          # 3. Patch subpage.html (the Vite entry point) BEFORE the build.
+          #    Vite will process this HTML and output a transformed subpage.html
+          #    in dist/ with all asset URLs correctly resolved.
+          cat >> 3x-ui/frontend/subpage.html << 'HTMLEOF'
+          <!-- 3X-SUB Premium Theme -->
+          <link rel="stylesheet" href="/premium/premium.css">
+          <script>document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('premium-theme'); var app = document.getElementById('app'); if(app) app.style.display='none'; });</script>
+          <script src="/premium/subscription.js"></script>
+          HTMLEOF
+
+          # Show what we injected so we can debug in CI logs
+          echo "=== subpage.html after injection ==="
+          cat 3x-ui/frontend/subpage.html
 
       - name: Build Vue Frontend
         working-directory: 3x-ui/frontend
@@ -42,24 +67,12 @@ jobs:
           npm ci
           npm run build
 
-      - name: Inject 3X-SUB Theme
+      - name: Verify dist contents
         run: |
-          echo "Injecting 3X-SUB theme into 3x-ui dist..."
-          
-          # Create directories for custom assets
-          mkdir -p 3x-ui/web/dist/assets/js
-          mkdir -p 3x-ui/web/dist/assets/css
-          
-          # Copy custom assets to the built dist folder
-          cp 3X-SUB/web/assets/js/subscription.js 3x-ui/web/dist/assets/js/
-          cp 3X-SUB/web/assets/css/premium.css 3x-ui/web/dist/assets/css/
-          
-          # Modify the dist/subpage.html to load our custom assets and hide the default app
-          sed -i 's|</head>|<link rel="stylesheet" href="/assets/css/premium.css"></head>|g' 3x-ui/web/dist/subpage.html
-          sed -i 's|</body>|<script>document.body.classList.add("premium-theme");</script><style>#app { display: none !important; }</style><script src="/assets/js/subscription.js"></script></body>|g' 3x-ui/web/dist/subpage.html
-
-          # Patch web.go to fallback to disk for dynamic files like status.json
-          sed -i 's/func (f \*wrapDistFS) Open(name string) (fs.File, error) {/func (f \*wrapDistFS) Open(name string) (fs.File, error) {\n\tif file, err := os.Open("web\/dist\/assets\/" + name); err == nil {\n\t\treturn file, nil\n\t}/' 3x-ui/web/web.go
+          echo "=== Checking dist folder structure ==="
+          find 3x-ui/web/dist -type f | sort
+          echo "=== Checking premium assets were copied ==="
+          ls -la 3x-ui/web/dist/premium/ || echo "MISSING: premium dir not in dist!"
 
       - name: Build Go Binary (AMD64)
         working-directory: 3x-ui
@@ -80,7 +93,6 @@ jobs:
             3x-ui/x-ui-linux-arm64
 
       - name: Release
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "latest-build"
