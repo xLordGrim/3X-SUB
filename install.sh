@@ -92,7 +92,7 @@ if [ "$IS_V3" = true ]; then
     echo -e "${YELLOW}Removing legacy debug mode to fix assets...${NC}"
     SERVICE_FILE="/etc/systemd/system/x-ui.service"
     if [[ -f "$SERVICE_FILE" ]]; then
-        sed -i '/Environment="XUI_DEBUG=true"/d' "$SERVICE_FILE"
+        sed -i '/XUI_DEBUG/d' "$SERVICE_FILE"
         systemctl daemon-reload
     fi
     
