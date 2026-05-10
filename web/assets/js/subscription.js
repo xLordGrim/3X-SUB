@@ -129,24 +129,50 @@
     document.body.classList.add("premium-theme");
     renderLoader();
     if (!STATE.raw) {
-      const dataEl = getEl("subscription-data");
-      if (!dataEl) return;
-      STATE.raw = {
-        sid:
-          dataEl.getAttribute("data-email") ||
-          dataEl.getAttribute("data-sid") ||
-          "User",
-        total: parseInt(dataEl.getAttribute("data-totalbyte") || 0),
-        up: parseInt(dataEl.getAttribute("data-downloadbyte") || 0),
-        down: parseInt(dataEl.getAttribute("data-uploadbyte") || 0),
-        expire: parseInt(dataEl.getAttribute("data-expire") || 0) * 1000,
-        subUrl: dataEl.getAttribute("data-sub-url") || "",
-        lastOnline: parseInt(dataEl.getAttribute("data-lastonline") || 0),
-        isp: "Detecting...",
-        location: "Detecting...",
-        serverIp: dataEl.getAttribute("data-ip") || "Self",
-      };
-      STATE.subUrl = STATE.raw.subUrl;
+      if (window.__SUB_PAGE_DATA__) {
+        const d = window.__SUB_PAGE_DATA__;
+        STATE.raw = {
+          sid: d.sId || "User",
+          total: parseInt(d.totalByte || 0),
+          up: parseInt(d.downloadByte || 0),
+          down: parseInt(d.uploadByte || 0),
+          expire: parseInt(d.expire || 0) * 1000,
+          subUrl: d.subUrl || "",
+          lastOnline: parseInt(d.lastOnline || 0),
+          isp: "Detecting...",
+          location: "Detecting...",
+          serverIp: "Self",
+        };
+        STATE.subUrl = STATE.raw.subUrl;
+        
+        // Inject links into DOM for renderNodesList to find
+        if (d.links && d.links.length > 0) {
+          const linksArea = mkEl("textarea");
+          linksArea.id = "subscription-links";
+          linksArea.style.display = "none";
+          linksArea.value = d.links.join("\n");
+          document.body.appendChild(linksArea);
+        }
+      } else {
+        const dataEl = getEl("subscription-data");
+        if (!dataEl) return;
+        STATE.raw = {
+          sid:
+            dataEl.getAttribute("data-email") ||
+            dataEl.getAttribute("data-sid") ||
+            "User",
+          total: parseInt(dataEl.getAttribute("data-totalbyte") || 0),
+          up: parseInt(dataEl.getAttribute("data-downloadbyte") || 0),
+          down: parseInt(dataEl.getAttribute("data-uploadbyte") || 0),
+          expire: parseInt(dataEl.getAttribute("data-expire") || 0) * 1000,
+          subUrl: dataEl.getAttribute("data-sub-url") || "",
+          lastOnline: parseInt(dataEl.getAttribute("data-lastonline") || 0),
+          isp: "Detecting...",
+          location: "Detecting...",
+          serverIp: dataEl.getAttribute("data-ip") || "Self",
+        };
+        STATE.subUrl = STATE.raw.subUrl;
+      }
     }
     if (!document.querySelector('link[href*="premium.css"]')) {
       const css = document.createElement("link");

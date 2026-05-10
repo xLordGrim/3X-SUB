@@ -1,0 +1,87 @@
+name: Build Custom 3x-ui
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - development
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 3X-SUB
+        uses: actions/checkout@v4
+        with:
+          path: 3X-SUB
+
+      - name: Checkout 3x-ui
+        uses: actions/checkout@v4
+        with:
+          repository: MHSanaei/3x-ui
+          path: 3x-ui
+          # You can specify a ref here like `ref: v3.0.0` if you want a stable tag
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22' # 3x-ui uses 1.22+
+
+      - name: Build Vue Frontend
+        working-directory: 3x-ui/frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Inject 3X-SUB Theme
+        run: |
+          echo "Injecting 3X-SUB theme into 3x-ui dist..."
+          
+          # Create directories for custom assets
+          mkdir -p 3x-ui/web/dist/assets/js
+          mkdir -p 3x-ui/web/dist/assets/css
+          
+          # Copy custom assets to the built dist folder
+          cp 3X-SUB/web/assets/js/subscription.js 3x-ui/web/dist/assets/js/
+          cp 3X-SUB/web/assets/css/premium.css 3x-ui/web/dist/assets/css/
+          
+          # Modify the dist/subpage.html to load our custom assets and hide the default app
+          sed -i 's|</head>|<link rel="stylesheet" href="/assets/css/premium.css"></head>|g' 3x-ui/web/dist/subpage.html
+          sed -i 's|</body>|<script>document.body.classList.add("premium-theme");</script><style>#app { display: none !important; }</style><script src="/assets/js/subscription.js"></script></body>|g' 3x-ui/web/dist/subpage.html
+
+      - name: Build Go Binary (AMD64)
+        working-directory: 3x-ui
+        run: |
+          GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o x-ui-linux-amd64 main.go
+
+      - name: Build Go Binary (ARM64)
+        working-directory: 3x-ui
+        run: |
+          GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -o x-ui-linux-arm64 main.go
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-x-ui-binaries
+          path: |
+            3x-ui/x-ui-linux-amd64
+            3x-ui/x-ui-linux-arm64
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "latest-build"
+          name: "Custom 3x-ui Build"
+          files: |
+            3x-ui/x-ui-linux-amd64
+            3x-ui/x-ui-linux-arm64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
