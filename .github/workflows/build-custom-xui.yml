@@ -97,6 +97,8 @@ jobs:
         with:
           tag_name: "latest-build"
           name: "Custom 3x-ui Build"
+          make_latest: true
+          prerelease: false
           files: |
             3x-ui/x-ui-linux-amd64
             3x-ui/x-ui-linux-arm64
