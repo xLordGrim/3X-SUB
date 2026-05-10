@@ -90,11 +90,9 @@ if [ "$IS_V3" = true ]; then
     cp /usr/local/x-ui/x-ui /usr/local/x-ui/x-ui.bak
     
     echo -e "${YELLOW}Removing legacy debug mode to fix assets...${NC}"
-    SERVICE_FILE="/etc/systemd/system/x-ui.service"
-    if [[ -f "$SERVICE_FILE" ]]; then
-        sed -i '/XUI_DEBUG/d' "$SERVICE_FILE"
-        systemctl daemon-reload
-    fi
+    find /etc/systemd /lib/systemd /usr/lib/systemd -type f -name "x-ui.service" -exec sed -i '/XUI_DEBUG/d' {} + 2>/dev/null
+    sed -i '/XUI_DEBUG/d' /etc/environment 2>/dev/null
+    systemctl daemon-reload
     
     echo -e "${BLUE}Downloading custom binary for $ARCH...${NC}"
     HTTP_STATUS=$(curl -sL -w "%{http_code}" "$XUI_BIN_URL" -o /usr/local/x-ui/x-ui.new)
