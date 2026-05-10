@@ -90,7 +90,17 @@ if [ "$IS_V3" = true ]; then
     cp /usr/local/x-ui/x-ui /usr/local/x-ui/x-ui.bak
     
     echo -e "${BLUE}Downloading custom binary for $ARCH...${NC}"
-    curl -Ls "$XUI_BIN_URL" -o /usr/local/x-ui/x-ui
+    HTTP_STATUS=$(curl -sL -w "%{http_code}" "$XUI_BIN_URL" -o /usr/local/x-ui/x-ui.new)
+    if [[ "$HTTP_STATUS" != "200" ]]; then
+        echo -e "${RED}❌ Failed to download custom binary (HTTP $HTTP_STATUS).${NC}"
+        echo -e "${YELLOW}Ensure the 'Build Custom 3x-ui' GitHub Action has run successfully and published a release!${NC}"
+        echo -e "${BLUE}Restoring original binary...${NC}"
+        cp /usr/local/x-ui/x-ui.bak /usr/local/x-ui/x-ui
+        systemctl start x-ui
+        exit 1
+    fi
+    
+    mv /usr/local/x-ui/x-ui.new /usr/local/x-ui/x-ui
     chmod +x /usr/local/x-ui/x-ui
     
     # Internal JS Cache Busting (Since we download a pre-compiled binary, we rely on the action to inject it)
