@@ -58,6 +58,9 @@ jobs:
           sed -i 's|</head>|<link rel="stylesheet" href="/assets/css/premium.css"></head>|g' 3x-ui/web/dist/subpage.html
           sed -i 's|</body>|<script>document.body.classList.add("premium-theme");</script><style>#app { display: none !important; }</style><script src="/assets/js/subscription.js"></script></body>|g' 3x-ui/web/dist/subpage.html
 
+          # Patch web.go to fallback to disk for dynamic files like status.json
+          sed -i 's/func (f \*wrapDistFS) Open(name string) (fs.File, error) {/func (f \*wrapDistFS) Open(name string) (fs.File, error) {\n\tif file, err := os.Open("web\/dist\/assets\/" + name); err == nil {\n\t\treturn file, nil\n\t}/' 3x-ui/web/web.go
+
       - name: Build Go Binary (AMD64)
         working-directory: 3x-ui
         run: |

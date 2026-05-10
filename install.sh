@@ -89,6 +89,13 @@ if [ "$IS_V3" = true ]; then
     echo -e "${BLUE}Backing up original binary...${NC}"
     cp /usr/local/x-ui/x-ui /usr/local/x-ui/x-ui.bak
     
+    echo -e "${YELLOW}Removing legacy debug mode to fix assets...${NC}"
+    SERVICE_FILE="/etc/systemd/system/x-ui.service"
+    if [[ -f "$SERVICE_FILE" ]]; then
+        sed -i '/Environment="XUI_DEBUG=true"/d' "$SERVICE_FILE"
+        systemctl daemon-reload
+    fi
+    
     echo -e "${BLUE}Downloading custom binary for $ARCH...${NC}"
     HTTP_STATUS=$(curl -sL -w "%{http_code}" "$XUI_BIN_URL" -o /usr/local/x-ui/x-ui.new)
     if [[ "$HTTP_STATUS" != "200" ]]; then
