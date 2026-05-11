@@ -126,13 +126,26 @@ jobs:
             3x-ui/x-ui-linux-amd64
             3x-ui/x-ui-linux-arm64
 
+      - name: Set release tag
+        id: release_tag
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "tag=stable" >> $GITHUB_OUTPUT
+            echo "name=3X-SUB Stable" >> $GITHUB_OUTPUT
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          else
+            echo "tag=dev-build" >> $GITHUB_OUTPUT
+            echo "name=3X-SUB Development" >> $GITHUB_OUTPUT
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "latest-build"
-          name: "Custom 3x-ui Build"
-          make_latest: true
-          prerelease: false
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          name: ${{ steps.release_tag.outputs.name }}
+          make_latest: ${{ steps.release_tag.outputs.prerelease == 'false' }}
+          prerelease: ${{ steps.release_tag.outputs.prerelease }}
           files: |
             3x-ui/x-ui-linux-amd64
             3x-ui/x-ui-linux-arm64

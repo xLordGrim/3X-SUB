@@ -3,6 +3,16 @@
 VERSION="2.0"
 TIMESTAMP=$(date +%s)
 
+# This determines which release to download.
+# development branch → dev-build release tag
+# main branch → stable release tag
+BRANCH="development"
+if [[ "$BRANCH" == "main" ]]; then
+    RELEASE_TAG="stable"
+else
+    RELEASE_TAG="dev-build"
+fi
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -72,12 +82,13 @@ fi
 
 if [ "$IS_V3" = true ]; then
     echo -e "${BLUE}v3.0.0+ detected. Installing pre-compiled custom binary...${NC}"
+    echo -e "${BLUE}Channel: ${BRANCH} (release: ${RELEASE_TAG})${NC}"
     
     ARCH=$(uname -m)
     if [[ "$ARCH" == "x86_64" ]]; then
-        XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/latest/download/x-ui-linux-amd64"
+        XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/download/${RELEASE_TAG}/x-ui-linux-amd64"
     elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
-        XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/latest/download/x-ui-linux-arm64"
+        XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/download/${RELEASE_TAG}/x-ui-linux-arm64"
     else
         echo -e "${RED}❌ Architecture $ARCH is not supported for v3.0.0+ pre-compiled binaries.${NC}"
         exit 1
