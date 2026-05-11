@@ -1196,10 +1196,14 @@
       fill: {
         type: 'gradient',
         gradient: {
-          shadeIntensity: 1,
-          opacityFrom: 0.35,
-          opacityTo: 0.05,
-          stops: [10, 95]
+          shade: isDark ? 'dark' : 'light',
+          type: "vertical",
+          shadeIntensity: 0.5,
+          gradientToColors: undefined,
+          inverseColors: false,
+          opacityFrom: 0.4,
+          opacityTo: 0.1,
+          stops: [0, 100]
         }
       },
       dataLabels: { enabled: false },
