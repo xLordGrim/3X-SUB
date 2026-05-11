@@ -347,7 +347,7 @@ while true; do
     COUNTER=$((COUNTER + 1))
     
     # Write to final JSON
-    cat <<EOF > "$JSON_FILE.tmp"
+    cat <<EOF_JSON > "$JSON_FILE.tmp"
 {
   "cpu": $cpu_usage,
   "ram": $ram_usage,
@@ -363,13 +363,13 @@ while true; do
     "d30": $HISTORY_30D
   }
 }
-EOF
+EOF_JSON
     mv "$JSON_FILE.tmp" "$JSON_FILE"
     chmod 644 "$JSON_FILE"
     
     # Persistence every 15 minutes
     if [ $((COUNTER % 450)) -eq 0 ]; then
-        cat <<EOF > "$HISTORY_CACHE"
+        cat <<EOF_HISTORY > "$HISTORY_CACHE"
 {
   "live": $HISTORY_LIVE,
   "h1": $HISTORY_1H,
@@ -377,7 +377,7 @@ EOF
   "d7": $HISTORY_7D,
   "d30": $HISTORY_30D
 }
-EOF
+EOF_HISTORY
     fi
 
     sleep $INTERVAL
