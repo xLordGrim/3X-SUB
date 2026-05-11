@@ -2528,21 +2528,30 @@ body.s-light .span-4::after {
 
 @media (max-width: 600px) {
     .metrics-modal {
-        padding: 20px;
+        padding: 24px 16px;
         width: 100%;
         height: 100%;
         max-height: 100%;
         border-radius: 0;
+        border: none;
     }
     .metrics-chart-container {
-        min-height: 300px;
+        min-height: 400px;
+        margin-top: 10px;
     }
     .metrics-tabs {
         gap: 6px;
+        justify-content: center;
     }
     .metrics-tab {
-        padding: 6px 10px;
-        font-size: 0.6rem;
+        padding: 8px 12px;
+        font-size: 0.65rem;
+        flex: 1;
+        text-align: center;
+        min-width: 80px;
+    }
+    .metrics-modal-header {
+        margin-bottom: 20px;
     }
 }
 

@@ -1182,9 +1182,9 @@
         width: '100%',
         animations: { 
           enabled: true, 
-          easing: 'easeinout', 
-          speed: 800,
-          dynamicAnimation: { enabled: true, speed: 350 }
+          easing: 'linear', 
+          speed: 200,
+          dynamicAnimation: { enabled: true, speed: 200 }
         },
         toolbar: { show: false },
         zoom: { enabled: false },
@@ -1197,23 +1197,23 @@
         type: 'gradient',
         gradient: {
           shadeIntensity: 1,
-          opacityFrom: 0.4,
-          opacityTo: 0.0,
-          stops: [0, 90]
+          opacityFrom: 0.35,
+          opacityTo: 0.05,
+          stops: [10, 95]
         }
       },
       dataLabels: { enabled: false },
-      stroke: { curve: 'smooth', width: 3 },
+      stroke: { curve: 'smooth', width: 3, lineCap: 'round' },
       grid: {
-        borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+        borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
         strokeDashArray: 4,
-        padding: { top: 0, right: 10, bottom: 0, left: 10 }
+        padding: { top: 10, right: 15, bottom: 0, left: 15 }
       },
       xaxis: {
         type: 'datetime',
         labels: { 
           datetimeUTC: false,
-          style: { colors: '#94a3b8', fontSize: '10px' } 
+          style: { colors: '#94a3b8', fontSize: '10px', fontWeight: 600 } 
         },
         axisBorder: { show: false },
         axisTicks: { show: false }
@@ -1221,12 +1221,13 @@
       yaxis: {
         min: 0,
         max: 100,
-        tickAmount: 5,
-        labels: { style: { colors: '#94a3b8', fontSize: '10px' } }
+        tickAmount: 4,
+        labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: 600 } }
       },
       tooltip: {
         theme: isDark ? 'dark' : 'light',
-        x: { format: 'HH:mm:ss' }
+        x: { format: 'HH:mm:ss' },
+        y: { formatter: (v) => v.toFixed(0) + '%' }
       }
     };
 
