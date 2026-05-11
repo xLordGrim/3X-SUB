@@ -1,9 +1,22 @@
+#!/bin/bash
+
 VERSION="2.0"
 TIMESTAMP=$(date +%s)
+
+# This determines which release to download.
+# development branch → dev-build release tag
+# main branch → stable release tag
+BRANCH="development"
+if [[ "$BRANCH" == "main" ]]; then
+    RELEASE_TAG="stable"
+else
+    RELEASE_TAG="dev-build"
+fi
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo -e "${BLUE}💎 Starting 3x-ui Subscription Theme Installation...${NC}"
@@ -23,13 +36,8 @@ ASSETS_PATH="$BASE_PATH/assets"
 HTML_PATH="$BASE_PATH/html"
 
 if [ -z "$BRANCH" ]; then
-    # Try to detect from the URL used to download this script
-    # Default to 'main' for stability
     BRANCH="main"
-    
-    # Check if script was sourced from development branch
     if curl -s --head "https://raw.githubusercontent.com/xLordGrim/3X-SUB/development/install.sh" | grep -q "200 OK"; then
-        # If user explicitly downloaded from development, detect it
         if [ -f "/tmp/xui_installer_dev" ]; then
             BRANCH="development"
         fi
@@ -39,94 +47,163 @@ fi
 echo -e "${BLUE}Using branch: ${GREEN}${BRANCH}${NC}"
 REPO_URL="https://raw.githubusercontent.com/xLordGrim/3X-SUB/${BRANCH}"
 
-mkdir -p "$ASSETS_PATH/js"
-mkdir -p "$ASSETS_PATH/css"
-mkdir -p "$HTML_PATH"
-
-echo -e "${BLUE}Backing up existing files...${NC}"
-[[ -f "$ASSETS_PATH/js/subscription.js" ]] && cp "$ASSETS_PATH/js/subscription.js" "$ASSETS_PATH/js/subscription.js.bak" 2>/dev/null
-[[ -f "$ASSETS_PATH/css/premium.css" ]] && cp "$ASSETS_PATH/css/premium.css" "$ASSETS_PATH/css/premium.css.bak" 2>/dev/null
-
-# Templates & Full Asset Sync (Crucial for Persistence/Debug Mode)
-echo -e "${BLUE}Syncing official web assets for full compatibility...${NC}"
-if ! command -v unzip &> /dev/null; then
-    echo -e "${BLUE}🔧 Installing unzip...${NC}"
-    apt-get install unzip -y >/dev/null 2>&1 || yum install unzip -y >/dev/null 2>&1
-fi
-
-# Attempt to detect local x-ui version to fetch compatible assets
-# Make grep extremely forgiving, grab just the decimal version, then prefix 'v' manually
-# Crucially: use 2>&1 because Go binaries often print version info to stderr!
+# Detect 3x-ui version
 RAW_VER=$( (/usr/local/x-ui/x-ui -v 2>&1 || /usr/local/x-ui/x-ui --version 2>&1 || /usr/local/x-ui/x-ui version 2>&1) | grep -iEo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
 
-LOCAL_VER=""
-if [[ -n "$RAW_VER" ]]; then
-    LOCAL_VER="v${RAW_VER}"
+if [[ -z "$RAW_VER" ]]; then
+    echo -e "${RED}Could not detect 3x-ui version. Assuming unsupported or broken installation.${NC}"
+    exit 1
 fi
-ARCHIVE_URL="https://github.com/MHSanaei/3x-ui/archive/refs/heads/main.zip"
-EXTRACT_FOLDER="3x-ui-main"
 
-if [[ -n "$LOCAL_VER" ]]; then
-    echo -e "${BLUE}Detected local 3x-ui version: ${GREEN}${LOCAL_VER}${NC}"
-    # Verify if this specific version tag exists on the GitHub repo
-    TAG_URL="https://github.com/MHSanaei/3x-ui/archive/refs/tags/${LOCAL_VER}.zip"
-    if curl -s --head "$TAG_URL" | head -n 1 | grep -E "200|301|302" >/dev/null; then
-        ARCHIVE_URL="$TAG_URL"
-        RAW_VER="${LOCAL_VER#v}" # Remove 'v' prefix for extraction folder name
-        EXTRACT_FOLDER="3x-ui-${RAW_VER}"
+echo -e "${BLUE}Detected local 3x-ui version: ${GREEN}v${RAW_VER}${NC}"
+
+# Check if version is < 2.8.4
+if [ "$(printf '%s\n' "2.8.4" "$RAW_VER" | sort -V | head -n1)" = "$RAW_VER" ] && [ "$RAW_VER" != "2.8.4" ]; then
+    echo -e "${RED}❌ Version v$RAW_VER is not supported. Please upgrade to at least v2.8.4.${NC}"
+    exit 1
+fi
+
+# Determine if we are on v3.0.0+
+IS_V3=false
+if [ "$(printf '%s\n' "3.0.0" "$RAW_VER" | sort -V | head -n1)" = "3.0.0" ]; then
+    IS_V3=true
+fi
+
+# Set Stats file path depending on version
+if [ "$IS_V3" = true ]; then
+    STATS_FILE="$XUI_ROOT/web/dist/assets/css/status.json"
+    mkdir -p "$XUI_ROOT/web/dist/assets/css"
+else
+    STATS_FILE="$XUI_ROOT/web/assets/css/status.json"
+    mkdir -p "$ASSETS_PATH/js"
+    mkdir -p "$ASSETS_PATH/css"
+    mkdir -p "$HTML_PATH"
+fi
+
+if [ "$IS_V3" = true ]; then
+    echo -e "${BLUE}v3.0.0+ detected. Installing pre-compiled custom binary...${NC}"
+    echo -e "${BLUE}Channel: ${BRANCH} (release: ${RELEASE_TAG})${NC}"
+    
+    ARCH=$(uname -m)
+    if [[ "$ARCH" == "x86_64" ]]; then
+        XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/download/${RELEASE_TAG}/x-ui-linux-amd64"
+    elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+        XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/download/${RELEASE_TAG}/x-ui-linux-arm64"
+    else
+        echo -e "${RED}❌ Architecture $ARCH is not supported for v3.0.0+ pre-compiled binaries.${NC}"
+        exit 1
+    fi
+
+    echo -e "${YELLOW}Stopping x-ui service...${NC}"
+    systemctl stop x-ui
+    
+    echo -e "${BLUE}Backing up original binary...${NC}"
+    cp /usr/local/x-ui/x-ui /usr/local/x-ui/x-ui.bak
+    OLD_SIZE=$(stat -c%s /usr/local/x-ui/x-ui 2>/dev/null || echo "0")
+    echo -e "${BLUE}Current binary size: ${OLD_SIZE} bytes${NC}"
+    
+    echo -e "${YELLOW}Removing legacy debug mode to fix assets...${NC}"
+    find /etc/systemd /lib/systemd /usr/lib/systemd -type f -name "x-ui.service" -exec sed -i '/XUI_DEBUG/d' {} + 2>/dev/null
+    sed -i '/XUI_DEBUG/d' /etc/environment 2>/dev/null
+    systemctl daemon-reload
+    
+    echo -e "${BLUE}Downloading custom binary for $ARCH from:${NC}"
+    echo -e "${YELLOW}  $XUI_BIN_URL${NC}"
+    
+    TMPFILE="/tmp/x-ui-custom-$$"
+    HTTP_STATUS=$(curl -L --progress-bar -w "%{http_code}" "$XUI_BIN_URL" -o "$TMPFILE")
+    
+    echo -e "${BLUE}HTTP Status: $HTTP_STATUS${NC}"
+    
+    if [[ "$HTTP_STATUS" != "200" ]]; then
+        echo -e "${RED}❌ Failed to download custom binary (HTTP $HTTP_STATUS).${NC}"
+        echo -e "${YELLOW}Ensure the 'Build Custom 3x-ui' GitHub Action has run and published a release.${NC}"
+        echo -e "${BLUE}Restoring original binary...${NC}"
+        cp /usr/local/x-ui/x-ui.bak /usr/local/x-ui/x-ui
+        systemctl start x-ui
+        exit 1
+    fi
+    
+    # Sanity check: make sure we got a binary (ELF), not an HTML page
+    MAGIC=$(head -c 4 "$TMPFILE" | xxd -p 2>/dev/null || head -c 4 "$TMPFILE" | od -A n -t x1 | tr -d ' \n')
+    NEW_SIZE=$(stat -c%s "$TMPFILE")
+    echo -e "${BLUE}Downloaded file size: ${NEW_SIZE} bytes${NC}"
+    echo -e "${BLUE}File magic bytes: ${MAGIC}${NC}"
+    
+    if [[ "$MAGIC" != "7f454c46" ]] && [[ "$MAGIC" != "7f454c46"* ]]; then
+        echo -e "${RED}❌ Downloaded file is not a Linux binary (expected ELF magic 7f454c46).${NC}"
+        echo -e "${RED}Got: $MAGIC — this looks like an HTML error page.${NC}"
+        echo -e "${BLUE}First 200 bytes of downloaded file:${NC}"
+        head -c 200 "$TMPFILE"
+        rm -f "$TMPFILE"
+        cp /usr/local/x-ui/x-ui.bak /usr/local/x-ui/x-ui
+        systemctl start x-ui
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✓ Valid ELF binary confirmed. Installing...${NC}"
+    cp "$TMPFILE" /usr/local/x-ui/x-ui
+    chmod +x /usr/local/x-ui/x-ui
+    rm -f "$TMPFILE"
+    
+    # Clear ISP cache
+    [[ -f "/usr/local/x-ui/isp_info.json" ]] && rm -f "/usr/local/x-ui/isp_info.json"
+
+
+else
+    echo -e "${BLUE}v2.x detected. Installing via legacy static file injection...${NC}"
+    
+    echo -e "${BLUE}Backing up existing files...${NC}"
+    [[ -f "$ASSETS_PATH/js/subscription.js" ]] && cp "$ASSETS_PATH/js/subscription.js" "$ASSETS_PATH/js/subscription.js.bak" 2>/dev/null
+    [[ -f "$ASSETS_PATH/css/premium.css" ]] && cp "$ASSETS_PATH/css/premium.css" "$ASSETS_PATH/css/premium.css.bak" 2>/dev/null
+
+    echo -e "${BLUE}Syncing official web assets for full compatibility...${NC}"
+    if ! command -v unzip &> /dev/null; then
+        echo -e "${BLUE}🔧 Installing unzip...${NC}"
+        apt-get install unzip -y >/dev/null 2>&1 || yum install unzip -y >/dev/null 2>&1
+    fi
+
+    LOCAL_VER="v${RAW_VER}"
+    ARCHIVE_URL="https://github.com/MHSanaei/3x-ui/archive/refs/tags/${LOCAL_VER}.zip"
+    EXTRACT_FOLDER="3x-ui-${RAW_VER}"
+    
+    if curl -s --head "$ARCHIVE_URL" | head -n 1 | grep -E "200|301|302" >/dev/null; then
         echo -e "${GREEN}Downloading version-matched assets to ensure compatibility.${NC}"
     else
         echo -e "${RED}Version tag not found on GitHub. Falling back to latest main branch.${NC}"
+        ARCHIVE_URL="https://github.com/MHSanaei/3x-ui/archive/refs/heads/main.zip"
+        EXTRACT_FOLDER="3x-ui-main"
     fi
-else
-    echo -e "${RED}Could not detect 3x-ui version. Falling back to latest main branch.${NC}"
-fi
 
-TEMP_ZIP="/tmp/3x-ui-assets.zip"
-curl -Ls "$ARCHIVE_URL" -o "$TEMP_ZIP"
-mkdir -p "/tmp/3x-ui-extract"
-unzip -qo "$TEMP_ZIP" -d "/tmp/3x-ui-extract"
+    TEMP_ZIP="/tmp/3x-ui-assets.zip"
+    curl -Ls "$ARCHIVE_URL" -o "$TEMP_ZIP"
+    mkdir -p "/tmp/3x-ui-extract"
+    unzip -qo "$TEMP_ZIP" -d "/tmp/3x-ui-extract"
 
-# Copy official web folder to local x-ui root
-cp -rf "/tmp/3x-ui-extract/${EXTRACT_FOLDER}/web/"* "$BASE_PATH/"
-rm -rf "$TEMP_ZIP" "/tmp/3x-ui-extract"
+    cp -rf "/tmp/3x-ui-extract/${EXTRACT_FOLDER}/web/"* "$BASE_PATH/"
+    rm -rf "$TEMP_ZIP" "/tmp/3x-ui-extract"
 
-echo -e "${BLUE}Fetching assets...${NC}"
-#  Assets (Overwriting official ones where needed)
-# Use TIMESTAMP to bust GitHub CDN cache
-curl -Ls "$REPO_URL/web/assets/js/subscription.js?v=$TIMESTAMP" -o "$ASSETS_PATH/js/subscription.js"
-curl -Ls "$REPO_URL/web/assets/css/premium.css?v=$TIMESTAMP" -o "$ASSETS_PATH/css/premium.css"
+    echo -e "${BLUE}Fetching custom theme assets...${NC}"
+    curl -Ls "$REPO_URL/web/assets/js/subscription.js?v=$TIMESTAMP" -o "$ASSETS_PATH/js/subscription.js"
+    curl -Ls "$REPO_URL/web/assets/css/premium.css?v=$TIMESTAMP" -o "$ASSETS_PATH/css/premium.css"
 
-# Templates (Crucial for Persistence/Debug Mode)
-echo -e "${BLUE}Fetching assets...${NC}"
+    SUBPAGE_PATH="$HTML_PATH/settings/panel/subscription/subpage.html"
+    mkdir -p $(dirname "$SUBPAGE_PATH")
+    curl -Ls "$REPO_URL/web/html/settings/panel/subscription/subpage.html?v=$VERSION" -o "$SUBPAGE_PATH"
 
-# Templates (Crucial for Persistence/Debug Mode)
-SUBPAGE_PATH="$HTML_PATH/settings/panel/subscription/subpage.html"
-mkdir -p $(dirname "$SUBPAGE_PATH")
-# Download subpage.html from repo
-curl -Ls "$REPO_URL/web/html/settings/panel/subscription/subpage.html?v=$VERSION" -o "$SUBPAGE_PATH"
+    sed -i "s|assets/css/premium.css?{{ .cur_ver }}|assets/css/premium.css?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
+    sed -i "s|assets/js/subscription.js?{{ .cur_ver }}|assets/js/subscription.js?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
+    sed -i "s|__VERSION__|$TIMESTAMP|g" "$ASSETS_PATH/js/subscription.js"
 
-# CACHE BUSTING: Inject installation timestamp to force browser update
-# Replace the Go template versioning with our timestamp to bust client caches
-sed -i "s|assets/css/premium.css?{{ .cur_ver }}|assets/css/premium.css?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
-sed -i "s|assets/js/subscription.js?{{ .cur_ver }}|assets/js/subscription.js?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
+    [[ -f "/usr/local/x-ui/isp_info.json" ]] && rm -f "/usr/local/x-ui/isp_info.json"
+    chmod -R 755 "$BASE_PATH"
 
-# Internal JS Cache Busting (Inject into the file itself)
-sed -i "s|__VERSION__|$TIMESTAMP|g" "$ASSETS_PATH/js/subscription.js"
-
-# Clear stale ISP cache to force fresh detection on install/update
-[[ -f "/usr/local/x-ui/isp_info.json" ]] && rm -f "/usr/local/x-ui/isp_info.json"
-
-chmod -R 755 "$BASE_PATH"
-
-echo -e "${BLUE}Injecting Persistence (Update Survival)...${NC}"
-SERVICE_FILE="/etc/systemd/system/x-ui.service"
-if [[ -f "$SERVICE_FILE" ]]; then
-    if ! grep -q "XUI_DEBUG=true" "$SERVICE_FILE"; then
-        sed -i '/\[Service\]/a Environment="XUI_DEBUG=true"' "$SERVICE_FILE"
-        echo -e "${GREEN}Persistence injected successfully!${NC}"
-    else
-        echo -e "${BLUE}Persistence already enabled.${NC}"
+    SERVICE_FILE="/etc/systemd/system/x-ui.service"
+    if [[ -f "$SERVICE_FILE" ]]; then
+        if ! grep -q "XUI_DEBUG=true" "$SERVICE_FILE"; then
+            sed -i '/\[Service\]/a Environment="XUI_DEBUG=true"' "$SERVICE_FILE"
+            echo -e "${GREEN}Persistence injected successfully!${NC}"
+        fi
     fi
 fi
 
@@ -135,12 +212,9 @@ echo -e "${BLUE}Deploying System Stats Monitor Service...${NC}"
 
 STATS_SCRIPT="$XUI_ROOT/server_stats.sh"
 STATS_SERVICE="/etc/systemd/system/x-ui-stats.service"
-STATS_FILE="$XUI_ROOT/web/assets/css/status.json"
 
-# Create stats collector script
 cat <<"EOF" > "$STATS_SCRIPT"
 #!/bin/bash
-# System Stats Collector for 3x-ui Premium Theme (Enhanced)
 JSON_FILE="__STATS_FILE__"
 ISP_CACHE="/usr/local/x-ui/isp_info.json"
 INTERVAL=2
@@ -157,8 +231,6 @@ prev_uptime=$(cat /proc/uptime | awk '{print $1}')
 detect_infrastructure() {
     if [ ! -s "$ISP_CACHE" ]; then
         IP_DATA=$(curl -s --max-time 10 http://ip-api.com/json/)
-        
- 
         if [[ -z "$IP_DATA" || "$IP_DATA" == *"fail"* ]]; then
             IP_DATA=$(curl -s --max-time 10 https://ipinfo.io/json)
             ISP=$(echo "$IP_DATA" | grep -oE "\"org\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"org\"\s*:\s*\"//g" | sed 's/"$//g' | sed 's/^AS[0-9]* //')
@@ -167,11 +239,8 @@ detect_infrastructure() {
             ISP=$(echo "$IP_DATA" | grep -oE "\"isp\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"isp\"\s*:\s*\"//g" | sed 's/"$//g')
             REGION=$(echo "$IP_DATA" | grep -oE "\"city\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"city\"\s*:\s*\"//g" | sed 's/"$//g')
         fi
-        
- 
         [[ -z "$ISP" ]] && ISP="Unknown Provider"
         [[ -z "$REGION" ]] && REGION="Unknown Region"
-        
         echo "{\"isp\":\"$ISP\",\"region\":\"$REGION\"}" > "$ISP_CACHE"
     fi
 }
@@ -238,11 +307,9 @@ while true; do
 done
 EOF
 
-# Replace placeholder with actual path
 sed -i "s|__STATS_FILE__|$STATS_FILE|g" "$STATS_SCRIPT"
 chmod +x "$STATS_SCRIPT"
 
-# Create systemd service
 cat <<"EOF" > "$STATS_SERVICE"
 [Unit]
 Description=3x-ui System Stats Monitor
@@ -261,12 +328,10 @@ EOF
 
 sed -i "s|__STATS_SCRIPT__|$STATS_SCRIPT|g" "$STATS_SERVICE"
 
-# Enable and start service
 systemctl daemon-reload
 systemctl enable x-ui-stats.service >/dev/null 2>&1
 systemctl restart x-ui-stats.service
 
-# Verify service started
 if systemctl is-active --quiet x-ui-stats.service; then
     echo -e "${GREEN}✅ Stats monitor deployed and running${NC}"
 else
@@ -283,4 +348,3 @@ fi
 
 echo -e "${GREEN}✅ 3X-UI Subscription Theme installed Successfully${NC}"
 echo -e "${GREEN}🔧 Turn on the Inbuilt Subscription System (If not enabled)${NC}"
-

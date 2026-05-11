@@ -1,0 +1,153 @@
+name: Build Custom 3x-ui
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - development
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout 3X-SUB
+        uses: actions/checkout@v4
+        with:
+          path: 3X-SUB
+
+      - name: Checkout 3x-ui
+        uses: actions/checkout@v4
+        with:
+          repository: MHSanaei/3x-ui
+          path: 3x-ui
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Inject 3X-SUB Theme (external CDN links)
+        run: |
+          echo "=== Injecting 3X-SUB external CDN links into subpage.html ==="
+
+          # Determine branch for CDN URL
+          BRANCH="${GITHUB_REF_NAME:-development}"
+          echo "Using branch: $BRANCH"
+
+          CSS_URL="https://cdn.jsdelivr.net/gh/xLordGrim/3X-SUB@${BRANCH}/web/assets/css/premium.css"
+          JS_URL="https://cdn.jsdelivr.net/gh/xLordGrim/3X-SUB@${BRANCH}/web/assets/js/subscription.js"
+
+          echo "CSS URL: $CSS_URL"
+          echo "JS URL: $JS_URL"
+
+          # Patch subpage.html with Python — inject INSIDE </head> and </body>
+          # Also strip the stock Vue app's script/link tags to prevent 404 errors
+          python3 << PYEOF
+          import re
+          css_url = "${CSS_URL}"
+          js_url = "${JS_URL}"
+
+          with open('3x-ui/frontend/subpage.html', 'r') as f:
+              content = f.read()
+
+          # Remove the stock Vue entry script (type="module" src pointing to subpage entry)
+          content = re.sub(r'<script type="module"[^>]*src="[^"]*subpage[^"]*"[^>]*></script>\s*', '', content)
+
+          # Remove all modulepreload links (vendor chunks, locale files, etc.)
+          content = re.sub(r'<link rel="modulepreload"[^>]*>\s*', '', content)
+
+          # Remove stock Vue CSS links (but keep our injected one)
+          content = re.sub(r'<link rel="stylesheet" crossorigin[^>]*>\s*', '', content)
+
+          # Inject our CDN links
+          head_inject = f'<link rel="stylesheet" href="{css_url}">\n  </head>'
+          body_inject = f'''  <script>
+              document.addEventListener('DOMContentLoaded', function() {{
+                document.body.classList.add('premium-theme');
+                var app = document.getElementById('app');
+                if (app) app.style.display = 'none';
+              }});
+            </script>
+            <script src="{js_url}"></script>
+            </body>'''
+
+          content = content.replace('</head>', head_inject, 1)
+          content = content.replace('</body>', body_inject, 1)
+
+          with open('3x-ui/frontend/subpage.html', 'w') as f:
+              f.write(content)
+
+          print("subpage.html patched successfully (stock Vue tags removed, CDN links injected)")
+          PYEOF
+
+          echo "--- subpage.html after patch ---"
+          cat 3x-ui/frontend/subpage.html
+
+      - name: Build Vue Frontend
+        working-directory: 3x-ui/frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Verify dist contents
+        run: |
+          echo "=== Checking subpage.html in dist ==="
+          cat 3x-ui/web/dist/subpage.html
+          echo ""
+          echo "=== Verifying CDN links present ==="
+          grep -c "cdn.jsdelivr.net" 3x-ui/web/dist/subpage.html && echo "CDN links found!" || echo "ERROR: CDN links NOT found!"
+
+      - name: Build Go Binary (AMD64)
+        working-directory: 3x-ui
+        run: |
+          GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o x-ui-linux-amd64 main.go
+          ls -lh x-ui-linux-amd64
+
+      - name: Build Go Binary (ARM64)
+        working-directory: 3x-ui
+        run: |
+          GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -o x-ui-linux-arm64 main.go
+          ls -lh x-ui-linux-arm64
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-x-ui-binaries
+          path: |
+            3x-ui/x-ui-linux-amd64
+            3x-ui/x-ui-linux-arm64
+
+      - name: Set release tag
+        id: release_tag
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "tag=stable" >> $GITHUB_OUTPUT
+            echo "name=3X-SUB Stable" >> $GITHUB_OUTPUT
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          else
+            echo "tag=dev-build" >> $GITHUB_OUTPUT
+            echo "name=3X-SUB Development" >> $GITHUB_OUTPUT
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          name: ${{ steps.release_tag.outputs.name }}
+          make_latest: ${{ steps.release_tag.outputs.prerelease == 'false' }}
+          prerelease: ${{ steps.release_tag.outputs.prerelease }}
+          files: |
+            3x-ui/x-ui-linux-amd64
+            3x-ui/x-ui-linux-arm64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
