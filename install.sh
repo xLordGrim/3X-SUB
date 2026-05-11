@@ -319,29 +319,63 @@ while true; do
     
     POINT="{\"c\":$cpu_usage,\"r\":$ram_usage,\"t\":$(date +%s)}"
     
+    update_buffer() {
+        local buffer="$1"
+        local max="$2"
+        if [ "$buffer" == "[]" ]; then
+            echo "[$POINT]"
+        else
+            # Prepend point
+            local new_buf=$(echo "$buffer" | sed "s/^\[/[$POINT,/")
+            # Truncate and ensure valid JSON (remove trailing comma if max reached)
+            echo "$new_buf" | awk -v max="$max" '
+                {
+                    n = 0
+                    pos = 1
+                    while (n < max && match(substr($0, pos), /},/)) {
+                        n++
+                        pos += RSTART + RLENGTH - 1
+                    }
+                    if (n == max) {
+                        # Find the last brace before the max-th comma
+                        # Actually, just cut at the max-th entry
+                        # The match found n commas. pos is at the char AFTER the n-th comma.
+                        print substr($0, 1, pos-2) "]"
+                    } else {
+                        # Check for trailing comma (e.g. if we just added to an empty-ish array)
+                        # [POINT, {OLD}] -> pos didn't move much
+                        # Just ensure no ",]" at the end
+                        gsub(/,\]$/, "]", $0)
+                        print $0
+                    }
+                }
+            '
+        fi
+    }
+
     # Update Live History (Every 10s)
     if [ $((COUNTER % 5)) -eq 0 ]; then
-        HISTORY_LIVE=$(echo "$HISTORY_LIVE" | sed "s/^\[/[$POINT,/" | awk -v max=60 '{n=0; start=1; while(n<max && match(substr($0,start),/},/)){n++; start+=RSTART+RLENGTH-1} if(n==max){print substr($0,1,start-2) "]"} else {print $0}}')
+        HISTORY_LIVE=$(update_buffer "$HISTORY_LIVE" 60)
     fi
     
     # Update 1h History (Every 1m = 30 intervals)
     if [ $((COUNTER % 30)) -eq 0 ]; then
-        HISTORY_1H=$(echo "$HISTORY_1H" | sed "s/^\[/[$POINT,/" | awk -v max=60 '{n=0; start=1; while(n<max && match(substr($0,start),/},/)){n++; start+=RSTART+RLENGTH-1} if(n==max){print substr($0,1,start-2) "]"} else {print $0}}')
+        HISTORY_1H=$(update_buffer "$HISTORY_1H" 60)
     fi
 
     # Update 24h History (Every 15m = 450 intervals)
     if [ $((COUNTER % 450)) -eq 0 ]; then
-        HISTORY_24H=$(echo "$HISTORY_24H" | sed "s/^\[/[$POINT,/" | awk -v max=96 '{n=0; start=1; while(n<max && match(substr($0,start),/},/)){n++; start+=RSTART+RLENGTH-1} if(n==max){print substr($0,1,start-2) "]"} else {print $0}}')
+        HISTORY_24H=$(update_buffer "$HISTORY_24H" 96)
     fi
 
     # Update 7d History (Every 1h = 1800 intervals)
     if [ $((COUNTER % 1800)) -eq 0 ]; then
-        HISTORY_7D=$(echo "$HISTORY_7D" | sed "s/^\[/[$POINT,/" | awk -v max=168 '{n=0; start=1; while(n<max && match(substr($0,start),/},/)){n++; start+=RSTART+RLENGTH-1} if(n==max){print substr($0,1,start-2) "]"} else {print $0}}')
+        HISTORY_7D=$(update_buffer "$HISTORY_7D" 168)
     fi
 
     # Update 30d History (Every 6h = 10800 intervals)
     if [ $((COUNTER % 10800)) -eq 0 ]; then
-        HISTORY_30D=$(echo "$HISTORY_30D" | sed "s/^\[/[$POINT,/" | awk -v max=120 '{n=0; start=1; while(n<max && match(substr($0,start),/},/)){n++; start+=RSTART+RLENGTH-1} if(n==max){print substr($0,1,start-2) "]"} else {print $0}}')
+        HISTORY_30D=$(update_buffer "$HISTORY_30D" 120)
     fi
 
     COUNTER=$((COUNTER + 1))
