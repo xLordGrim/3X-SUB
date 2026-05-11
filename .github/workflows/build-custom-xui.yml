@@ -35,26 +35,38 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Inject 3X-SUB Theme into Vue Source (BEFORE build)
+      - name: Inject 3X-SUB Theme (external CDN links)
         run: |
-          echo "=== Injecting 3X-SUB theme into subpage.html INSIDE </head> and </body> ==="
+          echo "=== Injecting 3X-SUB external CDN links into subpage.html ==="
 
-          # 1. Copy assets into frontend/public so Vite copies them verbatim into dist/
-          mkdir -p 3x-ui/frontend/public/premium
-          cp 3X-SUB/web/assets/css/premium.css 3x-ui/frontend/public/premium/premium.css
-          cp 3X-SUB/web/assets/js/subscription.js 3x-ui/frontend/public/premium/subscription.js
+          # Determine branch for CDN URL
+          BRANCH="${GITHUB_REF_NAME:-development}"
+          echo "Using branch: $BRANCH"
 
-          # 2. Verify files exist
-          echo "--- Assets to inject ---"
-          ls -la 3x-ui/frontend/public/premium/
+          CSS_URL="https://cdn.jsdelivr.net/gh/xLordGrim/3X-SUB@${BRANCH}/web/assets/css/premium.css"
+          JS_URL="https://cdn.jsdelivr.net/gh/xLordGrim/3X-SUB@${BRANCH}/web/assets/js/subscription.js"
 
-          # 3. Patch subpage.html using Python (reliable cross-platform, no sed escaping issues)
-          python3 << 'PYEOF'
+          echo "CSS URL: $CSS_URL"
+          echo "JS URL: $JS_URL"
+
+          # Patch subpage.html with Python — inject INSIDE </head> and </body>
+          python3 << PYEOF
+          css_url = "${CSS_URL}"
+          js_url = "${JS_URL}"
+
           with open('3x-ui/frontend/subpage.html', 'r') as f:
               content = f.read()
 
-          head_inject = '<link rel="stylesheet" href="/premium/premium.css">\n  </head>'
-          body_inject = '  <script>\n    document.body.classList.add("premium-theme");\n    var app = document.getElementById("app");\n    if (app) app.style.display = "none";\n  </script>\n  <script src="/premium/subscription.js"></script>\n  </body>'
+          head_inject = f'<link rel="stylesheet" href="{css_url}">\n  </head>'
+          body_inject = f'''  <script>
+              document.addEventListener('DOMContentLoaded', function() {{
+                document.body.classList.add('premium-theme');
+                var app = document.getElementById('app');
+                if (app) app.style.display = 'none';
+              }});
+            </script>
+            <script src="{js_url}"></script>
+            </body>'''
 
           content = content.replace('</head>', head_inject, 1)
           content = content.replace('</body>', body_inject, 1)
@@ -76,11 +88,11 @@ jobs:
 
       - name: Verify dist contents
         run: |
-          echo "=== Checking dist folder structure ==="
-          find 3x-ui/web/dist -type f | sort
-          echo ""
           echo "=== Checking subpage.html in dist ==="
-          cat 3x-ui/web/dist/subpage.html | grep -E "(premium|subscription|/assets/)" || echo "WARNING: premium assets not found in built subpage.html"
+          cat 3x-ui/web/dist/subpage.html
+          echo ""
+          echo "=== Verifying CDN links present ==="
+          grep -c "cdn.jsdelivr.net" 3x-ui/web/dist/subpage.html && echo "CDN links found!" || echo "ERROR: CDN links NOT found!"
 
       - name: Build Go Binary (AMD64)
         working-directory: 3x-ui
