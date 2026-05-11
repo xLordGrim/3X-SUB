@@ -209,39 +209,47 @@ echo -e "${BLUE}Deploying System Stats Monitor Service...${NC}"
 STATS_SCRIPT="$XUI_ROOT/server_stats.sh"
 STATS_SERVICE="/etc/systemd/system/x-ui-stats.service"
 
-cat <<"EOF" > "$STATS_SCRIPT"
+cat <<'EOF_SCRIPT' > "$STATS_SCRIPT"
 #!/bin/bash
 JSON_FILE="__STATS_FILE__"
 ISP_CACHE="/usr/local/x-ui/isp_info.json"
-HISTORY_CACHE="/tmp/xui_stats_history.json"
+BASE_DIR="/tmp/xui_stats"
+mkdir -p "$BASE_DIR"
+
 INTERVAL=2
-MAX_HISTORY=60
 COUNTER=0
 
-INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '{print $5; exit}')
-[[ -z "$INTERFACE" ]] && INTERFACE=$(ip -o -4 route show to default | awk '{print $5; exit}')
+# Define log files and limits
+# Period: [File, MaxPoints, IntervalSteps]
+# Live: 10s (60 pts, step=5), 1h: 1m (60 pts, step=30), 24h: 15m (96 pts, step=450)
+# 7d: 1h (168 pts, step=1800), 30d: 6h (120 pts, step=10800)
 
-prev_total=0
-prev_idle=0
-prev_rx=0
-prev_tx=0
-prev_uptime=$(cat /proc/uptime | awk '{print $1}')
+update_history() {
+    local key="$1"
+    local max="$2"
+    local point="$3"
+    local log="$BASE_DIR/$key.log"
+    
+    # Prepend point to file
+    if [ ! -f "$log" ]; then
+        echo "$point" > "$log"
+    else
+        echo "$point" | cat - "$log" | head -n "$max" > "$log.tmp"
+        mv "$log.tmp" "$log"
+    fi
+}
 
-# Initialize history from cache if exists
-if [ -f "$HISTORY_CACHE" ]; then
-    CACHE_DATA=$(cat "$HISTORY_CACHE")
-    HISTORY_LIVE=$(echo "$CACHE_DATA" | grep -oE "\"live\":\s*\[[^]]*\]" | cut -d: -f2- | sed 's/^\s*//')
-    HISTORY_1H=$(echo "$CACHE_DATA" | grep -oE "\"h1\":\s*\[[^]]*\]" | cut -d: -f2- | sed 's/^\s*//')
-    HISTORY_24H=$(echo "$CACHE_DATA" | grep -oE "\"h24\":\s*\[[^]]*\]" | cut -d: -f2- | sed 's/^\s*//')
-    HISTORY_7D=$(echo "$CACHE_DATA" | grep -oE "\"d7\":\s*\[[^]]*\]" | cut -d: -f2- | sed 's/^\s*//')
-    HISTORY_30D=$(echo "$CACHE_DATA" | grep -oE "\"d30\":\s*\[[^]]*\]" | cut -d: -f2- | sed 's/^\s*//')
-fi
-
-[[ -z "$HISTORY_LIVE" || "$HISTORY_LIVE" == "null" ]] && HISTORY_LIVE="[]"
-[[ -z "$HISTORY_1H" || "$HISTORY_1H" == "null" ]] && HISTORY_1H="[]"
-[[ -z "$HISTORY_24H" || "$HISTORY_24H" == "null" ]] && HISTORY_24H="[]"
-[[ -z "$HISTORY_7D" || "$HISTORY_7D" == "null" ]] && HISTORY_7D="[]"
-[[ -z "$HISTORY_30D" || "$HISTORY_30D" == "null" ]] && HISTORY_30D="[]"
+get_history_json() {
+    local key="$1"
+    local log="$BASE_DIR/$key.log"
+    if [ ! -f "$log" ]; then
+        echo "[]"
+    else
+        echo -n "["
+        paste -sd, "$log" | tr -d '\n'
+        echo -n "]"
+    fi
+}
 
 detect_infrastructure() {
     if [ ! -s "$ISP_CACHE" ]; then
@@ -262,125 +270,63 @@ detect_infrastructure() {
 
 detect_infrastructure
 
+prev_total=0
+prev_idle=0
+prev_rx=0
+prev_tx=0
+prev_uptime=$(cat /proc/uptime | awk '{print $1}')
+INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '{print $5; exit}')
+[[ -z "$INTERFACE" ]] && INTERFACE=$(ip -o -4 route show to default | awk '{print $5; exit}')
+
 while true; do
     if [ -f "$ISP_CACHE" ]; then
         ISP_DATA=$(cat "$ISP_CACHE")
         ISP=$(echo "$ISP_DATA" | grep -oE "\"isp\":\"[^\"]*\"" | cut -d'"' -f4)
         REGION=$(echo "$ISP_DATA" | grep -oE "\"region\":\"[^\"]*\"" | cut -d'"' -f4)
-    else
-        ISP="Detecting..."
-        REGION="..."
     fi
 
+    # CPU/RAM Stats
     read cpu a b c idle rest < /proc/stat
     total=$((a+b+c+idle))
-    
     if [ "$prev_total" -gt 0 ]; then
         diff_total=$((total-prev_total))
         diff_idle=$((idle-prev_idle))
-        if [ "$diff_total" -gt 0 ]; then
-            cpu_usage=$((100*(diff_total-diff_idle)/diff_total))
-        else
-            cpu_usage=0
-        fi
+        cpu_usage=$((100*(diff_total-diff_idle)/diff_total))
     else
         cpu_usage=0
     fi
+    prev_total=$total; prev_idle=$idle
     
-    prev_total=$total
-    prev_idle=$idle
-    
-    mem_info=$(free -m | awk 'NR==2{printf "%.1f", $3*100/$2}')
-    ram_usage=${mem_info%.*}
+    mem_info=$(free -m | awk 'NR==2{printf "%.0f", $3*100/$2}')
+    ram_usage=$mem_info
 
+    # Network Stats
     if [ -n "$INTERFACE" ]; then
         read rx tx < <(grep "$INTERFACE" /proc/net/dev | awk '{print $2, $10}')
         curr_uptime=$(cat /proc/uptime | awk '{print $1}')
         if [ "$prev_rx" -gt 0 ]; then
             read net_in net_out < <(awk -v rx="$rx" -v prx="$prev_rx" -v tx="$tx" -v ptx="$prev_tx" -v curr="$curr_uptime" -v prev="$prev_uptime" 'BEGIN {
-                dt = curr - prev;
-                if (dt <= 0) dt = 1;
+                dt = curr - prev; if (dt <= 0) dt = 1;
                 printf "%d %d\n", (rx - prx) / 1024 / dt, (tx - ptx) / 1024 / dt
             }')
         else
-            net_in=0
-            net_out=0
+            net_in=0; net_out=0
         fi
-        prev_rx=$rx
-        prev_tx=$tx
-        prev_uptime=$curr_uptime
-    else
-        net_in=0
-        net_out=0
+        prev_rx=$rx; prev_tx=$tx; prev_uptime=$curr_uptime
     fi
 
-    # Aggregation logic: Maintain separate buffers for different periods
-    # Live: 10s intervals (60 pts), 1h: 1m (60 pts), 24h: 15m (96 pts), 7d: 1h (168 pts), 30d: 6h (120 pts)
-    
+    # Update buffers
     POINT="{\"c\":$cpu_usage,\"r\":$ram_usage,\"t\":$(date +%s)}"
     
-    update_buffer() {
-        local buffer="$1"
-        local max="$2"
-        if [ "$buffer" == "[]" ]; then
-            echo "[$POINT]"
-        else
-            # Prepend point
-            local new_buf=$(echo "$buffer" | sed "s/^\[/[$POINT,/")
-            # Truncate and ensure valid JSON (remove trailing comma if max reached)
-            echo "$new_buf" | awk -v max="$max" '
-                {
-                    n = 0
-                    pos = 1
-                    while (n < max && match(substr($0, pos), /},/)) {
-                        n++
-                        pos += RSTART + RLENGTH - 1
-                    }
-                    if (n == max) {
-                        # Find the last brace before the max-th comma
-                        # Actually, just cut at the max-th entry
-                        # The match found n commas. pos is at the char AFTER the n-th comma.
-                        print substr($0, 1, pos-2) "]"
-                    } else {
-                        # Check for trailing comma (e.g. if we just added to an empty-ish array)
-                        # [POINT, {OLD}] -> pos didn't move much
-                        # Just ensure no ",]" at the end
-                        gsub(/,\]$/, "]", $0)
-                        print $0
-                    }
-                }
-            '
-        fi
-    }
-
-    # Update Live History (Every 10s)
-    if [ $((COUNTER % 5)) -eq 0 ]; then
-        HISTORY_LIVE=$(update_buffer "$HISTORY_LIVE" 60)
-    fi
-    
-    # Update 1h History (Every 1m = 30 intervals)
-    if [ $((COUNTER % 30)) -eq 0 ]; then
-        HISTORY_1H=$(update_buffer "$HISTORY_1H" 60)
-    fi
-
-    # Update 24h History (Every 15m = 450 intervals)
-    if [ $((COUNTER % 450)) -eq 0 ]; then
-        HISTORY_24H=$(update_buffer "$HISTORY_24H" 96)
-    fi
-
-    # Update 7d History (Every 1h = 1800 intervals)
-    if [ $((COUNTER % 1800)) -eq 0 ]; then
-        HISTORY_7D=$(update_buffer "$HISTORY_7D" 168)
-    fi
-
-    # Update 30d History (Every 6h = 10800 intervals)
-    if [ $((COUNTER % 10800)) -eq 0 ]; then
-        HISTORY_30D=$(update_buffer "$HISTORY_30D" 120)
-    fi
+    [[ $((COUNTER % 5)) -eq 0 ]] && update_history "live" 60 "$POINT"
+    [[ $((COUNTER % 30)) -eq 0 ]] && update_history "h1" 60 "$POINT"
+    [[ $((COUNTER % 450)) -eq 0 ]] && update_history "h24" 96 "$POINT"
+    [[ $((COUNTER % 1800)) -eq 0 ]] && update_history "h7" 168 "$POINT"
+    [[ $((COUNTER % 10800)) -eq 0 ]] && update_history "h30" 120 "$POINT"
 
     COUNTER=$((COUNTER + 1))
-    
-    # Write to final JSON
+
+    # Generate JSON
     cat <<EOF_JSON > "$JSON_FILE.tmp"
 {
   "cpu": $cpu_usage,
@@ -390,33 +336,23 @@ while true; do
   "isp": "$ISP",
   "region": "$REGION",
   "history": {
-    "live": $HISTORY_LIVE,
-    "h1": $HISTORY_1H,
-    "h24": $HISTORY_24H,
-    "d7": $HISTORY_7D,
-    "d30": $HISTORY_30D
+    "live": $(get_history_json "live"),
+    "h1": $(get_history_json "h1"),
+    "h24": $(get_history_json "h24"),
+    "d7": $(get_history_json "h7"),
+    "d30": $(get_history_json "h30")
   }
 }
 EOF_JSON
     mv "$JSON_FILE.tmp" "$JSON_FILE"
     chmod 644 "$JSON_FILE"
-    
-    # Persistence every 15 minutes
-    if [ $((COUNTER % 450)) -eq 0 ]; then
-        cat <<EOF_HISTORY > "$HISTORY_CACHE"
-{
-  "live": $HISTORY_LIVE,
-  "h1": $HISTORY_1H,
-  "h24": $HISTORY_24H,
-  "d7": $HISTORY_7D,
-  "d30": $HISTORY_30D
-}
-EOF_HISTORY
-    fi
 
     sleep $INTERVAL
 done
-EOF
+EOF_SCRIPT
+
+sed -i "s|__STATS_FILE__|$STATS_FILE|g" "$STATS_SCRIPT"
+chmod +x "$STATS_SCRIPT"
 
 sed -i "s|__STATS_FILE__|$STATS_FILE|g" "$STATS_SCRIPT"
 chmod +x "$STATS_SCRIPT"
