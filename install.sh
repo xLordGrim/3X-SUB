@@ -219,12 +219,28 @@ COUNTER=0
 # History Buffers (Bash Arrays)
 declare -a H_LIVE H_H1 H_H24 H_D7 H_D30
 
-# Initial load from ISP cache
-if [ -f "$ISP_CACHE" ]; then
-    ISP_DATA=$(cat "$ISP_CACHE")
-    ISP=$(echo "$ISP_DATA" | grep -oE "\"isp\":\"[^\"]*\"" | cut -d'"' -f4)
-    REGION=$(echo "$ISP_DATA" | grep -oE "\"region\":\"[^\"]*\"" | cut -d'"' -f4)
-fi
+# ISP Detection Logic
+detect_infrastructure() {
+    if [ ! -s "$ISP_CACHE" ]; then
+        local ip_data=$(curl -s --max-time 10 http://ip-api.com/json/)
+        if [[ -z "$ip_data" || "$ip_data" == *"fail"* ]]; then
+            ip_data=$(curl -s --max-time 10 https://ipinfo.io/json)
+            ISP=$(echo "$ip_data" | grep -oE "\"org\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"org\"\s*:\s*\"//g" | sed 's/"$//g' | sed 's/^AS[0-9]* //')
+            REGION=$(echo "$ip_data" | grep -oE "\"city\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"city\"\s*:\s*\"//g" | sed 's/"$//g')
+        else
+            ISP=$(echo "$ip_data" | grep -oE "\"isp\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"isp\"\s*:\s*\"//g" | sed 's/"$//g')
+            REGION=$(echo "$ip_data" | grep -oE "\"city\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"city\"\s*:\s*\"//g" | sed 's/"$//g')
+        fi
+        [[ -z "$ISP" ]] && ISP="Unknown Provider"
+        [[ -z "$REGION" ]] && REGION="Unknown Region"
+        echo "{\"isp\":\"$ISP\",\"region\":\"$REGION\"}" > "$ISP_CACHE"
+    else
+        local isp_data=$(cat "$ISP_CACHE")
+        ISP=$(echo "$isp_data" | grep -oE "\"isp\":\"[^\"]*\"" | cut -d'"' -f4)
+        REGION=$(echo "$isp_data" | grep -oE "\"region\":\"[^\"]*\"" | cut -d'"' -f4)
+    fi
+}
+detect_infrastructure
 
 get_net_interface() {
     local iface=$(ip route get 8.8.8.8 2>/dev/null | awk '{print $5; exit}')
