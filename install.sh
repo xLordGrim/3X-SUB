@@ -229,12 +229,19 @@ prev_uptime=$(cat /proc/uptime | awk '{print $1}')
 
 # Initialize history from cache if exists
 if [ -f "$HISTORY_CACHE" ]; then
-    HISTORY=$(cat "$HISTORY_CACHE")
-    # Basic validation
-    [[ ! "$HISTORY" =~ ^\[ ]] && HISTORY="[]"
-else
-    HISTORY="[]"
+    CACHE_DATA=$(cat "$HISTORY_CACHE")
+    HISTORY_LIVE=$(echo "$CACHE_DATA" | grep -oE "\"live\":\s*\[[^]]*\]" | cut -d: -f2- | sed 's/^\s*//')
+    HISTORY_1H=$(echo "$CACHE_DATA" | grep -oE "\"h1\":\s*\[[^]]*\]" | cut -d: -f2- | sed 's/^\s*//')
+    HISTORY_24H=$(echo "$CACHE_DATA" | grep -oE "\"h24\":\s*\[[^]]*\]" | cut -d: -f2- | sed 's/^\s*//')
+    HISTORY_7D=$(echo "$CACHE_DATA" | grep -oE "\"d7\":\s*\[[^]]*\]" | cut -d: -f2- | sed 's/^\s*//')
+    HISTORY_30D=$(echo "$CACHE_DATA" | grep -oE "\"d30\":\s*\[[^]]*\]" | cut -d: -f2- | sed 's/^\s*//')
 fi
+
+[[ -z "$HISTORY_LIVE" || "$HISTORY_LIVE" == "null" ]] && HISTORY_LIVE="[]"
+[[ -z "$HISTORY_1H" || "$HISTORY_1H" == "null" ]] && HISTORY_1H="[]"
+[[ -z "$HISTORY_24H" || "$HISTORY_24H" == "null" ]] && HISTORY_24H="[]"
+[[ -z "$HISTORY_7D" || "$HISTORY_7D" == "null" ]] && HISTORY_7D="[]"
+[[ -z "$HISTORY_30D" || "$HISTORY_30D" == "null" ]] && HISTORY_30D="[]"
 
 detect_infrastructure() {
     if [ ! -s "$ISP_CACHE" ]; then
@@ -307,39 +314,72 @@ while true; do
         net_out=0
     fi
 
-    # Update history every 10 seconds (5 * 2s)
+    # Aggregation logic: Maintain separate buffers for different periods
+    # Live: 10s intervals (60 pts), 1h: 1m (60 pts), 24h: 15m (96 pts), 7d: 1h (168 pts), 30d: 6h (120 pts)
+    
+    POINT="{\"c\":$cpu_usage,\"r\":$ram_usage,\"t\":$(date +%s)}"
+    
+    # Update Live History (Every 10s)
     if [ $((COUNTER % 5)) -eq 0 ]; then
-        POINT="{\"c\":$cpu_usage,\"r\":$ram_usage,\"t\":$(date +%s)}"
-        if [ "$HISTORY" == "[]" ]; then
-            HISTORY="[$POINT]"
-        else
-            # Prepend point and limit array size
-            HISTORY=$(echo "$HISTORY" | sed "s/^\[/[$POINT,/")
-            # Keep only last MAX_HISTORY points (simple awk truncation)
-            HISTORY=$(echo "$HISTORY" | awk -v max="$MAX_HISTORY" '
-                {
-                    n = 0
-                    start = 1
-                    while (n < max && match(substr($0, start), /},/)) {
-                        n++
-                        start += RSTART + RLENGTH - 1
-                    }
-                    if (n == max) {
-                        print substr($0, 1, start-2) "]"
-                    } else {
-                        print $0
-                    }
-                }
-            ')
-        fi
-        echo "$HISTORY" > "$HISTORY_CACHE"
+        HISTORY_LIVE=$(echo "$HISTORY_LIVE" | sed "s/^\[/[$POINT,/" | awk -v max=60 '{n=0; start=1; while(n<max && match(substr($0,start),/},/)){n++; start+=RSTART+RLENGTH-1} if(n==max){print substr($0,1,start-2) "]"} else {print $0}}')
     fi
+    
+    # Update 1h History (Every 1m = 30 intervals)
+    if [ $((COUNTER % 30)) -eq 0 ]; then
+        HISTORY_1H=$(echo "$HISTORY_1H" | sed "s/^\[/[$POINT,/" | awk -v max=60 '{n=0; start=1; while(n<max && match(substr($0,start),/},/)){n++; start+=RSTART+RLENGTH-1} if(n==max){print substr($0,1,start-2) "]"} else {print $0}}')
+    fi
+
+    # Update 24h History (Every 15m = 450 intervals)
+    if [ $((COUNTER % 450)) -eq 0 ]; then
+        HISTORY_24H=$(echo "$HISTORY_24H" | sed "s/^\[/[$POINT,/" | awk -v max=96 '{n=0; start=1; while(n<max && match(substr($0,start),/},/)){n++; start+=RSTART+RLENGTH-1} if(n==max){print substr($0,1,start-2) "]"} else {print $0}}')
+    fi
+
+    # Update 7d History (Every 1h = 1800 intervals)
+    if [ $((COUNTER % 1800)) -eq 0 ]; then
+        HISTORY_7D=$(echo "$HISTORY_7D" | sed "s/^\[/[$POINT,/" | awk -v max=168 '{n=0; start=1; while(n<max && match(substr($0,start),/},/)){n++; start+=RSTART+RLENGTH-1} if(n==max){print substr($0,1,start-2) "]"} else {print $0}}')
+    fi
+
+    # Update 30d History (Every 6h = 10800 intervals)
+    if [ $((COUNTER % 10800)) -eq 0 ]; then
+        HISTORY_30D=$(echo "$HISTORY_30D" | sed "s/^\[/[$POINT,/" | awk -v max=120 '{n=0; start=1; while(n<max && match(substr($0,start),/},/)){n++; start+=RSTART+RLENGTH-1} if(n==max){print substr($0,1,start-2) "]"} else {print $0}}')
+    fi
+
     COUNTER=$((COUNTER + 1))
     
-    echo "{\"cpu\":$cpu_usage,\"ram\":$ram_usage,\"net_in\":$net_in,\"net_out\":$net_out,\"isp\":\"$ISP\",\"region\":\"$REGION\",\"history\":$HISTORY}" > "$JSON_FILE.tmp"
+    # Write to final JSON
+    cat <<EOF > "$JSON_FILE.tmp"
+{
+  "cpu": $cpu_usage,
+  "ram": $ram_usage,
+  "net_in": $net_in,
+  "net_out": $net_out,
+  "isp": "$ISP",
+  "region": "$REGION",
+  "history": {
+    "live": $HISTORY_LIVE,
+    "h1": $HISTORY_1H,
+    "h24": $HISTORY_24H,
+    "d7": $HISTORY_7D,
+    "d30": $HISTORY_30D
+  }
+}
+EOF
     mv "$JSON_FILE.tmp" "$JSON_FILE"
     chmod 644 "$JSON_FILE"
     
+    # Persistence every 15 minutes
+    if [ $((COUNTER % 450)) -eq 0 ]; then
+        cat <<EOF > "$HISTORY_CACHE"
+{
+  "live": $HISTORY_LIVE,
+  "h1": $HISTORY_1H,
+  "h24": $HISTORY_24H,
+  "d7": $HISTORY_7D,
+  "d30": $HISTORY_30D
+}
+EOF
+    fi
+
     sleep $INTERVAL
 done
 EOF

@@ -422,27 +422,10 @@
             if (STATE.raw) STATE.raw.location = data.region;
           }
           
+          window.lastStatsData = data;
+          
           // Update Chart if modal is open
-          if (window.metricsChart && window.currentMetricType) {
-            const type = window.currentMetricType;
-            if (data.history && Array.isArray(data.history)) {
-                const chartData = data.history.map(p => ({
-                  x: p.t * 1000,
-                  y: type === 'cpu' ? p.c : p.r
-                })).reverse();
-                
-                window.metricsChart.updateSeries([{
-                  name: type.toUpperCase(),
-                  data: chartData
-                }], true);
-
-                // Hide loader on first data arrival
-                const loader = document.getElementById('metrics-loader');
-                if (loader && !loader.classList.contains('hidden')) {
-                  loader.classList.add('hidden');
-                }
-            }
-          }
+          updateChartWithData(data);
 
           applyTheme();
         }
@@ -1118,7 +1101,7 @@
         <div class="metrics-modal-header">
           <div class="metrics-modal-title">
             <div style="color:${iconColor}">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 ${type === 'cpu' 
                   ? '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>'
                   : '<path d="M4 6h16M4 12h16M4 18h16M8 2v20M12 2v20M16 2v20"/>'}
@@ -1127,16 +1110,20 @@
             <h2>${title}</h2>
           </div>
           <div class="metrics-modal-close" onclick="closeMetricsModal()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </div>
         </div>
         <div class="metrics-tabs">
-          <div class="metrics-tab active">Live History (10m)</div>
+          <div class="metrics-tab active" data-period="live">Live (10m)</div>
+          <div class="metrics-tab" data-period="h1">1 Hour</div>
+          <div class="metrics-tab" data-period="h24">24 Hours</div>
+          <div class="metrics-tab" data-period="d7">7 Days</div>
+          <div class="metrics-tab" data-period="d30">30 Days</div>
         </div>
         <div class="metrics-chart-container">
           <div id="metrics-loader" class="metrics-loader">
             <div class="metrics-spinner"></div>
-            <span>Gathering Real-time Data...</span>
+            <span style="margin-top:10px">Synchronizing Analytics...</span>
           </div>
           <div id="metrics-chart"></div>
         </div>
@@ -1144,6 +1131,28 @@
     `;
 
     overlay.classList.add('active');
+    
+    // Global state for current period
+    window.metricsPeriod = 'live';
+
+    // Tab events
+    const tabs = overlay.querySelectorAll('.metrics-tab');
+    tabs.forEach(tab => {
+      tab.onclick = () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        window.metricsPeriod = tab.getAttribute('data-period');
+        
+        const loader = getEl('metrics-loader');
+        if (loader) loader.classList.remove('hidden');
+        
+        // Force immediate update
+        if (window.lastStatsData) {
+          updateChartWithData(window.lastStatsData);
+        }
+      };
+    });
+
     setTimeout(() => renderMetricsChart(type), 100);
   }
 
@@ -1151,6 +1160,7 @@
     const overlay = getEl('metrics-overlay');
     if (overlay) overlay.classList.remove('active');
     window.currentMetricType = null;
+    window.metricsPeriod = null;
     if (window.metricsChart) {
       window.metricsChart.destroy();
       window.metricsChart = null;
@@ -1172,9 +1182,9 @@
         width: '100%',
         animations: { 
           enabled: true, 
-          easing: 'linear', 
+          easing: 'easeinout', 
           speed: 800,
-          dynamicAnimation: { enabled: true, speed: 800 }
+          dynamicAnimation: { enabled: true, speed: 350 }
         },
         toolbar: { show: false },
         zoom: { enabled: false },
@@ -1187,9 +1197,9 @@
         type: 'gradient',
         gradient: {
           shadeIntensity: 1,
-          opacityFrom: 0.45,
-          opacityTo: 0.05,
-          stops: [20, 100]
+          opacityFrom: 0.4,
+          opacityTo: 0.0,
+          stops: [0, 90]
         }
       },
       dataLabels: { enabled: false },
@@ -1197,8 +1207,7 @@
       grid: {
         borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
         strokeDashArray: 4,
-        xaxis: { lines: { show: true } },
-        padding: { top: 0, right: 0, bottom: 0, left: 10 }
+        padding: { top: 0, right: 10, bottom: 0, left: 10 }
       },
       xaxis: {
         type: 'datetime',
@@ -1225,6 +1234,37 @@
     if (container) {
       window.metricsChart = new ApexCharts(container, options);
       window.metricsChart.render();
+    }
+  }
+
+  function updateChartWithData(data) {
+    if (!window.metricsChart || !window.currentMetricType) return;
+    
+    const type = window.currentMetricType;
+    const period = window.metricsPeriod || 'live';
+    
+    // Support nested history object
+    let historyArr = [];
+    if (data.history && typeof data.history === 'object' && !Array.isArray(data.history)) {
+      historyArr = data.history[period] || [];
+    } else if (Array.isArray(data.history)) {
+      // Fallback for old data format
+      historyArr = (period === 'live') ? data.history : [];
+    }
+    
+    const chartData = historyArr.map(p => ({
+      x: p.t * 1000,
+      y: type === 'cpu' ? p.c : p.r
+    })).reverse();
+    
+    window.metricsChart.updateSeries([{
+      name: type.toUpperCase(),
+      data: chartData
+    }], true);
+
+    const loader = getEl('metrics-loader');
+    if (loader && !loader.classList.contains('hidden')) {
+      setTimeout(() => loader.classList.add('hidden'), 300);
     }
   }
 
