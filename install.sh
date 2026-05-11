@@ -108,6 +108,21 @@ if [ "$IS_V3" = true ]; then
     
     TMPFILE="/tmp/x-ui-custom-$$"
     HTTP_STATUS=$(curl -L --progress-bar -w "%{http_code}" "$XUI_BIN_URL" -o "$TMPFILE")
+
+    if [[ "$HTTP_STATUS" != "200" ]]; then
+        echo -e "${YELLOW}⚠️  Version-specific binary not found (HTTP $HTTP_STATUS). Searching for latest compatible release...${NC}"
+        LATEST_TAG=$(curl -s https://api.github.com/repos/xLordGrim/3X-SUB/releases/latest | grep -oE "\"tag_name\":\s*\"[^\"]*\"" | cut -d'"' -f4)
+        [[ -z "$LATEST_TAG" ]] && LATEST_TAG="v3.0.0-dev"
+        
+        if [[ "$ARCH" == "x86_64" ]]; then
+            XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/download/${LATEST_TAG}/x-ui-linux-amd64"
+        else
+            XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/download/${LATEST_TAG}/x-ui-linux-arm64"
+        fi
+        
+        echo -e "${BLUE}Attempting fallback to $LATEST_TAG...${NC}"
+        HTTP_STATUS=$(curl -L --progress-bar -w "%{http_code}" "$XUI_BIN_URL" -o "$TMPFILE")
+    fi
     
     echo -e "${BLUE}HTTP Status: $HTTP_STATUS${NC}"
     
