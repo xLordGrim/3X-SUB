@@ -156,13 +156,20 @@ jobs:
           cat 3x-ui/web/dist/subpage.html
           grep -c "cdn.jsdelivr.net" 3x-ui/web/dist/subpage.html && echo "✓ CDN links present" || echo "✗ CDN links MISSING"
 
+      - name: Install Cross-Compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
       - name: Build Go Binary (AMD64)
         working-directory: 3x-ui
-        run: GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o x-ui-linux-amd64 main.go
+        run: |
+          CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o x-ui-linux-amd64 main.go
 
       - name: Build Go Binary (ARM64)
         working-directory: 3x-ui
-        run: GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -o x-ui-linux-arm64 main.go
+        run: |
+          CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc go build -ldflags "-s -w" -o x-ui-linux-arm64 main.go
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
