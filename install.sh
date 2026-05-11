@@ -3,15 +3,10 @@
 VERSION="2.0"
 TIMESTAMP=$(date +%s)
 
-# This determines which release to download.
-# development branch → dev-build release tag
-# main branch → stable release tag
+# Which channel this script installs from.
+# development branch → fetches dev releases
+# main branch → fetches stable releases
 BRANCH="development"
-if [[ "$BRANCH" == "main" ]]; then
-    RELEASE_TAG="stable"
-else
-    RELEASE_TAG="dev-build"
-fi
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -82,7 +77,15 @@ fi
 
 if [ "$IS_V3" = true ]; then
     echo -e "${BLUE}v3.0.0+ detected. Installing pre-compiled custom binary...${NC}"
-    echo -e "${BLUE}Channel: ${BRANCH} (release: ${RELEASE_TAG})${NC}"
+
+    # Build the release tag from the detected x-ui version
+    # development branch → v3.0.0-dev, main branch → v3.0.0
+    if [[ "$BRANCH" == "main" ]]; then
+        RELEASE_TAG="v${RAW_VER}"
+    else
+        RELEASE_TAG="v${RAW_VER}-dev"
+    fi
+    echo -e "${BLUE}Channel: ${BRANCH} | Release: ${RELEASE_TAG}${NC}"
     
     ARCH=$(uname -m)
     if [[ "$ARCH" == "x86_64" ]]; then
