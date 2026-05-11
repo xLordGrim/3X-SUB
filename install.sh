@@ -4,13 +4,11 @@ VERSION="2.0"
 TIMESTAMP=$(date +%s)
 
 # ┌─────────────────────────────────────────────────────┐
-# │ CHANNEL CONFIG                                      │
-# │ development branch install.sh → BRANCH="development"│
-# │ main branch install.sh        → BRANCH="main"       │
-# │                                                     │
-# │ ⚠ When merging to main, change this to "main"       │
+# │ CHANNEL CONFIG — defaults to main (stable)          │
+# │ development branch overrides this to "development"  │
+# │ No changes needed when merging to main.             │
 # └─────────────────────────────────────────────────────┘
-BRANCH="development"
+BRANCH="${BRANCH:-main}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
