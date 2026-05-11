@@ -2381,14 +2381,17 @@ body.s-light .span-4::after {
 
 .metrics-modal-overlay {
     position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
     z-index: 10000;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 16px;
     opacity: 0;
     visibility: hidden;
     transition: all 0.4s var(--ease-out);
@@ -2401,17 +2404,21 @@ body.s-light .span-4::after {
 
 .metrics-modal {
     width: 100%;
-    max-width: 800px;
+    max-width: 700px;
+    max-height: 90vh;
     background: var(--bg-card);
     backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--card-border);
     border-radius: 24px;
-    padding: 30px;
+    padding: 24px;
     position: relative;
-    transform: scale(0.9) translateY(20px);
+    transform: scale(0.95) translateY(20px);
     opacity: 0;
-    transition: all 0.5s var(--ease-out);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: var(--shadow-xl);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .metrics-modal-overlay.active .metrics-modal {
@@ -2423,7 +2430,8 @@ body.s-light .span-4::after {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
 }
 
 .metrics-modal-title {
@@ -2432,21 +2440,21 @@ body.s-light .span-4::after {
     gap: 12px;
 }
 
-.metrics-modal-title i {
-    font-size: 1.5rem;
+.metrics-modal-title i, .metrics-modal-title svg {
     color: var(--accent);
 }
 
 .metrics-modal-title h2 {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 800;
+    letter-spacing: -0.02em;
 }
 
 .metrics-modal-close {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     background: rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
@@ -2465,26 +2473,60 @@ body.s-light .span-4::after {
 
 .metrics-chart-container {
     width: 100%;
-    height: 350px;
+    flex: 1;
+    min-height: 300px;
     position: relative;
+}
+
+.metrics-loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    z-index: 5;
+    background: var(--bg-card);
+    transition: opacity 0.4s;
+}
+
+.metrics-loader.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.metrics-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--card-border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: rotate 0.8s linear infinite;
 }
 
 .metrics-tabs {
     display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-shrink: 0;
 }
 
 .metrics-tab {
-    padding: 8px 16px;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
     color: var(--text-secondary);
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--card-border);
     cursor: pointer;
     transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .metrics-tab.active {
@@ -2496,10 +2538,18 @@ body.s-light .span-4::after {
 
 @media (max-width: 600px) {
     .metrics-modal {
-        padding: 20px;
+        padding: 16px;
+        border-radius: 20px;
     }
     .metrics-chart-container {
-        height: 250px;
+        min-height: 250px;
     }
+    .metrics-modal-title h2 {
+        font-size: 1rem;
+    }
+}
+
+@keyframes rotate {
+    to { transform: rotate(360deg); }
 }
 

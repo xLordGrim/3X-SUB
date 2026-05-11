@@ -430,10 +430,17 @@
                   x: p.t * 1000,
                   y: type === 'cpu' ? p.c : p.r
                 })).reverse();
+                
                 window.metricsChart.updateSeries([{
                   name: type.toUpperCase(),
                   data: chartData
-                }], false); // false = no transition for smoother live updates
+                }], true);
+
+                // Hide loader on first data arrival
+                const loader = document.getElementById('metrics-loader');
+                if (loader && !loader.classList.contains('hidden')) {
+                  loader.classList.add('hidden');
+                }
             }
           }
 
@@ -1111,7 +1118,7 @@
         <div class="metrics-modal-header">
           <div class="metrics-modal-title">
             <div style="color:${iconColor}">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 ${type === 'cpu' 
                   ? '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>'
                   : '<path d="M4 6h16M4 12h16M4 18h16M8 2v20M12 2v20M16 2v20"/>'}
@@ -1120,13 +1127,17 @@
             <h2>${title}</h2>
           </div>
           <div class="metrics-modal-close" onclick="closeMetricsModal()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </div>
         </div>
         <div class="metrics-tabs">
-          <div class="metrics-tab active" data-period="live">Live (10m)</div>
+          <div class="metrics-tab active">Live History (10m)</div>
         </div>
         <div class="metrics-chart-container">
+          <div id="metrics-loader" class="metrics-loader">
+            <div class="metrics-spinner"></div>
+            <span>Gathering Real-time Data...</span>
+          </div>
           <div id="metrics-chart"></div>
         </div>
       </div>
@@ -1157,17 +1168,19 @@
       }],
       chart: {
         type: 'area',
-        height: 350,
+        height: '100%',
+        width: '100%',
         animations: { 
           enabled: true, 
-          easing: 'easeinout', 
+          easing: 'linear', 
           speed: 800,
-          dynamicAnimation: { enabled: true, speed: 350 }
+          dynamicAnimation: { enabled: true, speed: 800 }
         },
         toolbar: { show: false },
         zoom: { enabled: false },
         background: 'transparent',
-        foreColor: '#94a3b8'
+        foreColor: '#94a3b8',
+        sparkline: { enabled: false }
       },
       colors: [accentColor],
       fill: {
@@ -1184,7 +1197,8 @@
       grid: {
         borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
         strokeDashArray: 4,
-        xaxis: { lines: { show: true } }
+        xaxis: { lines: { show: true } },
+        padding: { top: 0, right: 0, bottom: 0, left: 10 }
       },
       xaxis: {
         type: 'datetime',
@@ -1198,6 +1212,7 @@
       yaxis: {
         min: 0,
         max: 100,
+        tickAmount: 5,
         labels: { style: { colors: '#94a3b8', fontSize: '10px' } }
       },
       tooltip: {
@@ -1206,8 +1221,11 @@
       }
     };
 
-    window.metricsChart = new ApexCharts(document.querySelector("#metrics-chart"), options);
-    window.metricsChart.render();
+    const container = document.querySelector("#metrics-chart");
+    if (container) {
+      window.metricsChart = new ApexCharts(container, options);
+      window.metricsChart.render();
+    }
   }
 
   function showToast(msg) {
