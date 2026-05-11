@@ -1074,7 +1074,7 @@
       burst.remove();
     }, 1600);
   }
-  }
+
   
   window.metricsChart = null;
   window.currentMetricType = null;
