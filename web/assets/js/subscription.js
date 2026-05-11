@@ -398,7 +398,7 @@
       kbps >= 1024 ? (kbps / 1024).toFixed(1) + " MB/s" : kbps + " KB/s";
     const poll = async () => {
       try {
-        const basePath = window.__X_UI_BASE_PATH__ || "/sub/";
+        const basePath = window.__X_UI_BASE_PATH__ || window.X_UI_BASE_PATH || "/sub/";
         const res = await fetch(basePath + "assets/css/status.json?t=" + Date.now());
         if (res.ok) {
           const data = await res.json();
