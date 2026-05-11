@@ -2341,6 +2341,7 @@ body.s-light .span-4::after {
         color-mix(in srgb, var(--accent) 12%, transparent) 50%,
         color-mix(in srgb, var(--accent) 3%, transparent) 75%,
         transparent 80%
+    );
 }
 
 /* --- PREMIUM METRICS DASHBOARD --- */
