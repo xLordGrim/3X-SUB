@@ -152,7 +152,7 @@ else
     echo -e "${BLUE}Backing up existing files...${NC}"
     [[ -f "$ASSETS_PATH/js/subscription.js" ]] && cp "$ASSETS_PATH/js/subscription.js" "$ASSETS_PATH/js/subscription.js.bak" 2>/dev/null
     [[ -f "$ASSETS_PATH/css/premium.css" ]] && cp "$ASSETS_PATH/css/premium.css" "$ASSETS_PATH/css/premium.css.bak" 2>/dev/null
-
+    
     echo -e "${BLUE}Syncing official web assets for full compatibility...${NC}"
     if ! command -v unzip &> /dev/null; then
         echo -e "${BLUE}🔧 Installing unzip...${NC}"
@@ -213,7 +213,10 @@ cat <<"EOF" > "$STATS_SCRIPT"
 #!/bin/bash
 JSON_FILE="__STATS_FILE__"
 ISP_CACHE="/usr/local/x-ui/isp_info.json"
+HISTORY_CACHE="/tmp/xui_stats_history.json"
 INTERVAL=2
+MAX_HISTORY=60
+COUNTER=0
 
 INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '{print $5; exit}')
 [[ -z "$INTERFACE" ]] && INTERFACE=$(ip -o -4 route show to default | awk '{print $5; exit}')
@@ -223,6 +226,15 @@ prev_idle=0
 prev_rx=0
 prev_tx=0
 prev_uptime=$(cat /proc/uptime | awk '{print $1}')
+
+# Initialize history from cache if exists
+if [ -f "$HISTORY_CACHE" ]; then
+    HISTORY=$(cat "$HISTORY_CACHE")
+    # Basic validation
+    [[ ! "$HISTORY" =~ ^\[ ]] && HISTORY="[]"
+else
+    HISTORY="[]"
+fi
 
 detect_infrastructure() {
     if [ ! -s "$ISP_CACHE" ]; then
@@ -294,8 +306,37 @@ while true; do
         net_in=0
         net_out=0
     fi
+
+    # Update history every 10 seconds (5 * 2s)
+    if [ $((COUNTER % 5)) -eq 0 ]; then
+        POINT="{\"c\":$cpu_usage,\"r\":$ram_usage,\"t\":$(date +%s)}"
+        if [ "$HISTORY" == "[]" ]; then
+            HISTORY="[$POINT]"
+        else
+            # Prepend point and limit array size
+            HISTORY=$(echo "$HISTORY" | sed "s/^\[/[$POINT,/")
+            # Keep only last MAX_HISTORY points (simple awk truncation)
+            HISTORY=$(echo "$HISTORY" | awk -v max="$MAX_HISTORY" '
+                {
+                    n = 0
+                    start = 1
+                    while (n < max && match(substr($0, start), /},/)) {
+                        n++
+                        start += RSTART + RLENGTH - 1
+                    }
+                    if (n == max) {
+                        print substr($0, 1, start-2) "]"
+                    } else {
+                        print $0
+                    }
+                }
+            ')
+        fi
+        echo "$HISTORY" > "$HISTORY_CACHE"
+    fi
+    COUNTER=$((COUNTER + 1))
     
-    echo "{\"cpu\":$cpu_usage,\"ram\":$ram_usage,\"net_in\":$net_in,\"net_out\":$net_out,\"isp\":\"$ISP\",\"region\":\"$REGION\"}" > "$JSON_FILE.tmp"
+    echo "{\"cpu\":$cpu_usage,\"ram\":$ram_usage,\"net_in\":$net_in,\"net_out\":$net_out,\"isp\":\"$ISP\",\"region\":\"$REGION\",\"history\":$HISTORY}" > "$JSON_FILE.tmp"
     mv "$JSON_FILE.tmp" "$JSON_FILE"
     chmod 644 "$JSON_FILE"
     

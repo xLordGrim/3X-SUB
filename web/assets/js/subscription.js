@@ -372,10 +372,14 @@
     wrap.innerHTML = `<div class="nodes-header"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Server Monitor</div>`;
     const grid = mkEl("div", "stats-grid-horizontal");
     grid.id = "stats-grid";
-    const cpuCard = mkEl("div", "stat-card-mini");
+    const cpuCard = mkEl("div", "stat-card-mini clickable-card");
     cpuCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-cpu)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">CPU Usage</div><div class="stat-mini-value"><span id="cpu-val">0</span>%</div></div>`;
-    const ramCard = mkEl("div", "stat-card-mini");
+    cpuCard.onclick = () => showMetricsModal("cpu");
+
+    const ramCard = mkEl("div", "stat-card-mini clickable-card");
     ramCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-ram)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M4 12h16M4 18h16M8 2v20M12 2v20M16 2v20"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">Memory</div><div class="stat-mini-value"><span id="ram-val">0</span>%</div></div>`;
+    ramCard.onclick = () => showMetricsModal("ram");
+
     const uploadCard = mkEl("div", "stat-card-mini");
     uploadCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-up)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">Upload</div><div class="stat-mini-value" id="upload-val">0 KB/s</div></div>`;
     const downloadCard = mkEl("div", "stat-card-mini");
@@ -416,6 +420,22 @@
             if (locEl) locEl.textContent = data.region;
             if (STATE.raw) STATE.raw.location = data.region;
           }
+          
+          // Update Chart if modal is open
+          if (window.metricsChart && window.currentMetricType) {
+            const type = window.currentMetricType;
+            if (data.history && Array.isArray(data.history)) {
+                const chartData = data.history.map(p => ({
+                  x: p.t * 1000,
+                  y: type === 'cpu' ? p.c : p.r
+                })).reverse();
+                window.metricsChart.updateSeries([{
+                  name: type.toUpperCase(),
+                  data: chartData
+                }], false); // false = no transition for smoother live updates
+            }
+          }
+
           applyTheme();
         }
       } catch (e) {}
@@ -1054,6 +1074,141 @@
       burst.remove();
     }, 1600);
   }
+  }
+  
+  window.metricsChart = null;
+  window.currentMetricType = null;
+
+  window.showMetricsModal = async function(type) {
+    window.currentMetricType = type;
+    if (!window.ApexCharts) {
+      const script = document.createElement('script');
+      script.src = "https://cdn.jsdelivr.net/npm/apexcharts";
+      script.onload = () => createMetricsModal(type);
+      document.head.appendChild(script);
+    } else {
+      createMetricsModal(type);
+    }
+  };
+
+  function createMetricsModal(type) {
+    let overlay = getEl('metrics-overlay');
+    if (!overlay) {
+      overlay = mkEl('div', 'metrics-modal-overlay');
+      overlay.id = 'metrics-overlay';
+      overlay.onclick = (e) => {
+        if (e.target === overlay) closeMetricsModal();
+      };
+      document.body.appendChild(overlay);
+    }
+
+    const title = type === 'cpu' ? 'CPU Usage History' : 'Memory Usage History';
+    const iconColor = type === 'cpu' ? 'var(--theme-cpu)' : 'var(--theme-ram)';
+    
+    overlay.innerHTML = `
+      <div class="metrics-modal">
+        <div class="metrics-modal-header">
+          <div class="metrics-modal-title">
+            <div style="color:${iconColor}">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                ${type === 'cpu' 
+                  ? '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>'
+                  : '<path d="M4 6h16M4 12h16M4 18h16M8 2v20M12 2v20M16 2v20"/>'}
+              </svg>
+            </div>
+            <h2>${title}</h2>
+          </div>
+          <div class="metrics-modal-close" onclick="closeMetricsModal()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </div>
+        </div>
+        <div class="metrics-tabs">
+          <div class="metrics-tab active" data-period="live">Live (10m)</div>
+        </div>
+        <div class="metrics-chart-container">
+          <div id="metrics-chart"></div>
+        </div>
+      </div>
+    `;
+
+    overlay.classList.add('active');
+    setTimeout(() => renderMetricsChart(type), 100);
+  }
+
+  window.closeMetricsModal = function() {
+    const overlay = getEl('metrics-overlay');
+    if (overlay) overlay.classList.remove('active');
+    window.currentMetricType = null;
+    if (window.metricsChart) {
+      window.metricsChart.destroy();
+      window.metricsChart = null;
+    }
+  };
+
+  function renderMetricsChart(type) {
+    const isDark = STATE.theme === 'dark';
+    const accentColor = type === 'cpu' ? '#6366f1' : '#ec4899';
+    
+    const options = {
+      series: [{
+        name: type.toUpperCase(),
+        data: []
+      }],
+      chart: {
+        type: 'area',
+        height: 350,
+        animations: { 
+          enabled: true, 
+          easing: 'easeinout', 
+          speed: 800,
+          dynamicAnimation: { enabled: true, speed: 350 }
+        },
+        toolbar: { show: false },
+        zoom: { enabled: false },
+        background: 'transparent',
+        foreColor: '#94a3b8'
+      },
+      colors: [accentColor],
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.45,
+          opacityTo: 0.05,
+          stops: [20, 100]
+        }
+      },
+      dataLabels: { enabled: false },
+      stroke: { curve: 'smooth', width: 3 },
+      grid: {
+        borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+        strokeDashArray: 4,
+        xaxis: { lines: { show: true } }
+      },
+      xaxis: {
+        type: 'datetime',
+        labels: { 
+          datetimeUTC: false,
+          style: { colors: '#94a3b8', fontSize: '10px' } 
+        },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: {
+        min: 0,
+        max: 100,
+        labels: { style: { colors: '#94a3b8', fontSize: '10px' } }
+      },
+      tooltip: {
+        theme: isDark ? 'dark' : 'light',
+        x: { format: 'HH:mm:ss' }
+      }
+    };
+
+    window.metricsChart = new ApexCharts(document.querySelector("#metrics-chart"), options);
+    window.metricsChart.render();
+  }
+
   function showToast(msg) {
     const toastEl = getEl("toast");
     if (toastEl) {
@@ -1066,6 +1221,7 @@
       );
     }
   }
+
   function updateStatus() {}
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", init);

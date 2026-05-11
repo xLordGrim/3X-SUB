@@ -2341,5 +2341,164 @@ body.s-light .span-4::after {
         color-mix(in srgb, var(--accent) 12%, transparent) 50%,
         color-mix(in srgb, var(--accent) 3%, transparent) 75%,
         transparent 80%
-    );
 }
+
+/* --- PREMIUM METRICS DASHBOARD --- */
+.clickable-card {
+    cursor: pointer;
+    transition: all 0.4s var(--ease-out) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.clickable-card::after {
+    content: 'Click to view history';
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 10px;
+    color: var(--accent);
+    opacity: 0;
+    transform: translateY(5px);
+    transition: all 0.3s var(--ease-out);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.clickable-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    background: var(--card-hover) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 12px 30px var(--accent-glow) !important;
+}
+
+.clickable-card:hover::after {
+    opacity: 0.7;
+    transform: translateY(0);
+}
+
+.metrics-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s var(--ease-out);
+}
+
+.metrics-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.metrics-modal {
+    width: 100%;
+    max-width: 800px;
+    background: var(--bg-card);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 30px;
+    position: relative;
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+    transition: all 0.5s var(--ease-out);
+    box-shadow: var(--shadow-xl);
+}
+
+.metrics-modal-overlay.active .metrics-modal {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+.metrics-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.metrics-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.metrics-modal-title i {
+    font-size: 1.5rem;
+    color: var(--accent);
+}
+
+.metrics-modal-title h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.metrics-modal-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid var(--card-border);
+}
+
+.metrics-modal-close:hover {
+    background: #ff4444;
+    color: white;
+    border-color: #ff4444;
+    transform: rotate(90deg);
+}
+
+.metrics-chart-container {
+    width: 100%;
+    height: 350px;
+    position: relative;
+}
+
+.metrics-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.metrics-tab {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.metrics-tab.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+@media (max-width: 600px) {
+    .metrics-modal {
+        padding: 20px;
+    }
+    .metrics-chart-container {
+        height: 250px;
+    }
+}
+
