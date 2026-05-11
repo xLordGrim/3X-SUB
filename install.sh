@@ -3,9 +3,13 @@
 VERSION="2.0"
 TIMESTAMP=$(date +%s)
 
-# Which channel this script installs from.
-# development branch → fetches dev releases
-# main branch → fetches stable releases
+# ┌─────────────────────────────────────────────────────┐
+# │ CHANNEL CONFIG                                      │
+# │ development branch install.sh → BRANCH="development"│
+# │ main branch install.sh        → BRANCH="main"       │
+# │                                                     │
+# │ ⚠ When merging to main, change this to "main"       │
+# └─────────────────────────────────────────────────────┘
 BRANCH="development"
 
 RED='\033[0;31m'
@@ -30,16 +34,7 @@ BASE_PATH="$XUI_ROOT/web"
 ASSETS_PATH="$BASE_PATH/assets"
 HTML_PATH="$BASE_PATH/html"
 
-if [ -z "$BRANCH" ]; then
-    BRANCH="main"
-    if curl -s --head "https://raw.githubusercontent.com/xLordGrim/3X-SUB/development/install.sh" | grep -q "200 OK"; then
-        if [ -f "/tmp/xui_installer_dev" ]; then
-            BRANCH="development"
-        fi
-    fi
-fi
-
-echo -e "${BLUE}Using branch: ${GREEN}${BRANCH}${NC}"
+echo -e "${BLUE}Channel: ${GREEN}${BRANCH}${NC}"
 REPO_URL="https://raw.githubusercontent.com/xLordGrim/3X-SUB/${BRANCH}"
 
 # Detect 3x-ui version
