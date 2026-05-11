@@ -37,28 +37,35 @@ jobs:
 
       - name: Inject 3X-SUB Theme into Vue Source (BEFORE build)
         run: |
-          echo "=== Injecting 3X-SUB theme into Vue source files ==="
+          echo "=== Injecting 3X-SUB theme into subpage.html INSIDE </head> and </body> ==="
 
-          # 1. Copy premium.css into the frontend public folder so Vite
-          #    copies it verbatim into dist/ at build time
+          # 1. Copy assets into frontend/public so Vite copies them verbatim into dist/
           mkdir -p 3x-ui/frontend/public/premium
           cp 3X-SUB/web/assets/css/premium.css 3x-ui/frontend/public/premium/premium.css
-
-          # 2. Copy our subscription.js into the frontend public folder too
           cp 3X-SUB/web/assets/js/subscription.js 3x-ui/frontend/public/premium/subscription.js
 
-          # 3. Patch subpage.html (the Vite entry point) BEFORE the build.
-          #    Vite will process this HTML and output a transformed subpage.html
-          #    in dist/ with all asset URLs correctly resolved.
-          cat >> 3x-ui/frontend/subpage.html << 'HTMLEOF'
-          <!-- 3X-SUB Premium Theme -->
-          <link rel="stylesheet" href="/premium/premium.css">
-          <script>document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('premium-theme'); var app = document.getElementById('app'); if(app) app.style.display='none'; });</script>
-          <script src="/premium/subscription.js"></script>
-          HTMLEOF
+          # 2. Verify files exist
+          echo "--- Assets to inject ---"
+          ls -la 3x-ui/frontend/public/premium/
 
-          # Show what we injected so we can debug in CI logs
-          echo "=== subpage.html after injection ==="
+          # 3. Patch subpage.html using Python (reliable cross-platform, no sed escaping issues)
+          python3 << 'PYEOF'
+          with open('3x-ui/frontend/subpage.html', 'r') as f:
+              content = f.read()
+
+          head_inject = '<link rel="stylesheet" href="/premium/premium.css">\n  </head>'
+          body_inject = '  <script>\n    document.body.classList.add("premium-theme");\n    var app = document.getElementById("app");\n    if (app) app.style.display = "none";\n  </script>\n  <script src="/premium/subscription.js"></script>\n  </body>'
+
+          content = content.replace('</head>', head_inject, 1)
+          content = content.replace('</body>', body_inject, 1)
+
+          with open('3x-ui/frontend/subpage.html', 'w') as f:
+              f.write(content)
+
+          print("subpage.html patched successfully")
+          PYEOF
+
+          echo "--- subpage.html after patch ---"
           cat 3x-ui/frontend/subpage.html
 
       - name: Build Vue Frontend
@@ -71,18 +78,21 @@ jobs:
         run: |
           echo "=== Checking dist folder structure ==="
           find 3x-ui/web/dist -type f | sort
-          echo "=== Checking premium assets were copied ==="
-          ls -la 3x-ui/web/dist/premium/ || echo "MISSING: premium dir not in dist!"
+          echo ""
+          echo "=== Checking subpage.html in dist ==="
+          cat 3x-ui/web/dist/subpage.html | grep -E "(premium|subscription|/assets/)" || echo "WARNING: premium assets not found in built subpage.html"
 
       - name: Build Go Binary (AMD64)
         working-directory: 3x-ui
         run: |
           GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o x-ui-linux-amd64 main.go
+          ls -lh x-ui-linux-amd64
 
       - name: Build Go Binary (ARM64)
         working-directory: 3x-ui
         run: |
           GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -o x-ui-linux-arm64 main.go
+          ls -lh x-ui-linux-arm64
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4

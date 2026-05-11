@@ -88,29 +88,56 @@ if [ "$IS_V3" = true ]; then
     
     echo -e "${BLUE}Backing up original binary...${NC}"
     cp /usr/local/x-ui/x-ui /usr/local/x-ui/x-ui.bak
+    OLD_SIZE=$(stat -c%s /usr/local/x-ui/x-ui 2>/dev/null || echo "0")
+    echo -e "${BLUE}Current binary size: ${OLD_SIZE} bytes${NC}"
     
     echo -e "${YELLOW}Removing legacy debug mode to fix assets...${NC}"
     find /etc/systemd /lib/systemd /usr/lib/systemd -type f -name "x-ui.service" -exec sed -i '/XUI_DEBUG/d' {} + 2>/dev/null
     sed -i '/XUI_DEBUG/d' /etc/environment 2>/dev/null
     systemctl daemon-reload
     
-    echo -e "${BLUE}Downloading custom binary for $ARCH...${NC}"
-    HTTP_STATUS=$(curl -sL -w "%{http_code}" "$XUI_BIN_URL" -o /usr/local/x-ui/x-ui.new)
+    echo -e "${BLUE}Downloading custom binary for $ARCH from:${NC}"
+    echo -e "${YELLOW}  $XUI_BIN_URL${NC}"
+    
+    TMPFILE="/tmp/x-ui-custom-$$"
+    HTTP_STATUS=$(curl -L --progress-bar -w "%{http_code}" "$XUI_BIN_URL" -o "$TMPFILE")
+    
+    echo -e "${BLUE}HTTP Status: $HTTP_STATUS${NC}"
+    
     if [[ "$HTTP_STATUS" != "200" ]]; then
         echo -e "${RED}❌ Failed to download custom binary (HTTP $HTTP_STATUS).${NC}"
-        echo -e "${YELLOW}Ensure the 'Build Custom 3x-ui' GitHub Action has run successfully and published a release!${NC}"
+        echo -e "${YELLOW}Ensure the 'Build Custom 3x-ui' GitHub Action has run and published a release.${NC}"
         echo -e "${BLUE}Restoring original binary...${NC}"
         cp /usr/local/x-ui/x-ui.bak /usr/local/x-ui/x-ui
         systemctl start x-ui
         exit 1
     fi
     
-    mv /usr/local/x-ui/x-ui.new /usr/local/x-ui/x-ui
-    chmod +x /usr/local/x-ui/x-ui
+    # Sanity check: make sure we got a binary (ELF), not an HTML page
+    MAGIC=$(head -c 4 "$TMPFILE" | xxd -p 2>/dev/null || head -c 4 "$TMPFILE" | od -A n -t x1 | tr -d ' \n')
+    NEW_SIZE=$(stat -c%s "$TMPFILE")
+    echo -e "${BLUE}Downloaded file size: ${NEW_SIZE} bytes${NC}"
+    echo -e "${BLUE}File magic bytes: ${MAGIC}${NC}"
     
-    # Internal JS Cache Busting (Since we download a pre-compiled binary, we rely on the action to inject it)
-    # But we can clear ISP cache
+    if [[ "$MAGIC" != "7f454c46" ]] && [[ "$MAGIC" != "7f454c46"* ]]; then
+        echo -e "${RED}❌ Downloaded file is not a Linux binary (expected ELF magic 7f454c46).${NC}"
+        echo -e "${RED}Got: $MAGIC — this looks like an HTML error page.${NC}"
+        echo -e "${BLUE}First 200 bytes of downloaded file:${NC}"
+        head -c 200 "$TMPFILE"
+        rm -f "$TMPFILE"
+        cp /usr/local/x-ui/x-ui.bak /usr/local/x-ui/x-ui
+        systemctl start x-ui
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✓ Valid ELF binary confirmed. Installing...${NC}"
+    cp "$TMPFILE" /usr/local/x-ui/x-ui
+    chmod +x /usr/local/x-ui/x-ui
+    rm -f "$TMPFILE"
+    
+    # Clear ISP cache
     [[ -f "/usr/local/x-ui/isp_info.json" ]] && rm -f "/usr/local/x-ui/isp_info.json"
+
 
 else
     echo -e "${BLUE}v2.x detected. Installing via legacy static file injection...${NC}"
