@@ -50,13 +50,25 @@ jobs:
           echo "JS URL: $JS_URL"
 
           # Patch subpage.html with Python — inject INSIDE </head> and </body>
+          # Also strip the stock Vue app's script/link tags to prevent 404 errors
           python3 << PYEOF
+          import re
           css_url = "${CSS_URL}"
           js_url = "${JS_URL}"
 
           with open('3x-ui/frontend/subpage.html', 'r') as f:
               content = f.read()
 
+          # Remove the stock Vue entry script (type="module" src pointing to subpage entry)
+          content = re.sub(r'<script type="module"[^>]*src="[^"]*subpage[^"]*"[^>]*></script>\s*', '', content)
+
+          # Remove all modulepreload links (vendor chunks, locale files, etc.)
+          content = re.sub(r'<link rel="modulepreload"[^>]*>\s*', '', content)
+
+          # Remove stock Vue CSS links (but keep our injected one)
+          content = re.sub(r'<link rel="stylesheet" crossorigin[^>]*>\s*', '', content)
+
+          # Inject our CDN links
           head_inject = f'<link rel="stylesheet" href="{css_url}">\n  </head>'
           body_inject = f'''  <script>
               document.addEventListener('DOMContentLoaded', function() {{
@@ -74,7 +86,7 @@ jobs:
           with open('3x-ui/frontend/subpage.html', 'w') as f:
               f.write(content)
 
-          print("subpage.html patched successfully")
+          print("subpage.html patched successfully (stock Vue tags removed, CDN links injected)")
           PYEOF
 
           echo "--- subpage.html after patch ---"
