@@ -152,7 +152,7 @@ else
     echo -e "${BLUE}Backing up existing files...${NC}"
     [[ -f "$ASSETS_PATH/js/subscription.js" ]] && cp "$ASSETS_PATH/js/subscription.js" "$ASSETS_PATH/js/subscription.js.bak" 2>/dev/null
     [[ -f "$ASSETS_PATH/css/premium.css" ]] && cp "$ASSETS_PATH/css/premium.css" "$ASSETS_PATH/css/premium.css.bak" 2>/dev/null
-
+    
     echo -e "${BLUE}Syncing official web assets for full compatibility...${NC}"
     if ! command -v unzip &> /dev/null; then
         echo -e "${BLUE}🔧 Installing unzip...${NC}"
@@ -209,99 +209,146 @@ echo -e "${BLUE}Deploying System Stats Monitor Service...${NC}"
 STATS_SCRIPT="$XUI_ROOT/server_stats.sh"
 STATS_SERVICE="/etc/systemd/system/x-ui-stats.service"
 
-cat <<"EOF" > "$STATS_SCRIPT"
+cat <<'EOF_SCRIPT' > "$STATS_SCRIPT"
 #!/bin/bash
 JSON_FILE="__STATS_FILE__"
 ISP_CACHE="/usr/local/x-ui/isp_info.json"
 INTERVAL=2
+COUNTER=0
 
-INTERFACE=$(ip route get 8.8.8.8 2>/dev/null | awk '{print $5; exit}')
-[[ -z "$INTERFACE" ]] && INTERFACE=$(ip -o -4 route show to default | awk '{print $5; exit}')
+# History Buffers (Bash Arrays)
+declare -a H_LIVE H_H1 H_H24 H_D7 H_D30
 
-prev_total=0
-prev_idle=0
-prev_rx=0
-prev_tx=0
-prev_uptime=$(cat /proc/uptime | awk '{print $1}')
-
+# ISP Detection Logic
 detect_infrastructure() {
     if [ ! -s "$ISP_CACHE" ]; then
-        IP_DATA=$(curl -s --max-time 10 http://ip-api.com/json/)
-        if [[ -z "$IP_DATA" || "$IP_DATA" == *"fail"* ]]; then
-            IP_DATA=$(curl -s --max-time 10 https://ipinfo.io/json)
-            ISP=$(echo "$IP_DATA" | grep -oE "\"org\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"org\"\s*:\s*\"//g" | sed 's/"$//g' | sed 's/^AS[0-9]* //')
-            REGION=$(echo "$IP_DATA" | grep -oE "\"city\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"city\"\s*:\s*\"//g" | sed 's/"$//g')
+        local ip_data=$(curl -s --max-time 10 http://ip-api.com/json/)
+        if [[ -z "$ip_data" || "$ip_data" == *"fail"* ]]; then
+            ip_data=$(curl -s --max-time 10 https://ipinfo.io/json)
+            ISP=$(echo "$ip_data" | grep -oE "\"org\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"org\"\s*:\s*\"//g" | sed 's/"$//g' | sed 's/^AS[0-9]* //')
+            REGION=$(echo "$ip_data" | grep -oE "\"city\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"city\"\s*:\s*\"//g" | sed 's/"$//g')
         else
-            ISP=$(echo "$IP_DATA" | grep -oE "\"isp\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"isp\"\s*:\s*\"//g" | sed 's/"$//g')
-            REGION=$(echo "$IP_DATA" | grep -oE "\"city\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"city\"\s*:\s*\"//g" | sed 's/"$//g')
+            ISP=$(echo "$ip_data" | grep -oE "\"isp\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"isp\"\s*:\s*\"//g" | sed 's/"$//g')
+            REGION=$(echo "$ip_data" | grep -oE "\"city\"\s*:\s*\"[^\"]*\"" | sed -E "s/\"city\"\s*:\s*\"//g" | sed 's/"$//g')
         fi
         [[ -z "$ISP" ]] && ISP="Unknown Provider"
         [[ -z "$REGION" ]] && REGION="Unknown Region"
         echo "{\"isp\":\"$ISP\",\"region\":\"$REGION\"}" > "$ISP_CACHE"
+    else
+        local isp_data=$(cat "$ISP_CACHE")
+        ISP=$(echo "$isp_data" | grep -oE "\"isp\":\"[^\"]*\"" | cut -d'"' -f4)
+        REGION=$(echo "$isp_data" | grep -oE "\"region\":\"[^\"]*\"" | cut -d'"' -f4)
     fi
 }
-
 detect_infrastructure
 
-while true; do
-    if [ -f "$ISP_CACHE" ]; then
-        ISP_DATA=$(cat "$ISP_CACHE")
-        ISP=$(echo "$ISP_DATA" | grep -oE "\"isp\":\"[^\"]*\"" | cut -d'"' -f4)
-        REGION=$(echo "$ISP_DATA" | grep -oE "\"region\":\"[^\"]*\"" | cut -d'"' -f4)
-    else
-        ISP="Detecting..."
-        REGION="..."
-    fi
+get_net_interface() {
+    local iface=$(ip route get 8.8.8.8 2>/dev/null | awk '{print $5; exit}')
+    [[ -z "$iface" ]] && iface=$(ip -o -4 route show to default | awk '{print $5; exit}')
+    echo "$iface"
+}
+INTERFACE=$(get_net_interface)
 
-    read cpu a b c idle rest < /proc/stat
-    total=$((a+b+c+idle))
-    
-    if [ "$prev_total" -gt 0 ]; then
-        diff_total=$((total-prev_total))
-        diff_idle=$((idle-prev_idle))
-        if [ "$diff_total" -gt 0 ]; then
-            cpu_usage=$((100*(diff_total-diff_idle)/diff_total))
-        else
-            cpu_usage=0
-        fi
+# Optimized Stat Helpers
+get_cpu() {
+    read _ cpu_u cpu_n cpu_s cpu_i cpu_io _ < /proc/stat
+    local total=$((cpu_u + cpu_n + cpu_s + cpu_i + cpu_io))
+    local idle=$((cpu_i + cpu_io))
+    echo "$total $idle"
+}
+
+get_mem() {
+    local mem_total=0 mem_free=0 mem_buf=0 mem_cache=0
+    while read name val unit; do
+        case "$name" in
+            MemTotal:) mem_total=$val ;;
+            MemFree:)  mem_free=$val ;;
+            Buffers:)  mem_buf=$val ;;
+            Cached:)   mem_cache=$val ;;
+        esac
+    done < /proc/meminfo
+    local used=$((mem_total - mem_free - mem_buf - mem_cache))
+    echo "$((used * 100 / mem_total))"
+}
+
+prev_cpu=($(get_cpu))
+prev_net=($(grep "$INTERFACE" /proc/net/dev | awk '{print $2, $10}' 2>/dev/null || echo "0 0"))
+prev_uptime=$(cat /proc/uptime | cut -d' ' -f1)
+
+join_arr() {
+    local IFS=","
+    echo "[${*// /,}]"
+}
+
+while true; do
+    # 1. CPU Usage
+    curr_cpu=($(get_cpu))
+    diff_total=$((curr_cpu[0] - prev_cpu[0]))
+    diff_idle=$((curr_cpu[1] - prev_cpu[1]))
+    if [ $diff_total -gt 0 ]; then
+        cpu_usage=$((100 * (diff_total - diff_idle) / diff_total))
     else
         cpu_usage=0
     fi
-    
-    prev_total=$total
-    prev_idle=$idle
-    
-    mem_info=$(free -m | awk 'NR==2{printf "%.1f", $3*100/$2}')
-    ram_usage=${mem_info%.*}
+    prev_cpu=("${curr_cpu[@]}")
 
+    # 2. RAM Usage
+    ram_usage=$(get_mem)
+
+    # 3. Network Usage
     if [ -n "$INTERFACE" ]; then
-        read rx tx < <(grep "$INTERFACE" /proc/net/dev | awk '{print $2, $10}')
-        curr_uptime=$(cat /proc/uptime | awk '{print $1}')
-        if [ "$prev_rx" -gt 0 ]; then
-            read net_in net_out < <(awk -v rx="$rx" -v prx="$prev_rx" -v tx="$tx" -v ptx="$prev_tx" -v curr="$curr_uptime" -v prev="$prev_uptime" 'BEGIN {
-                dt = curr - prev;
-                if (dt <= 0) dt = 1;
-                printf "%d %d\n", (rx - prx) / 1024 / dt, (tx - ptx) / 1024 / dt
-            }')
-        else
-            net_in=0
-            net_out=0
-        fi
-        prev_rx=$rx
-        prev_tx=$tx
+        curr_net=($(grep "$INTERFACE" /proc/net/dev | awk '{print $2, $10}' 2>/dev/null))
+        curr_uptime=$(cat /proc/uptime | cut -d' ' -f1)
+        dt=$(echo "$curr_uptime - $prev_uptime" | bc 2>/dev/null || echo "2")
+        [[ -z "$dt" || "$dt" == "0" ]] && dt=2
+        
+        net_in=$(( (curr_net[0] - prev_net[0]) / 1024 / 2 ))
+        net_out=$(( (curr_net[1] - prev_net[1]) / 1024 / 2 ))
+        prev_net=("${curr_net[@]}")
         prev_uptime=$curr_uptime
     else
-        net_in=0
-        net_out=0
+        net_in=0; net_out=0
     fi
+
+    # 4. History Management (Shift and Prepend)
+    POINT="{\"c\":$cpu_usage,\"r\":$ram_usage,\"t\":$(date +%s)}"
     
-    echo "{\"cpu\":$cpu_usage,\"ram\":$ram_usage,\"net_in\":$net_in,\"net_out\":$net_out,\"isp\":\"$ISP\",\"region\":\"$REGION\"}" > "$JSON_FILE.tmp"
+    update_buffer() {
+        local -n arr=$1
+        local max=$2
+        arr=("$POINT" "${arr[@]:0:max-1}")
+    }
+
+    [[ $((COUNTER % 5)) -eq 0 ]] && update_buffer H_LIVE 60
+    [[ $((COUNTER % 30)) -eq 0 ]] && update_buffer H_H1 60
+    [[ $((COUNTER % 450)) -eq 0 ]] && update_buffer H_H24 96
+    [[ $((COUNTER % 1800)) -eq 0 ]] && update_buffer H_D7 168
+    [[ $((COUNTER % 10800)) -eq 0 ]] && update_buffer H_D30 120
+
+    # 5. Output JSON (Efficiently)
+    cat <<EOF > "$JSON_FILE.tmp"
+{
+  "cpu": $cpu_usage, "ram": $ram_usage, "net_in": $net_in, "net_out": $net_out,
+  "isp": "$ISP", "region": "$REGION",
+  "history": {
+    "live": $(join_arr "${H_LIVE[@]}"),
+    "h1": $(join_arr "${H_H1[@]}"),
+    "h24": $(join_arr "${H_H24[@]}"),
+    "d7": $(join_arr "${H_D7[@]}"),
+    "d30": $(join_arr "${H_D30[@]}")
+  }
+}
+EOF
     mv "$JSON_FILE.tmp" "$JSON_FILE"
     chmod 644 "$JSON_FILE"
-    
+
+    COUNTER=$((COUNTER + 1))
     sleep $INTERVAL
 done
-EOF
+EOF_SCRIPT
+
+sed -i "s|__STATS_FILE__|$STATS_FILE|g" "$STATS_SCRIPT"
+chmod +x "$STATS_SCRIPT"
 
 sed -i "s|__STATS_FILE__|$STATS_FILE|g" "$STATS_SCRIPT"
 chmod +x "$STATS_SCRIPT"

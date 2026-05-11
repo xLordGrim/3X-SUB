@@ -2314,21 +2314,18 @@ body.s-light .icon-btn-mini:hover {
     inset: 0;
     pointer-events: none;
     z-index: 10;
-    background: linear-gradient(
-        105deg,
-        transparent 20%,
-        color-mix(in srgb, var(--accent) 3%, transparent) 25%,
-        color-mix(in srgb, var(--accent) 15%, transparent) 50%,
-        color-mix(in srgb, var(--accent) 3%, transparent) 75%,
-        transparent 80%
+    background: radial-gradient(
+        circle at 50% 50%,
+        color-mix(in srgb, var(--accent) 5%, transparent) 0%,
+        transparent 70%
     );
-    transform: translateX(-150%) skewX(-15deg);
-    animation: premium-glass-sweep 8s infinite cubic-bezier(0.25, 0.1, 0.25, 1);
+    opacity: 0.5;
+    animation: premium-breathing-glow 4s infinite ease-in-out;
 }
 
-@keyframes premium-glass-sweep {
-    0%, 20% { transform: translateX(-150%) skewX(-15deg); }
-    80%, 100% { transform: translateX(200%) skewX(-15deg); }
+@keyframes premium-breathing-glow {
+    0%, 100% { transform: translate3d(-10%, -10%, 0) scale(1); opacity: 0.3; }
+    50% { transform: translate3d(10%, 10%, 0) scale(1.2); opacity: 0.6; }
 }
 
 body.s-light .span-12::after,
@@ -2343,3 +2340,229 @@ body.s-light .span-4::after {
         transparent 80%
     );
 }
+
+/* --- PREMIUM METRICS DASHBOARD --- */
+.clickable-card {
+    cursor: pointer;
+    transition: all 0.4s var(--ease-out) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.clickable-card::after {
+    content: 'Click to view history';
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 10px;
+    color: var(--accent);
+    opacity: 0;
+    transform: translateY(5px);
+    transition: all 0.3s var(--ease-out);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.clickable-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    background: var(--card-hover) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 12px 30px var(--accent-glow) !important;
+}
+
+.clickable-card:hover::after {
+    opacity: 0.7;
+    transform: translateY(0);
+}
+
+.metrics-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s var(--ease-out);
+}
+
+.metrics-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.metrics-modal {
+    width: 95%;
+    max-width: 900px;
+    height: auto;
+    max-height: 95vh;
+    background: var(--bg-card);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--card-border);
+    border-radius: 28px;
+    padding: 32px;
+    position: relative;
+    transform: scale(0.96) translateY(30px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--shadow-xl);
+    display: flex;
+    flex-direction: column;
+}
+
+.metrics-modal-overlay.active .metrics-modal {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+.metrics-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-shrink: 0;
+}
+
+.metrics-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.metrics-modal-title h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+}
+
+.metrics-modal-close {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid var(--card-border);
+}
+
+.metrics-modal-close:hover {
+    background: #ff4444;
+    color: white;
+    border-color: #ff4444;
+    transform: rotate(90deg);
+}
+
+.metrics-chart-container {
+    width: 100%;
+    min-height: 400px;
+    height: 100%;
+    position: relative;
+    flex: 1;
+}
+
+.metrics-loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    z-index: 10;
+    background: var(--bg-card);
+    border-radius: 16px;
+}
+
+.metrics-loader.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.metrics-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.metrics-tab {
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.metrics-tab.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 8px 20px var(--accent-glow);
+}
+
+@media (max-width: 600px) {
+    .metrics-modal {
+        padding: 24px 16px;
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        border: none;
+    }
+    .metrics-chart-container {
+        min-height: 400px;
+        margin-top: 10px;
+    }
+    .metrics-tabs {
+        gap: 6px;
+        justify-content: center;
+    }
+    .metrics-tab {
+        padding: 8px 12px;
+        font-size: 0.65rem;
+        flex: 1;
+        text-align: center;
+        min-width: 80px;
+    }
+    .metrics-modal-header {
+        margin-bottom: 20px;
+    }
+}
+
+.metrics-spinner {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 30%, var(--accent));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
+    animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+    to { transform: rotate(360deg); }
+}
+
