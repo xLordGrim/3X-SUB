@@ -1,58 +1,97 @@
 #!/bin/bash
 
- 
-
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${BLUE}💎 Starting 3x-ui Subscription Theme Uninstallation (v3.2.0)...${NC}"
+echo -e "${BLUE}💎 Starting 3x-ui Subscription Theme Uninstallation...${NC}"
 
 if [ "$EUID" -ne 0 ]; then
   echo -e "${RED}Please run as root (sudo bash uninstall.sh)${NC}"
   exit 1
 fi
 
- 
-if [[ -d "/usr/local/x-ui" ]]; then
-    XUI_ROOT="/usr/local/x-ui"
+XUI_ROOT="/usr/local/x-ui"
+
+echo -e "${YELLOW}⚠️  Stopping and removing Stats Monitor Service...${NC}"
+systemctl stop x-ui-stats.service 2>/dev/null
+systemctl disable x-ui-stats.service 2>/dev/null
+rm -f /etc/systemd/system/x-ui-stats.service
+rm -f "$XUI_ROOT/server_stats.sh"
+rm -f "$XUI_ROOT/stats_history.cache"
+rm -f "$XUI_ROOT/isp_info.json"
+echo -e "${GREEN}✅ Stats monitor removed.${NC}"
+
+echo -e "${YELLOW}🔄 Restoring original binary...${NC}"
+if [[ -f "$XUI_ROOT/x-ui.bak" ]]; then
+    # Stop service before moving binary
+    systemctl stop x-ui 2>/dev/null
+    mv "$XUI_ROOT/x-ui.bak" "$XUI_ROOT/x-ui"
+    chmod +x "$XUI_ROOT/x-ui"
+    echo -e "${GREEN}✅ Binary restored from backup.${NC}"
 else
-    XUI_ROOT=$(dirname $(readlink -f $(which x-ui 2>/dev/null || echo "/usr/local/x-ui/x-ui")))
+    echo -e "${BLUE}No binary backup found. Skipping binary restoration.${NC}"
 fi
 
- 
-echo -e "${YELLOW}⚠️  Removing modified web assets...${NC}"
-if [[ -d "$XUI_ROOT/web" ]]; then
-    rm -rf "$XUI_ROOT/web"
-    echo -e "${GREEN}✅ Premium Theme assets removed successfully.${NC}"
+echo -e "${YELLOW}🧹 Cleaning up web assets...${NC}"
+# Auto-detect web path similar to install.sh
+if [ -d "$XUI_ROOT/bin/web" ]; then
+    BASE_PATH="$XUI_ROOT/bin/web"
 else
-    echo -e "${YELLOW}Warning: web directory not found at $XUI_ROOT/web${NC}"
+    BASE_PATH="$XUI_ROOT/web"
+fi
+ASSETS_PATH="$BASE_PATH/assets"
+
+# Restore legacy backups
+if [[ -f "$ASSETS_PATH/js/subscription.js.bak" ]]; then
+    mv "$ASSETS_PATH/js/subscription.js.bak" "$ASSETS_PATH/js/subscription.js"
+    echo -e "${GREEN}✅ Legacy Javascript restored.${NC}"
 fi
 
- 
+# Remove our custom files
+rm -f "$ASSETS_PATH/css/premium.css"
+rm -f "$ASSETS_PATH/css/status.json"
+rm -f "$BASE_PATH/dist/assets/css/status.json"
+echo -e "${GREEN}✅ Premium assets removed.${NC}"
+
 echo -e "${BLUE}Disabling debugging environment...${NC}"
 SERVICE_FILES=("/etc/systemd/system/x-ui.service" "/lib/systemd/system/x-ui.service")
 for FILE in "${SERVICE_FILES[@]}"; do
     if [[ -f "$FILE" ]]; then
-        sed -i '/Environment="XUI_DEBUG=true"/d' "$FILE"
+        sed -i '/XUI_DEBUG/d' "$FILE"
         echo -e "${GREEN}Cleaned service file: $FILE${NC}"
     fi
 done
+
+echo -e "${BLUE}Refreshing systemd & Restarting x-ui...${NC}"
 systemctl daemon-reload
-
- 
-echo -e "${BLUE}🚀 Re-installing official 3x-ui (Data will be preserved)...${NC}"
-echo -e "${YELLOW}Please stay connected, the official installer will now take over.${NC}"
-sleep 2
-
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-
-if [[ $? -eq 0 ]]; then
-    echo -e "${GREEN}✅ 3X-UI restored to official version successfully.${NC}"
+if command -v x-ui &> /dev/null; then
+    x-ui restart
 else
-    echo -e "${RED}❌ Official restoration may have encountered an issue. Please check the logs above.${NC}"
+    systemctl restart x-ui
 fi
 
-echo -e "${BLUE}Note: If the UI still looks modified, please clear your browser cache.${NC}"
+echo -e "\n${BLUE}Would you like to run the official 3x-ui installer to ensure a 100% clean state?${NC}"
+while true; do
+    echo -e "  1) Yes, run official installer (Recommended if UI still looks modified)"
+    echo -e "  2) No, I'm done"
+    read -p "Selection [1-2]: " choice
+    case $choice in
+        1)
+            echo -e "${YELLOW}🚀 Launching official installer...${NC}"
+            bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+            break
+            ;;
+        2)
+            break
+            ;;
+        *)
+            echo -e "${RED}Invalid selection '$choice'. Please enter 1 or 2.${NC}"
+            ;;
+    esac
+done
+
+echo -e "\n${GREEN}✅ Uninstallation completed Successfully${NC}"
+echo -e "${BLUE}Note: Please clear your browser cache to ensure the stock UI loads correctly.${NC}"
