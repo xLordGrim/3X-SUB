@@ -1153,7 +1153,8 @@
       };
     });
 
-    setTimeout(() => renderMetricsChart(type), 100);
+    // Wait for the 500ms CSS entrance animation to finish before rendering ApexCharts to prevent UI jank
+    setTimeout(() => renderMetricsChart(type), 550);
   }
 
   window.closeMetricsModal = function() {
@@ -1162,8 +1163,12 @@
     window.currentMetricType = null;
     window.metricsPeriod = null;
     if (window.metricsChart) {
-      window.metricsChart.destroy();
+      const chartToDestroy = window.metricsChart;
       window.metricsChart = null;
+      // Destroy chart after CSS fade-out animation finishes to prevent layout thrashing
+      setTimeout(() => {
+        try { chartToDestroy.destroy(); } catch(e){}
+      }, 500);
     }
   };
 
@@ -1171,10 +1176,26 @@
     const isDark = STATE.theme === 'dark';
     const accentColor = type === 'cpu' ? '#6366f1' : '#ec4899';
     
+    // Extract initial data synchronously
+    let initialData = [];
+    if (window.lastStatsData) {
+      const period = window.metricsPeriod || 'live';
+      let historyArr = [];
+      if (window.lastStatsData.history && typeof window.lastStatsData.history === 'object' && !Array.isArray(window.lastStatsData.history)) {
+        historyArr = window.lastStatsData.history[period] || [];
+      } else if (Array.isArray(window.lastStatsData.history)) {
+        historyArr = (period === 'live') ? window.lastStatsData.history : [];
+      }
+      initialData = historyArr.map(p => ({
+        x: p.t * 1000,
+        y: type === 'cpu' ? p.c : p.r
+      })).reverse();
+    }
+    
     const options = {
       series: [{
         name: type.toUpperCase(),
-        data: []
+        data: initialData
       }],
       chart: {
         type: 'area',
@@ -1182,9 +1203,21 @@
         width: '100%',
         animations: { 
           enabled: true, 
-          easing: 'linear', 
-          speed: 200,
-          dynamicAnimation: { enabled: true, speed: 200 }
+          easing: 'easeinout', 
+          speed: 800,
+          animateGradually: {
+              enabled: true,
+              delay: 150
+          },
+          dynamicAnimation: { enabled: true, speed: 350 }
+        },
+        dropShadow: {
+          enabled: true,
+          top: 3,
+          left: 0,
+          blur: 5,
+          color: accentColor,
+          opacity: 0.3
         },
         toolbar: { show: false },
         zoom: { enabled: false },
@@ -1198,11 +1231,11 @@
         gradient: {
           shade: isDark ? 'dark' : 'light',
           type: "vertical",
-          shadeIntensity: 0.5,
-          gradientToColors: undefined,
+          shadeIntensity: 1,
+          gradientToColors: [accentColor],
           inverseColors: false,
-          opacityFrom: 0.4,
-          opacityTo: 0.1,
+          opacityFrom: 0.65,
+          opacityTo: 0.05,
           stops: [0, 100]
         }
       },
@@ -1215,21 +1248,39 @@
       },
       xaxis: {
         type: 'datetime',
+        tickAmount: 6,
         labels: { 
           datetimeUTC: false,
-          style: { colors: '#94a3b8', fontSize: '10px', fontWeight: 600 } 
+          format: 'HH:mm',
+          style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 600, fontFamily: 'Inter' } 
         },
         axisBorder: { show: false },
-        axisTicks: { show: false }
+        axisTicks: { show: false },
+        crosshairs: {
+          show: true,
+          position: 'back',
+          stroke: {
+            color: accentColor,
+            width: 1,
+            dashArray: 3,
+          }
+        },
+        tooltip: {
+          enabled: false
+        }
       },
       yaxis: {
         min: 0,
         max: 100,
         tickAmount: 4,
-        labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: 600 } }
+        labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 600, fontFamily: 'Inter' } }
       },
       tooltip: {
         theme: isDark ? 'dark' : 'light',
+        cssClass: 'premium-chart-tooltip',
+        marker: {
+          show: true,
+        },
         x: { format: 'HH:mm:ss' },
         y: { formatter: (v) => v.toFixed(0) + '%' }
       }
@@ -1238,7 +1289,12 @@
     const container = document.querySelector("#metrics-chart");
     if (container) {
       window.metricsChart = new ApexCharts(container, options);
-      window.metricsChart.render();
+      window.metricsChart.render().then(() => {
+        if (initialData.length > 0) {
+          const loader = getEl('metrics-loader');
+          if (loader) loader.classList.add('hidden');
+        }
+      });
     }
   }
 
