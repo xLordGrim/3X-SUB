@@ -10,7 +10,10 @@
 </div>
 <script src="{{ .base_path }}assets/qrcode/qrious2.min.js?{{ .cur_ver }}"></script>
 <link rel="stylesheet" href="{{ .base_path }}assets/css/premium.css?{{ .cur_ver }}">
-<script>document.body.classList.add('premium-theme');</script>
+<script>
+    window.__X_UI_BASE_PATH__ = "{{ .base_path }}";
+    document.body.classList.add('premium-theme');
+</script>
 <style>
  
     body.premium-theme {
