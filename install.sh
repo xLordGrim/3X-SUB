@@ -119,18 +119,42 @@ if [ "$IS_V3" = true ]; then
     HTTP_STATUS=$(curl -L --progress-bar -w "%{http_code}" "$XUI_BIN_URL" -o "$TMPFILE")
 
     if [[ "$HTTP_STATUS" != "200" ]]; then
-        echo -e "${YELLOW}⚠️  Version-specific binary not found (HTTP $HTTP_STATUS). Searching for latest compatible release...${NC}"
-        LATEST_TAG=$(curl -s https://api.github.com/repos/xLordGrim/3X-SUB/releases/latest | grep -oE "\"tag_name\":\s*\"[^\"]*\"" | cut -d'"' -f4)
-        [[ -z "$LATEST_TAG" ]] && LATEST_TAG="v3.0.0-dev"
+        echo -e "${RED}❌ Custom binary for 3x-ui v${RAW_VER} was not found on our server.${NC}"
+        echo -e "${YELLOW}This usually happens if you are on a very new 3x-ui version that hasn't been compiled yet.${NC}"
         
-        if [[ "$ARCH" == "x86_64" ]]; then
-            XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/download/${LATEST_TAG}/x-ui-linux-amd64"
-        else
-            XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/download/${LATEST_TAG}/x-ui-linux-arm64"
-        fi
-        
-        echo -e "${BLUE}Attempting fallback to $LATEST_TAG...${NC}"
-        HTTP_STATUS=$(curl -L --progress-bar -w "%{http_code}" "$XUI_BIN_URL" -o "$TMPFILE")
+        while true; do
+            echo -e "${BLUE}What would you like to do?${NC}"
+            echo -e "  1) Install the latest available stable binary (Recommended Fallback)"
+            echo -e "  2) Exit installer safely (No changes made)"
+            read -p "Selection [1-2]: " choice
+            
+            case $choice in
+                1)
+                    echo -e "${BLUE}Searching for latest compatible release...${NC}"
+                    LATEST_TAG=$(curl -s https://api.github.com/repos/xLordGrim/3X-SUB/releases/latest | grep -oE "\"tag_name\":\s*\"[^\"]*\"" | cut -d'"' -f4)
+                    [[ -z "$LATEST_TAG" ]] && LATEST_TAG="v3.0.0-dev"
+                    
+                    if [[ "$ARCH" == "x86_64" ]]; then
+                        XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/download/${LATEST_TAG}/x-ui-linux-amd64"
+                    else
+                        XUI_BIN_URL="https://github.com/xLordGrim/3X-SUB/releases/download/${LATEST_TAG}/x-ui-linux-arm64"
+                    fi
+                    
+                    echo -e "${BLUE}Attempting fallback to $LATEST_TAG...${NC}"
+                    HTTP_STATUS=$(curl -L --progress-bar -w "%{http_code}" "$XUI_BIN_URL" -o "$TMPFILE")
+                    break
+                    ;;
+                2)
+                    echo -e "${BLUE}Exiting safely. Restoring original binary...${NC}"
+                    cp /usr/local/x-ui/x-ui.bak /usr/local/x-ui/x-ui
+                    systemctl start x-ui
+                    exit 0
+                    ;;
+                *)
+                    echo -e "${RED}Invalid selection '$choice'. Please enter 1 or 2.${NC}"
+                    ;;
+            esac
+        done
     fi
     
     echo -e "${BLUE}HTTP Status: $HTTP_STATUS${NC}"
