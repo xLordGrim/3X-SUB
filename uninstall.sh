@@ -49,6 +49,10 @@ if [[ -f "$ASSETS_PATH/js/subscription.js.bak" ]]; then
     mv "$ASSETS_PATH/js/subscription.js.bak" "$ASSETS_PATH/js/subscription.js"
     echo -e "${GREEN}✅ Legacy Javascript restored.${NC}"
 fi
+if [[ -f "$HTML_PATH/settings/panel/subscription/subpage.html.bak" ]]; then
+    mv "$HTML_PATH/settings/panel/subscription/subpage.html.bak" "$HTML_PATH/settings/panel/subscription/subpage.html"
+    echo -e "${GREEN}✅ Legacy Subscription page restored.${NC}"
+fi
 
 # Remove our custom files
 rm -f "$ASSETS_PATH/css/premium.css"
