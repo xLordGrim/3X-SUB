@@ -1163,8 +1163,12 @@
     window.currentMetricType = null;
     window.metricsPeriod = null;
     if (window.metricsChart) {
-      window.metricsChart.destroy();
+      const chartToDestroy = window.metricsChart;
       window.metricsChart = null;
+      // Destroy chart after CSS fade-out animation finishes to prevent layout thrashing
+      setTimeout(() => {
+        try { chartToDestroy.destroy(); } catch(e){}
+      }, 500);
     }
   };
 
@@ -1290,8 +1294,6 @@
           const loader = getEl('metrics-loader');
           if (loader) loader.classList.add('hidden');
         }
-        // Force resize to ensure exact boundary calculations post-animation
-        setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
       });
     }
   }

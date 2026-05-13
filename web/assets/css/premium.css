@@ -742,7 +742,6 @@ body.s-dark .icon-btn {
     transition: all 0.3s var(--ease-out);
     position: relative;
     overflow: hidden;
-    contain: layout style paint;
 }
 
 .sys-card {
