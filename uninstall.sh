@@ -14,6 +14,9 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 XUI_ROOT="/usr/local/x-ui"
+# Detect current 3x-ui version
+RAW_VER=$( (/usr/local/x-ui/x-ui -v 2>&1 || /usr/local/x-ui/x-ui --version 2>&1 || /usr/local/x-ui/x-ui version 2>&1) | grep -iEo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+[[ -z "$RAW_VER" ]] && RAW_VER="master"
 
 echo -e "${YELLOW}⚠️  Stopping and removing Stats Monitor Service...${NC}"
 systemctl stop x-ui-stats.service 2>/dev/null
@@ -77,25 +80,16 @@ else
     systemctl restart x-ui
 fi
 
-echo -e "\n${BLUE}Would you like to run the official 3x-ui installer to ensure a 100% clean state?${NC}"
-while true; do
-    echo -e "  1) Yes, run official installer (Recommended if UI still looks modified)"
-    echo -e "  2) No, I'm done"
-    read -p "Selection [1-2]: " choice
-    case $choice in
-        1)
-            echo -e "${YELLOW}🚀 Launching official installer...${NC}"
-            bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-            break
-            ;;
-        2)
-            break
-            ;;
-        *)
-            echo -e "${RED}Invalid selection '$choice'. Please enter 1 or 2.${NC}"
-            ;;
-    esac
-done
+echo -e "${BLUE}🚀 Re-installing official 3x-ui v${RAW_VER} (Clean Restoration)...${NC}"
+echo -e "${YELLOW}Please stay connected, the official installer will now take over.${NC}"
+sleep 2
 
-echo -e "\n${GREEN}✅ Uninstallation completed Successfully${NC}"
+bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) "$RAW_VER"
+
+if [[ $? -eq 0 ]]; then
+    echo -e "\n${GREEN}✅ Uninstallation and official restoration completed Successfully${NC}"
+else
+    echo -e "\n${RED}❌ Official restoration encountered an issue. Please check the logs above.${NC}"
+fi
+
 echo -e "${BLUE}Note: Please clear your browser cache to ensure the stock UI loads correctly.${NC}"
