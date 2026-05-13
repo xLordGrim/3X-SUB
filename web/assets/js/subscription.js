@@ -125,8 +125,32 @@
     };
   }
   function init() {
-    document.documentElement.classList.add("premium-theme");
-    document.body.classList.add("premium-theme");
+    // Robust base path detection for legacy support
+    const getBase = () => {
+      if (window.__X_UI_BASE_PATH__) return window.__X_UI_BASE_PATH__;
+      if (window.X_UI_BASE_PATH) return window.X_UI_BASE_PATH;
+      const path = window.location.pathname;
+      if (path.includes("/sub")) {
+        return path.endsWith("/") ? path : path + "/";
+      }
+      return "/sub/";
+    };
+    const currentBase = getBase();
+
+    // Safe injection for legacy embedded templates
+    if (!document.body.classList.contains("premium-theme")) {
+      console.log("[3X-SUB] Applying premium theme via injection...");
+      document.body.classList.add("premium-theme");
+      document.documentElement.classList.add("premium-theme");
+
+      if (!document.querySelector('link[href*="premium.css"]')) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = currentBase + "assets/css/premium.css?v=" + Date.now();
+        document.head.appendChild(link);
+      }
+    }
+
     renderLoader();
     if (!STATE.raw) {
       if (window.__SUB_PAGE_DATA__) {
@@ -398,8 +422,19 @@
       kbps >= 1024 ? (kbps / 1024).toFixed(1) + " MB/s" : kbps + " KB/s";
     const poll = async () => {
       try {
-        const basePath = window.__X_UI_BASE_PATH__ || window.X_UI_BASE_PATH || "/sub/";
-        const res = await fetch(basePath + "assets/css/status.json?t=" + Date.now());
+        const getBase = () => {
+          if (window.__X_UI_BASE_PATH__) return window.__X_UI_BASE_PATH__;
+          if (window.X_UI_BASE_PATH) return window.X_UI_BASE_PATH;
+          const path = window.location.pathname;
+          if (path.includes("/sub")) {
+            return path.endsWith("/") ? path : path + "/";
+          }
+          return "/sub/";
+        };
+        const basePath = getBase();
+        const res = await fetch(
+          basePath + "assets/css/status.json?t=" + Date.now(),
+        );
         if (res.ok) {
           const data = await res.json();
           const cpuEl = getEl("cpu-val"),

@@ -6,8 +6,8 @@ on:
       - development
       - main
   schedule:
-    # Check every hour for new 3x-ui releases
-    - cron: '0 * * * *'
+    # Check every 30 minutes for new 3x-ui releases
+    - cron: '*/30 * * * *'
 
 jobs:
   check-update:
