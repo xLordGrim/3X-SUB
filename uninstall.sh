@@ -88,7 +88,7 @@ echo -e "${BLUE}🚀 Re-installing official 3x-ui ${VERSION_ARG} (Clean Restorat
 echo -e "${YELLOW}Please stay connected, the official installer will now take over.${NC}"
 sleep 2
 
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) "$VERSION_ARG"
+bash <(curl -Ls "https://raw.githubusercontent.com/mhsanaei/3x-ui/${VERSION_ARG}/install.sh") "${VERSION_ARG}"
 
 if [[ $? -eq 0 ]]; then
     echo -e "\n${GREEN}✅ Uninstallation and official restoration completed Successfully${NC}"
