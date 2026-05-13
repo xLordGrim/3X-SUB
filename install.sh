@@ -266,29 +266,35 @@ INTERFACE=$(get_net_interface)
 
 # Optimized Stat Helpers
 get_cpu() {
-    read _ cpu_u cpu_n cpu_s cpu_i cpu_io _ < /proc/stat
-    local total=$((cpu_u + cpu_n + cpu_s + cpu_i + cpu_io))
-    local idle=$((cpu_i + cpu_io))
+    read _ u n s i io irq sirq steal _ < /proc/stat
+    local total=$((u + n + s + i + io + irq + sirq + steal))
+    local idle=$i
     echo "$total $idle"
 }
 
 get_mem() {
-    local mem_total=0 mem_free=0 mem_buf=0 mem_cache=0
+    local mem_total=0 mem_avail=0 mem_free=0 mem_buf=0 mem_cache=0
     while read name val unit; do
         case "$name" in
             MemTotal:) mem_total=$val ;;
+            MemAvailable:) mem_avail=$val ;;
             MemFree:)  mem_free=$val ;;
             Buffers:)  mem_buf=$val ;;
             Cached:)   mem_cache=$val ;;
         esac
     done < /proc/meminfo
-    local used=$((mem_total - mem_free - mem_buf - mem_cache))
+    
+    if [ "$mem_avail" -gt 0 ]; then
+        local used=$((mem_total - mem_avail))
+    else
+        local used=$((mem_total - mem_free - mem_buf - mem_cache))
+    fi
     echo "$((used * 100 / mem_total))"
 }
 
 prev_cpu=($(get_cpu))
-prev_net=($(grep "$INTERFACE" /proc/net/dev | awk '{print $2, $10}' 2>/dev/null || echo "0 0"))
-prev_uptime=$(cat /proc/uptime | cut -d' ' -f1)
+prev_net=($(grep -E "^\s*${INTERFACE}:" /proc/net/dev | sed 's/.*://' | awk '{print $1, $9}' 2>/dev/null || echo "0 0"))
+prev_uptime=$(awk '{print int($1 * 1000)}' /proc/uptime 2>/dev/null || echo 0)
 
 join_arr() {
     local IFS=","
@@ -312,13 +318,16 @@ while true; do
 
     # 3. Network Usage
     if [ -n "$INTERFACE" ]; then
-        curr_net=($(grep "$INTERFACE" /proc/net/dev | awk '{print $2, $10}' 2>/dev/null))
-        curr_uptime=$(cat /proc/uptime | cut -d' ' -f1)
-        dt=$(echo "$curr_uptime - $prev_uptime" | bc 2>/dev/null || echo "2")
-        [[ -z "$dt" || "$dt" == "0" ]] && dt=2
+        curr_net=($(grep -E "^\s*${INTERFACE}:" /proc/net/dev | sed 's/.*://' | awk '{print $1, $9}' 2>/dev/null || echo "0 0"))
+        curr_uptime=$(awk '{print int($1 * 1000)}' /proc/uptime 2>/dev/null || echo 0)
+        dt_ms=$((curr_uptime - prev_uptime))
+        [[ $dt_ms -le 0 ]] && dt_ms=2000
         
-        net_in=$(( (curr_net[0] - prev_net[0]) / 1024 / 2 ))
-        net_out=$(( (curr_net[1] - prev_net[1]) / 1024 / 2 ))
+        net_in=$(( (curr_net[0] - prev_net[0]) * 1000 / 1024 / dt_ms ))
+        net_out=$(( (curr_net[1] - prev_net[1]) * 1000 / 1024 / dt_ms ))
+        [[ $net_in -lt 0 ]] && net_in=0
+        [[ $net_out -lt 0 ]] && net_out=0
+        
         prev_net=("${curr_net[@]}")
         prev_uptime=$curr_uptime
     else
