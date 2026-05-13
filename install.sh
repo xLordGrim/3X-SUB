@@ -231,8 +231,21 @@ ISP_CACHE="/usr/local/x-ui/isp_info.json"
 INTERVAL=2
 COUNTER=0
 
-# History Buffers (Bash Arrays)
-declare -a H_LIVE H_H1 H_H24 H_D7 H_D30
+# History Buffers (Persistent Cache)
+HISTORY_CACHE="/usr/local/x-ui/stats_history.cache"
+
+save_cache() {
+    declare -p H_LIVE H_H1 H_H24 H_D7 H_D30 > "$HISTORY_CACHE.tmp" 2>/dev/null
+    mv "$HISTORY_CACHE.tmp" "$HISTORY_CACHE" 2>/dev/null
+}
+
+trap 'save_cache; exit 0' SIGTERM SIGINT
+
+if [ -s "$HISTORY_CACHE" ]; then
+    source "$HISTORY_CACHE"
+else
+    declare -a H_LIVE H_H1 H_H24 H_D7 H_D30
+fi
 
 # ISP Detection Logic
 detect_infrastructure() {
@@ -348,6 +361,9 @@ while true; do
     [[ $((COUNTER % 450)) -eq 0 ]] && update_buffer H_H24 96
     [[ $((COUNTER % 1800)) -eq 0 ]] && update_buffer H_D7 168
     [[ $((COUNTER % 10800)) -eq 0 ]] && update_buffer H_D30 120
+    
+    # Periodic Safety Save (Every 5 minutes = 150 loops)
+    [[ $COUNTER -gt 0 && $((COUNTER % 150)) -eq 0 ]] && save_cache
 
     # 5. Output JSON (Efficiently)
     cat <<EOF > "$JSON_FILE.tmp"
