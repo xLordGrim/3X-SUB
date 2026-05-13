@@ -98,13 +98,8 @@ jobs:
           RELEASE_TAG="${{ steps.version.outputs.release_tag }}"
           BRANCH="${{ steps.version.outputs.branch }}"
           
-          # For development, use commit SHA to bypass CDN caching issues
-          # For main/stable, use the release tag
-          if [[ "$BRANCH" == "main" ]]; then
-            ASSET_VERSION="$RELEASE_TAG"
-          else
-            ASSET_VERSION="${{ github.sha }}"
-          fi
+          # Always use commit SHA to bypass CDN caching issues completely
+          ASSET_VERSION="${{ github.sha }}"
 
           CSS_URL="https://cdn.jsdelivr.net/gh/xLordGrim/3X-SUB@${ASSET_VERSION}/web/assets/css/premium.css"
           JS_URL="https://cdn.jsdelivr.net/gh/xLordGrim/3X-SUB@${ASSET_VERSION}/web/assets/js/subscription.js"
