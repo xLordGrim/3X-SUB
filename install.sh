@@ -62,7 +62,16 @@ if [ "$IS_V3" = true ]; then
     STATS_FILE="$XUI_ROOT/web/dist/assets/css/status.json"
     mkdir -p "$XUI_ROOT/web/dist/assets/css"
 else
-    STATS_FILE="$XUI_ROOT/web/assets/css/status.json"
+    # Auto-detect web path for legacy v2.x
+    if [ -d "$XUI_ROOT/bin/web" ]; then
+        BASE_PATH="$XUI_ROOT/bin/web"
+    else
+        BASE_PATH="$XUI_ROOT/web"
+    fi
+    ASSETS_PATH="$BASE_PATH/assets"
+    HTML_PATH="$BASE_PATH/html"
+    
+    STATS_FILE="$ASSETS_PATH/css/status.json"
     mkdir -p "$ASSETS_PATH/js"
     mkdir -p "$ASSETS_PATH/css"
     mkdir -p "$HTML_PATH"
