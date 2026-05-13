@@ -11,38 +11,41 @@ on:
 
 jobs:
   check-update:
-    # Only runs on schedule — skips rebuild if 3x-ui version hasn't changed
-    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     outputs:
       should_build: ${{ steps.check.outputs.should_build }}
-      xui_version: ${{ steps.check.outputs.xui_version }}
+      xui_tag: ${{ steps.check.outputs.xui_tag }}
     steps:
       - name: Check latest 3x-ui version
         id: check
         run: |
           # Get the latest 3x-ui release tag
-          LATEST=$(curl -sL https://api.github.com/repos/MHSanaei/3x-ui/releases/latest | jq -r '.tag_name' | sed 's/^v//')
-          echo "Latest 3x-ui version: $LATEST"
+          LATEST_TAG=$(curl -sL https://api.github.com/repos/MHSanaei/3x-ui/releases/latest | jq -r '.tag_name')
+          LATEST_VER=$(echo "$LATEST_TAG" | sed 's/^v//')
+          echo "Latest 3x-ui version: $LATEST_VER"
 
-          # Get our last built version from the dev-build release body
-          OUR_TAG=$(curl -sL https://api.github.com/repos/${{ github.repository }}/releases/tags/dev-build 2>/dev/null | jq -r '.body // ""' | grep -oP 'xui-version: \K.*' || echo "")
+          # Get our last built version from the latest release body
+          OUR_TAG=$(curl -sL https://api.github.com/repos/${{ github.repository }}/releases/latest 2>/dev/null | jq -r '.body // ""' | grep -oP 'xui-version: \K.*' || echo "")
           echo "Our last built version: $OUR_TAG"
 
-          if [[ "$LATEST" != "$OUR_TAG" && "$LATEST" != "" ]]; then
-            echo "New version detected! Triggering rebuild."
-            echo "should_build=true" >> $GITHUB_OUTPUT
+          if [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
+            if [[ "$LATEST_VER" != "$OUR_TAG" && "$LATEST_VER" != "" ]]; then
+              echo "New version detected! Triggering rebuild."
+              echo "should_build=true" >> $GITHUB_OUTPUT
+            else
+              echo "No new version. Skipping."
+              echo "should_build=false" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "No new version. Skipping."
-            echo "should_build=false" >> $GITHUB_OUTPUT
+            echo "Manual or push event. Triggering rebuild."
+            echo "should_build=true" >> $GITHUB_OUTPUT
           fi
-          echo "xui_version=$LATEST" >> $GITHUB_OUTPUT
+          echo "xui_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
 
   build:
     runs-on: ubuntu-latest
     needs: [check-update]
-    # Run if: push/manual trigger OR scheduled check found a new version
-    if: always() && (github.event_name != 'schedule' || needs.check-update.outputs.should_build == 'true')
+    if: needs.check-update.outputs.should_build == 'true'
     permissions:
       contents: write
     steps:
@@ -56,6 +59,7 @@ jobs:
         with:
           repository: MHSanaei/3x-ui
           path: 3x-ui
+          ref: ${{ needs.check-update.outputs.xui_tag }}
 
       - name: Detect 3x-ui version
         id: version
