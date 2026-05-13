@@ -200,6 +200,7 @@ else
     echo -e "${BLUE}Backing up existing files...${NC}"
     [[ -f "$ASSETS_PATH/js/subscription.js" ]] && cp "$ASSETS_PATH/js/subscription.js" "$ASSETS_PATH/js/subscription.js.bak" 2>/dev/null
     [[ -f "$ASSETS_PATH/css/premium.css" ]] && cp "$ASSETS_PATH/css/premium.css" "$ASSETS_PATH/css/premium.css.bak" 2>/dev/null
+    [[ -f "$HTML_PATH/settings/panel/subscription/subpage.html" ]] && cp "$HTML_PATH/settings/panel/subscription/subpage.html" "$HTML_PATH/settings/panel/subscription/subpage.html.bak" 2>/dev/null
     
     echo -e "${BLUE}Syncing official web assets for full compatibility...${NC}"
     if ! command -v unzip &> /dev/null; then
