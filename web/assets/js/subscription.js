@@ -1172,10 +1172,26 @@
     const isDark = STATE.theme === 'dark';
     const accentColor = type === 'cpu' ? '#6366f1' : '#ec4899';
     
+    // Extract initial data synchronously
+    let initialData = [];
+    if (window.lastStatsData) {
+      const period = window.metricsPeriod || 'live';
+      let historyArr = [];
+      if (window.lastStatsData.history && typeof window.lastStatsData.history === 'object' && !Array.isArray(window.lastStatsData.history)) {
+        historyArr = window.lastStatsData.history[period] || [];
+      } else if (Array.isArray(window.lastStatsData.history)) {
+        historyArr = (period === 'live') ? window.lastStatsData.history : [];
+      }
+      initialData = historyArr.map(p => ({
+        x: p.t * 1000,
+        y: type === 'cpu' ? p.c : p.r
+      })).reverse();
+    }
+    
     const options = {
       series: [{
         name: type.toUpperCase(),
-        data: []
+        data: initialData
       }],
       chart: {
         type: 'area',
@@ -1269,7 +1285,14 @@
     const container = document.querySelector("#metrics-chart");
     if (container) {
       window.metricsChart = new ApexCharts(container, options);
-      window.metricsChart.render();
+      window.metricsChart.render().then(() => {
+        if (initialData.length > 0) {
+          const loader = getEl('metrics-loader');
+          if (loader) loader.classList.add('hidden');
+        }
+        // Force resize to ensure exact boundary calculations post-animation
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+      });
     }
   }
 
