@@ -1153,7 +1153,8 @@
       };
     });
 
-    setTimeout(() => renderMetricsChart(type), 100);
+    // Wait for the 500ms CSS entrance animation to finish before rendering ApexCharts to prevent UI jank
+    setTimeout(() => renderMetricsChart(type), 550);
   }
 
   window.closeMetricsModal = function() {
