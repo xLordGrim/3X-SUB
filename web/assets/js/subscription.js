@@ -125,15 +125,19 @@
     };
   }
   function init() {
-    // Robust base path detection for legacy support
+    // Smart base path detection from the script's own location
     const getBase = () => {
       if (window.__X_UI_BASE_PATH__) return window.__X_UI_BASE_PATH__;
       if (window.X_UI_BASE_PATH) return window.X_UI_BASE_PATH;
-      const path = window.location.pathname;
-      if (path.includes("/sub")) {
-        return path.endsWith("/") ? path : path + "/";
+      const script = document.querySelector('script[src*="subscription.js"]');
+      if (script) {
+        const url = new URL(script.src);
+        const path = url.pathname;
+        if (path.includes("assets/js/subscription.js")) {
+          return path.split("assets/js/subscription.js")[0];
+        }
       }
-      return "/sub/";
+      return "/";
     };
     const currentBase = getBase();
 
@@ -425,11 +429,17 @@
         const getBase = () => {
           if (window.__X_UI_BASE_PATH__) return window.__X_UI_BASE_PATH__;
           if (window.X_UI_BASE_PATH) return window.X_UI_BASE_PATH;
-          const path = window.location.pathname;
-          if (path.includes("/sub")) {
-            return path.endsWith("/") ? path : path + "/";
+          const script = document.querySelector(
+            'script[src*="subscription.js"]',
+          );
+          if (script) {
+            const url = new URL(script.src);
+            const path = url.pathname;
+            if (path.includes("assets/js/subscription.js")) {
+              return path.split("assets/js/subscription.js")[0];
+            }
           }
-          return "/sub/";
+          return "/";
         };
         const basePath = getBase();
         const res = await fetch(
