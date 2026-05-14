@@ -2438,6 +2438,11 @@ body.s-light .span-4::after {
     font-size: 1.35rem;
     font-weight: 900;
     letter-spacing: -0.03em;
+    color: var(--text-primary);
+}
+
+body.modal-open {
+    overflow: hidden !important;
 }
 
 .metrics-modal-close {
