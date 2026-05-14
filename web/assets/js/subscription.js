@@ -131,9 +131,10 @@
       if (window.X_UI_BASE_PATH) return window.X_UI_BASE_PATH;
       const script = document.querySelector('script[src*="subscription.js"]');
       if (script) {
-        const src = script.getAttribute("src");
-        if (src.includes("assets/js/subscription.js")) {
-          return src.split("assets/js/subscription.js")[0];
+        const url = new URL(script.src);
+        const path = url.pathname;
+        if (path.includes("assets/js/subscription.js")) {
+          return path.split("assets/js/subscription.js")[0];
         }
       }
       return "/";
@@ -432,9 +433,10 @@
             'script[src*="subscription.js"]',
           );
           if (script) {
-            const src = script.getAttribute("src");
-            if (src.includes("assets/js/subscription.js")) {
-              return src.split("assets/js/subscription.js")[0];
+            const url = new URL(script.src);
+            const path = url.pathname;
+            if (path.includes("assets/js/subscription.js")) {
+              return path.split("assets/js/subscription.js")[0];
             }
           }
           return "/";
