@@ -736,6 +736,7 @@
       this.glitchDuration = 0;
       this.glitchElapsed = 0;
       this.glitchSlices = [];
+      this.paused = false;
     }
     updateStyles() {
       const style = getComputedStyle(document.body);
@@ -784,7 +785,7 @@
     }
     animate() {
       this.animFrame = requestAnimationFrame(this.animate);
-      if (this.isScrolling) return; // Pause network drawing during scroll for better FPS
+      if (this.isScrolling || this.paused) return; // Pause network drawing during scroll or modal for better FPS
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       const connectDist = 160,
         connectDistSq = connectDist * connectDist;
@@ -1128,6 +1129,10 @@
   };
 
   function createMetricsModal(type) {
+    document.body.classList.add("modal-open");
+    const bg = getEl("canvas-bg");
+    if (bg && bg._network) bg._network.paused = true;
+
     let overlay = getEl('metrics-overlay');
     if (!overlay) {
       overlay = mkEl('div', 'metrics-modal-overlay');
@@ -1203,6 +1208,10 @@
   }
 
   window.closeMetricsModal = function() {
+    document.body.classList.remove("modal-open");
+    const bg = getEl("canvas-bg");
+    if (bg && bg._network) bg._network.paused = false;
+
     const overlay = getEl('metrics-overlay');
     if (overlay) overlay.classList.remove('active');
     window.currentMetricType = null;
