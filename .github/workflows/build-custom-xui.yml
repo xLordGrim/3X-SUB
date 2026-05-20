@@ -1,6 +1,11 @@
 name: Build Custom 3x-ui
 on:
   workflow_dispatch:
+    inputs:
+      target_version:
+        description: 'Specific 3x-ui version tag to build (e.g., v3.0.0). Leave empty for latest.'
+        required: false
+        type: string
   push:
     branches:
       - development
@@ -19,6 +24,16 @@ jobs:
       - name: Check latest 3x-ui version
         id: check
         run: |
+          TARGET_VERSION="${{ github.event.inputs.target_version }}"
+          if [[ -n "$TARGET_VERSION" ]]; then
+            LATEST_TAG="$TARGET_VERSION"
+            LATEST_VER=$(echo "$LATEST_TAG" | sed 's/^v//')
+            echo "Manual target version: $LATEST_VER"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "xui_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           # Get the latest 3x-ui release tag
           LATEST_TAG=$(curl -sL https://api.github.com/repos/MHSanaei/3x-ui/releases/latest | jq -r '.tag_name')
           LATEST_VER=$(echo "$LATEST_TAG" | sed 's/^v//')
