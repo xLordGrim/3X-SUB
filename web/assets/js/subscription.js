@@ -162,8 +162,8 @@
         STATE.raw = {
           sid: d.sId || "User",
           total: parseInt(d.totalByte || 0),
-          up: parseInt(d.downloadByte || 0),
-          down: parseInt(d.uploadByte || 0),
+          up: parseInt(d.uploadByte || 0),
+          down: parseInt(d.downloadByte || 0),
           expire: parseInt(d.expire || 0) * 1000,
           subUrl: d.subUrl || "",
           lastOnline: parseInt(d.lastOnline || 0),
@@ -190,8 +190,8 @@
             dataEl.getAttribute("data-sid") ||
             "User",
           total: parseInt(dataEl.getAttribute("data-totalbyte") || 0),
-          up: parseInt(dataEl.getAttribute("data-downloadbyte") || 0),
-          down: parseInt(dataEl.getAttribute("data-uploadbyte") || 0),
+          up: parseInt(dataEl.getAttribute("data-uploadbyte") || 0),
+          down: parseInt(dataEl.getAttribute("data-downloadbyte") || 0),
           expire: parseInt(dataEl.getAttribute("data-expire") || 0) * 1000,
           subUrl: dataEl.getAttribute("data-sub-url") || "",
           lastOnline: parseInt(dataEl.getAttribute("data-lastonline") || 0),
