@@ -453,9 +453,9 @@
           if (ramEl) ramEl.textContent = data.ram || 0;
           const uploadEl = getEl("upload-val"),
             downloadEl = getEl("download-val");
-          if (uploadEl) uploadEl.textContent = formatSpeed(data.net_in || 0);
+          if (uploadEl) uploadEl.textContent = formatSpeed(data.net_out || 0);
           if (downloadEl)
-            downloadEl.textContent = formatSpeed(data.net_out || 0);
+            downloadEl.textContent = formatSpeed(data.net_in || 0);
           if (data.isp) {
             const ispEl = getEl("infra-isp");
             if (ispEl) ispEl.textContent = data.isp;
