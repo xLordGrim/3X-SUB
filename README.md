@@ -30,7 +30,8 @@ Dark/light theme, glassmorphism,smooth transitions, toast notifications, Animate
 ## 🚀 Requirements & Installation
 1. Make sure to take a backup of the system before doing anything.
 2. 3X-SUB only supports 3X-UI v2.8.4 or later.
-3. Run the following command on your 3x-ui server to install or update:
+3. Supported Architectures: AMD64, ARM64
+4. Run the following command on your 3x-ui server to install or update:
 
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/install.sh)
