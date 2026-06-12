@@ -380,6 +380,8 @@ body.premium-theme .dashboard-header {
     will-change: transform, opacity;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    position: relative;
+    z-index: 1000;
 }
 
 body.premium-theme.ready .dashboard-header {
@@ -409,12 +411,15 @@ body.premium-theme.ready .dashboard-header {
     display: flex;
     align-items: center;
     gap: 20px;
+    min-width: 0;
+    flex: 1;
 }
 
 .user-text-group {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-width: 0;
 }
 
 .dashboard-title {
@@ -453,6 +458,10 @@ body.premium-theme.ready .dashboard-header {
     opacity: 0;
     will-change: transform, opacity, background-position;
     animation: usernameReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 @keyframes usernameReveal {
@@ -516,6 +525,7 @@ body.premium-theme.ready .dashboard-header {
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+    min-width: 0;
 }
 
 .status-indicator-wrap {
@@ -2601,3 +2611,99 @@ body.s-light .apexcharts-tooltip.premium-chart-tooltip .apexcharts-tooltip-title
 .apexcharts-tooltip.premium-chart-tooltip .apexcharts-tooltip-marker {
     margin-right: 8px !important;
 }
+
+/* RTL Support for Farsi */
+body.lang-fa {
+    direction: rtl;
+    text-align: right;
+    font-family: Tahoma, "Vazirmatn", "IRANSans", sans-serif !important;
+}
+
+body.lang-fa .nodes-header,
+body.lang-fa .usage-header,
+body.lang-fa .metrics-modal-title h2 {
+    text-align: right;
+}
+
+body.lang-fa .stat-mini,
+body.lang-fa .stat-mini-content,
+body.lang-fa .infra-details {
+    text-align: right;
+}
+
+body.lang-fa .status-indicator-wrap {
+    flex-direction: row;
+}
+
+body.lang-fa .icon-btn-mini {
+    margin-left: 0;
+}
+
+body.lang-fa .metrics-modal-close {
+    margin-right: auto;
+}
+
+/* Language Dropdown Styles */
+.lang-switcher-wrap {
+    position: relative;
+}
+
+.lang-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 120px;
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(12px);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+}
+
+@media (max-width: 600px) {
+    .lang-dropdown {
+        right: -10px;
+    }
+}
+
+body.lang-fa .lang-dropdown {
+    right: auto;
+    left: 0;
+}
+
+.lang-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.lang-item {
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.lang-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.lang-item.active {
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+}
+
