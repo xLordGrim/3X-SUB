@@ -201,7 +201,7 @@ if [ "$IS_V3" = true ]; then
     
     if [ "$DEFAULT_LANG" != "en" ]; then
         echo -e "${BLUE}Setting default language to ${DEFAULT_LANG}...${NC}"
-        sed -i "s/window.__DEFAULT_LANG__=['\"]en['\"]/window.__DEFAULT_LANG__=\"$DEFAULT_LANG\"/g" /usr/local/x-ui/x-ui
+        LC_ALL=C sed -i "s/window.__DEFAULT_LANG__=['\"]en['\"]/window.__DEFAULT_LANG__=\"$DEFAULT_LANG\"/g" /usr/local/x-ui/x-ui
     fi
     
     # Clear ISP cache
