@@ -11,8 +11,8 @@ on:
       - development
       - main
   schedule:
-    # Check every 10;minutes for new 3x-ui releases
-    - cron: '*/10 * * * *'
+    # Check every 30 minutes for new 3x-ui releases
+    - cron: '*/30 * * * *'
 
 jobs:
   check-update:
@@ -145,6 +145,7 @@ jobs:
                 if (app) app.style.display = 'none';
               }});
             </script>
+            <script>window.__DEFAULT_LANG__="en";</script>
             <script src="{js_url}"></script>
             </body>'''
 
@@ -192,6 +193,11 @@ jobs:
           path: |
             3x-ui/x-ui-linux-amd64
             3x-ui/x-ui-linux-arm64
+
+      - name: Delete existing release
+        run: gh release delete ${{ steps.version.outputs.release_tag }} --cleanup-tag -y || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release
         uses: softprops/action-gh-release@v2

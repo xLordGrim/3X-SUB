@@ -3,9 +3,9 @@
   const VERSION = "v2.0.13";
   const STATE = {
     theme: localStorage.getItem("xui_theme") || "dark",
-    lang: localStorage.getItem("xui_lang") || "en",
-    subUrl: "",
+    lang: localStorage.getItem("xui_lang") || window.__DEFAULT_LANG__ || "en",
     raw: null,
+    subUrl: "",
   };
   const I18N = {
     en: {
@@ -45,7 +45,7 @@
       testing: "Testing...",
       scanQR: "Scan this QR code to import configuration"
     },
-    cn: {
+    zh: {
       title: "我的订阅",
       limit: "流量限制",
       used: "已用",
@@ -136,10 +136,7 @@
       let name = decodeURIComponent(raw);
       name = name.replace(/^(⛔️|N\/A|\s|-)+/i, "");
       name = name.replace(/-\s*\d+(\.\d+)?\s*([GMKT]B|[dhmy]|min|mo).*$/i, "");
-      name = name.replace(
-        /[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2700}-\u{27BF}\u{1F680}-\u{1F6FF}\u{24C2}-\u{1F251}].*$/u,
-        "",
-      );
+      // Emojis are fine to leave in the name. We only strip known status suffixes.
       return name.trim() || "User";
     } catch (e) {
       return raw;
@@ -334,7 +331,7 @@
     dispName = cleanupName(dispName);
     const s = getStatusInfo();
     const profile = mkEl("div", "user-profile");
-    profile.innerHTML = `<div class="avatar">${dispName.substring(0, 1).toUpperCase()}</div><div class="user-text-group"><div class="dashboard-title">${t("userDashboard")}</div><div class="user-main-row"><div class="username-display" data-text="${dispName}">${dispName}</div><div class="status-indicator-wrap"><span class="status-text-inline" style="color: ${s.color}">${s.label}</span><div class="status-dot-inline" style="background:${s.color}; box-shadow: 0 0 10px ${s.color}; border-color: ${s.color}44;"></div></div></div></div>`;
+    profile.innerHTML = `<div class="avatar">${Array.from(dispName)[0].toUpperCase()}</div><div class="user-text-group"><div class="dashboard-title">${t("userDashboard")}</div><div class="user-main-row"><div class="username-display" data-text="${dispName}">${dispName}</div><div class="status-indicator-wrap"><span class="status-text-inline" style="color: ${s.color}">${s.label}</span><div class="status-dot-inline" style="background:${s.color}; box-shadow: 0 0 10px ${s.color}; border-color: ${s.color}44;"></div></div></div></div>`;
     const ctrls = mkEl("div", "controls");
     ctrls.style.position = "relative";
     ctrls.style.zIndex = "200";
@@ -352,7 +349,7 @@
     const langDropdown = mkEl("div", "lang-dropdown");
     const langs = [
       { code: "en", label: "English" },
-      { code: "cn", label: "中文" },
+      { code: "zh", label: "中文" },
       { code: "fa", label: "فارسی" }
     ];
     langs.forEach(l => {
