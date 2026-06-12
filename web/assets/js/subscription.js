@@ -3,9 +3,9 @@
   const VERSION = "v2.0.13";
   const STATE = {
     theme: localStorage.getItem("xui_theme") || "dark",
-    lang: localStorage.getItem("xui_lang") || "en",
-    subUrl: "",
+    lang: localStorage.getItem("xui_lang") || window.__DEFAULT_LANG__ || "en",
     raw: null,
+    subUrl: "",
   };
   const I18N = {
     en: {
@@ -45,7 +45,7 @@
       testing: "Testing...",
       scanQR: "Scan this QR code to import configuration"
     },
-    cn: {
+    zh: {
       title: "我的订阅",
       limit: "流量限制",
       used: "已用",
@@ -352,7 +352,7 @@
     const langDropdown = mkEl("div", "lang-dropdown");
     const langs = [
       { code: "en", label: "English" },
-      { code: "cn", label: "中文" },
+      { code: "zh", label: "中文" },
       { code: "fa", label: "فارسی" }
     ];
     langs.forEach(l => {

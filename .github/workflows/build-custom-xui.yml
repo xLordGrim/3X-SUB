@@ -145,6 +145,7 @@ jobs:
                 if (app) app.style.display = 'none';
               }});
             </script>
+            <script>window.__DEFAULT_LANG__="en";</script>
             <script src="{js_url}"></script>
             </body>'''
 

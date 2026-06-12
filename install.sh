@@ -10,6 +10,15 @@ TIMESTAMP=$(date +%s)
 # └─────────────────────────────────────────────────────┘
 BRANCH="${BRANCH:-main}"
 
+DEFAULT_LANG="en"
+for arg in "$@"; do
+    case $arg in
+        --en) DEFAULT_LANG="en" ;;
+        --fa) DEFAULT_LANG="fa" ;;
+        --zh) DEFAULT_LANG="zh" ;;
+    esac
+done
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -190,6 +199,11 @@ if [ "$IS_V3" = true ]; then
     chmod +x /usr/local/x-ui/x-ui
     rm -f "$TMPFILE"
     
+    if [ "$DEFAULT_LANG" != "en" ]; then
+        echo -e "${BLUE}Setting default language to ${DEFAULT_LANG}...${NC}"
+        sed -i "s/window.__DEFAULT_LANG__=\"en\";/window.__DEFAULT_LANG__=\"$DEFAULT_LANG\";/g" /usr/local/x-ui/x-ui
+    fi
+    
     # Clear ISP cache
     [[ -f "/usr/local/x-ui/isp_info.json" ]] && rm -f "/usr/local/x-ui/isp_info.json"
 
@@ -239,6 +253,11 @@ else
     sed -i "s|assets/css/premium.css?{{ .cur_ver }}|assets/css/premium.css?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
     sed -i "s|assets/js/subscription.js?{{ .cur_ver }}|assets/js/subscription.js?v=$TIMESTAMP|g" "$SUBPAGE_PATH"
     sed -i "s|__VERSION__|$TIMESTAMP|g" "$ASSETS_PATH/js/subscription.js"
+    
+    if [ "$DEFAULT_LANG" != "en" ]; then
+        echo -e "${BLUE}Setting legacy default language to ${DEFAULT_LANG}...${NC}"
+        sed -i "s/window.__DEFAULT_LANG__=\"en\";/window.__DEFAULT_LANG__=\"$DEFAULT_LANG\";/g" "$SUBPAGE_PATH"
+    fi
 
     [[ -f "/usr/local/x-ui/isp_info.json" ]] && rm -f "/usr/local/x-ui/isp_info.json"
     chmod -R 755 "$BASE_PATH"
