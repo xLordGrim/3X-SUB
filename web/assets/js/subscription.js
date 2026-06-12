@@ -803,7 +803,6 @@
           this.resizeTimeout = setTimeout(() => this.resize(), 200);
         });
         window.addEventListener("mousemove", (e) => {
-          if (this.isScrolling) return;
           this.mouse.x = e.x;
           this.mouse.y = e.y;
         });
@@ -811,23 +810,6 @@
           this.mouse.x = null;
           this.mouse.y = null;
         });
-        window.addEventListener(
-          "scroll",
-          () => {
-            if (!this.isScrolling) {
-              this.isScrolling = true;
-              document.body.classList.add("is-scrolling");
-            }
-            this.mouse.x = null;
-            this.mouse.y = null;
-            clearTimeout(this.scrollTimeout);
-            this.scrollTimeout = setTimeout(() => {
-              this.isScrolling = false;
-              document.body.classList.remove("is-scrolling");
-            }, 200);
-          },
-          { passive: true },
-        );
         this.handlersBound = true;
       }
       this.initParticles();
@@ -852,13 +834,15 @@
         style.getPropertyValue("--line-color").trim() || "148, 163, 184";
     }
     resize() {
+      if (this.lastW === window.innerWidth) return; // Ignore vertical-only resizes (e.g. mobile address bar)
+      this.lastW = window.innerWidth;
       const dpr = window.devicePixelRatio || 1;
       this.canvas.width = window.innerWidth * dpr;
       this.canvas.height = window.innerHeight * dpr;
       this.canvas.style.width = window.innerWidth + "px";
       this.canvas.style.height = window.innerHeight + "px";
       this.ctx.scale(dpr, dpr);
-      if (this.particles.length === 0) this.initParticles();
+      this.initParticles();
     }
     initParticles() {
       this.particles = [];
@@ -891,7 +875,7 @@
     }
     animate() {
       this.animFrame = requestAnimationFrame(this.animate);
-      if (this.isScrolling || this.paused) return; // Pause network drawing during scroll or modal for better FPS
+      if (this.paused) return; // Removed isScrolling pause to prevent blank canvas during scroll
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       const connectDist = 160,
         connectDistSq = connectDist * connectDist;
