@@ -140,7 +140,11 @@ if [ "$IS_V3" = true ]; then
             case $choice in
                 1)
                     echo -e "${BLUE}Searching for latest compatible release...${NC}"
-                    LATEST_TAG=$(curl -s https://api.github.com/repos/xLordGrim/3X-SUB/releases/latest | grep -oE "\"tag_name\":\s*\"[^\"]*\"" | cut -d'"' -f4)
+                    if [[ "$BRANCH" == "main" ]]; then
+                        LATEST_TAG=$(curl -s https://api.github.com/repos/xLordGrim/3X-SUB/releases/latest | grep -oE "\"tag_name\":\s*\"[^\"]*\"" | cut -d'"' -f4)
+                    else
+                        LATEST_TAG=$(curl -s https://api.github.com/repos/xLordGrim/3X-SUB/releases | grep -oE "\"tag_name\":\s*\"[^\"]*-dev\"" | head -n 1 | cut -d'"' -f4)
+                    fi
                     [[ -z "$LATEST_TAG" ]] && LATEST_TAG="v3.0.0-dev"
                     
                     if [[ "$ARCH" == "x86_64" ]]; then
