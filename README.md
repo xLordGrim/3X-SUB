@@ -33,9 +33,23 @@ Dark/light theme, glassmorphism,smooth transitions, toast notifications, Animate
 3. Supported Architectures: AMD64, ARM64
 4. Run the following command on your 3x-ui server to install or update:
 
+**🌐 Default Language Selection:**
+
+🇬🇧 English (en)
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/install.sh)
 ```
+🇮🇷 Persian (fa)
+```bash
+# Install with Farsi as the default language
+bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/install.sh) --fa
+```
+
+🇨🇳 Chinese (zh)
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/install.sh) --zh
+```
+
 
 ## 🧹 Uninstallation
 If you wish to return to the default 3X-UI subscribe, run:
