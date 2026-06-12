@@ -40,7 +40,10 @@
       hAgo: "h ago",
       dAgo: "d ago",
       expired: "Expired",
-      active: "Active"
+      active: "Active",
+      dataUsageMetrics: "Data Usage Metrics",
+      testing: "Testing...",
+      scanQR: "Scan this QR code to import configuration"
     },
     cn: {
       title: "我的订阅",
@@ -74,7 +77,10 @@
       hAgo: "小时前",
       dAgo: "天前",
       expired: "已过期",
-      active: "活跃"
+      active: "活跃",
+      dataUsageMetrics: "流量使用统计",
+      testing: "测试中...",
+      scanQR: "扫描二维码导入配置"
     },
     fa: {
       title: "اشتراک من",
@@ -108,7 +114,10 @@
       hAgo: "ساعت پیش",
       dAgo: "روز پیش",
       expired: "منقضی شده",
-      active: "فعال"
+      active: "فعال",
+      dataUsageMetrics: "آمار استفاده از داده",
+      testing: "در حال آزمایش...",
+      scanQR: "برای وارد کردن پیکربندی این QR را اسکن کنید"
     },
   };
   function t(key) {
@@ -332,21 +341,44 @@
     ctrls.style.display = "flex";
     ctrls.style.gap = "8px";
 
+    const langWrap = mkEl("div", "lang-switcher-wrap");
+    langWrap.style.position = "relative";
+    
     const langBtn = mkEl("div", "icon-btn");
     langBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
-    langBtn.onclick = (e) => {
-      e.stopPropagation();
-      langBtn.style.animation = "bounce 0.6s cubic-bezier(0.68,-0.55,0.265,1.55)";
-      setTimeout(() => { langBtn.style.animation = ""; }, 600);
-      const langs = ["en", "cn", "fa"];
-      let idx = langs.indexOf(STATE.lang);
-      let nextLang = langs[(idx + 1) % langs.length];
-      localStorage.setItem("xui_lang", nextLang);
-      location.reload();
-    };
     langBtn.id = "lang-btn";
     langBtn.title = "Change Language";
-    ctrls.appendChild(langBtn);
+    
+    const langDropdown = mkEl("div", "lang-dropdown");
+    const langs = [
+      { code: "en", label: "English" },
+      { code: "cn", label: "中文" },
+      { code: "fa", label: "فارسی" }
+    ];
+    langs.forEach(l => {
+      const item = mkEl("div", "lang-item");
+      if (STATE.lang === l.code) item.classList.add("active");
+      item.textContent = l.label;
+      item.onclick = (e) => {
+        e.stopPropagation();
+        localStorage.setItem("xui_lang", l.code);
+        location.reload();
+      };
+      langDropdown.appendChild(item);
+    });
+
+    langBtn.onclick = (e) => {
+      e.stopPropagation();
+      langDropdown.classList.toggle("show");
+    };
+
+    document.addEventListener("click", () => {
+      langDropdown.classList.remove("show");
+    });
+
+    langWrap.appendChild(langBtn);
+    langWrap.appendChild(langDropdown);
+    ctrls.appendChild(langWrap);
 
     const themeBtn = mkEl("div", "icon-btn");
     themeBtn.innerHTML =
@@ -371,7 +403,7 @@
     const card = mkEl("div", "span-8 usage-overview");
     const s = getStatusInfo();
     const limitHtml = s.total === 0 ? `<span class="glitch-text" data-text="${t("unlimited")}">${t("unlimited")}</span>` : formatBytes(s.total);
-    card.innerHTML = `<div class="usage-header"><span class="usage-title">Data Usage Metrics</span><span class="usage-title">${s.pct.toFixed(1)}%</span></div><div class="usage-big-number" id="usage-val">0 B</div><div class="progress-container"><div class="progress-bar ${s.total === 0 ? "unlimited-bar" : ""}" id="prog-bar" style="transform:translateX(${s.total === 0 ? "0" : "-100%"});"><div class="bloom"></div></div></div><div class="usage-sub">${t("limit")}: ${limitHtml}</div>`;
+    card.innerHTML = `<div class="usage-header"><span class="usage-title">${t("dataUsageMetrics")}</span><span class="usage-title">${s.pct.toFixed(1)}%</span></div><div class="usage-big-number" id="usage-val">0 B</div><div class="progress-container"><div class="progress-bar ${s.total === 0 ? "unlimited-bar" : ""}" id="prog-bar" style="transform:translateX(${s.total === 0 ? "0" : "-100%"});"><div class="bloom"></div></div></div><div class="usage-sub">${t("limit")}: ${limitHtml}</div>`;
     return card;
   }
   function renderInfoCard() {
@@ -418,7 +450,7 @@
   }
   function renderNodesList() {
     const wrap = mkEl("div", "span-12");
-    wrap.innerHTML = `<div class="nodes-header"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg> Configuration Links</div>`;
+    wrap.innerHTML = `<div class="nodes-header"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg> ${t("nodes")}</div>`;
     const grid = mkEl("div", "node-grid");
     const links =
       getEl("subscription-links")?.value.split("\n").filter(Boolean) || [];
@@ -561,7 +593,7 @@
     btn.classList.add("loading");
     dot.className = "ping-dot pinging";
     valEl.className = "infra-value";
-    valEl.textContent = "Testing...";
+    valEl.textContent = t("testing");
     const startTime = Date.now();
     fetch(window.location.href, { method: "HEAD", cache: "no-cache" })
       .then(() => {
@@ -602,7 +634,7 @@
     overlay.style.visibility = "hidden";
     overlay.style.pointerEvents = "none";
     const content = mkEl("div", "qr-modal");
-    content.innerHTML = `<div class="qr-header"><div class="qr-spacer"></div><h3 id="qr-title">${t("qr")}</h3><div class="qr-close" onclick="document.getElementById('qr-modal').classList.remove('open')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div><div class="qr-container"><canvas id="qr-canv"></canvas><div class="qr-scan-line"></div></div><div class="qr-footer">Scan this QR code to import configuration</div>`;
+    content.innerHTML = `<div class="qr-header"><div class="qr-spacer"></div><h3 id="qr-title">${t("qr")}</h3><div class="qr-close" onclick="document.getElementById('qr-modal').classList.remove('open')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div></div><div class="qr-container"><canvas id="qr-canv"></canvas><div class="qr-scan-line"></div></div><div class="qr-footer">${t("scanQR")}</div>`;
     overlay.appendChild(content);
     setTimeout(() => {
       const loadQR = () =>
