@@ -24,6 +24,23 @@
       upload: "Upload",
       download: "Download",
       copied: "Copied!",
+      userDashboard: "User Dashboard",
+      serverMonitor: "Server Monitor",
+      cpuUsage: "CPU Usage",
+      memory: "Memory",
+      infraInsights: "Infrastructure Insights",
+      provider: "Provider",
+      region: "Region",
+      checkLatency: "Check Latency",
+      clientToServer: "Client to Server",
+      lastOnline: "Last Online",
+      never: "Never",
+      justNow: "Just now",
+      mAgo: "m ago",
+      hAgo: "h ago",
+      dAgo: "d ago",
+      expired: "Expired",
+      active: "Active"
     },
     cn: {
       title: "我的订阅",
@@ -41,6 +58,23 @@
       upload: "上传",
       download: "下载",
       copied: "已复制!",
+      userDashboard: "用户仪表板",
+      serverMonitor: "服务器监控",
+      cpuUsage: "CPU使用率",
+      memory: "内存",
+      infraInsights: "基础设施",
+      provider: "提供商",
+      region: "区域",
+      checkLatency: "检查延迟",
+      clientToServer: "客户端到服务端",
+      lastOnline: "最后在线",
+      never: "从未",
+      justNow: "刚刚",
+      mAgo: "分钟前",
+      hAgo: "小时前",
+      dAgo: "天前",
+      expired: "已过期",
+      active: "活跃"
     },
     fa: {
       title: "اشتراک من",
@@ -58,6 +92,23 @@
       upload: "آپلود",
       download: "دانلود",
       copied: "کپی شد!",
+      userDashboard: "داشبورد کاربر",
+      serverMonitor: "مانیتور سرور",
+      cpuUsage: "میزان استفاده از پردازنده",
+      memory: "حافظه",
+      infraInsights: "بینش زیرساخت",
+      provider: "ارائه دهنده",
+      region: "منطقه",
+      checkLatency: "بررسی تاخیر",
+      clientToServer: "کلاینت به سرور",
+      lastOnline: "آخرین آنلاین",
+      never: "هرگز",
+      justNow: "همین الان",
+      mAgo: "دقیقه پیش",
+      hAgo: "ساعت پیش",
+      dAgo: "روز پیش",
+      expired: "منقضی شده",
+      active: "فعال"
     },
   };
   function t(key) {
@@ -93,11 +144,11 @@
     const depleted = total > 0 && used >= total;
     let state = "active",
       colorVar = "--usage-active",
-      label = "Active";
+      label = t("active");
     if (expired) {
       state = "warn";
       colorVar = "var(--usage-expired)";
-      label = "Expired";
+      label = t("expired");
     } else if (depleted) {
       state = "depleted";
       colorVar = "var(--usage-depleted)";
@@ -140,6 +191,10 @@
       return "/";
     };
     const currentBase = getBase();
+
+    if (STATE.lang === "fa") {
+      document.body.classList.add("lang-fa");
+    }
 
     // Safe injection for legacy embedded templates
     if (!document.body.classList.contains("premium-theme")) {
@@ -270,10 +325,29 @@
     dispName = cleanupName(dispName);
     const s = getStatusInfo();
     const profile = mkEl("div", "user-profile");
-    profile.innerHTML = `<div class="avatar">${dispName.substring(0, 1).toUpperCase()}</div><div class="user-text-group"><div class="dashboard-title">User Dashboard</div><div class="user-main-row"><div class="username-display" data-text="${dispName}">${dispName}</div><div class="status-indicator-wrap"><span class="status-text-inline" style="color: ${s.color}">${s.label}</span><div class="status-dot-inline" style="background:${s.color}; box-shadow: 0 0 10px ${s.color}; border-color: ${s.color}44;"></div></div></div></div>`;
+    profile.innerHTML = `<div class="avatar">${dispName.substring(0, 1).toUpperCase()}</div><div class="user-text-group"><div class="dashboard-title">${t("userDashboard")}</div><div class="user-main-row"><div class="username-display" data-text="${dispName}">${dispName}</div><div class="status-indicator-wrap"><span class="status-text-inline" style="color: ${s.color}">${s.label}</span><div class="status-dot-inline" style="background:${s.color}; box-shadow: 0 0 10px ${s.color}; border-color: ${s.color}44;"></div></div></div></div>`;
     const ctrls = mkEl("div", "controls");
     ctrls.style.position = "relative";
     ctrls.style.zIndex = "200";
+    ctrls.style.display = "flex";
+    ctrls.style.gap = "8px";
+
+    const langBtn = mkEl("div", "icon-btn");
+    langBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
+    langBtn.onclick = (e) => {
+      e.stopPropagation();
+      langBtn.style.animation = "bounce 0.6s cubic-bezier(0.68,-0.55,0.265,1.55)";
+      setTimeout(() => { langBtn.style.animation = ""; }, 600);
+      const langs = ["en", "cn", "fa"];
+      let idx = langs.indexOf(STATE.lang);
+      let nextLang = langs[(idx + 1) % langs.length];
+      localStorage.setItem("xui_lang", nextLang);
+      location.reload();
+    };
+    langBtn.id = "lang-btn";
+    langBtn.title = "Change Language";
+    ctrls.appendChild(langBtn);
+
     const themeBtn = mkEl("div", "icon-btn");
     themeBtn.innerHTML =
       STATE.theme === "dark"
@@ -322,19 +396,19 @@
     const down = mkEl("div", "stat-mini");
     down.innerHTML = `<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-down)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></div><div class="stat-value" id="down-total-val">0 B</div><div class="stat-label">${t("download")}</div>`;
     const lastOnline = mkEl("div", "stat-mini");
-    let lastOnlineText = "Never";
+    let lastOnlineText = t("never");
     if (STATE.raw.lastOnline > 0) {
       const now = Date.now(),
         diff = now - STATE.raw.lastOnline,
         minutes = Math.floor(diff / (1000 * 60)),
         hours = Math.floor(diff / (1000 * 60 * 60)),
         days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      if (minutes < 1) lastOnlineText = "Just now";
-      else if (minutes < 60) lastOnlineText = minutes + "m ago";
-      else if (hours < 24) lastOnlineText = hours + "h ago";
-      else lastOnlineText = days + "d ago";
+      if (minutes < 1) lastOnlineText = t("justNow");
+      else if (minutes < 60) lastOnlineText = minutes + " " + t("mAgo");
+      else if (hours < 24) lastOnlineText = hours + " " + t("hAgo");
+      else lastOnlineText = days + " " + t("dAgo");
     }
-    lastOnline.innerHTML = `<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--status-online)"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div><div class="stat-value">${lastOnlineText}</div><div class="stat-label">Last Online</div>`;
+    lastOnline.innerHTML = `<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--status-online)"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div><div class="stat-value">${lastOnlineText}</div><div class="stat-label">${t("lastOnline")}</div>`;
     card.appendChild(up);
     card.appendChild(down);
     card.appendChild(rem);
@@ -380,14 +454,14 @@
   }
   function renderInfrastructureSection() {
     const wrap = mkEl("div", "span-12");
-    wrap.innerHTML = `<div class="nodes-header" style="margin-top:20px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19L19 19C20.1046 19 21 18.1046 21 17C21 15.8954 20.1046 15 19 15L18.1 15C17.55 12.15 15.05 10 12 10C9.6 10 7.55 11.35 6.55 13.35C4.55 13.7 3 15.45 3 17.5C3 19.433 4.567 21 6.5 21L7.5 21"></path></svg> Infrastructure Insights</div>`;
+    wrap.innerHTML = `<div class="nodes-header" style="margin-top:20px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19L19 19C20.1046 19 21 18.1046 21 17C21 15.8954 20.1046 15 19 15L18.1 15C17.55 12.15 15.05 10 12 10C9.6 10 7.55 11.35 6.55 13.35C4.55 13.7 3 15.45 3 17.5C3 19.433 4.567 21 6.5 21L7.5 21"></path></svg> ${t("infraInsights")}</div>`;
     const grid = mkEl("div", "infra-grid");
     const hosting = mkEl("div", "infra-card");
-    hosting.innerHTML = `<div class="infra-icon" id="infra-isp-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-isp)"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg></div><div class="infra-details"><div class="infra-value" id="infra-isp">${STATE.raw.isp}</div><div class="infra-label">Provider</div></div>`;
+    hosting.innerHTML = `<div class="infra-icon" id="infra-isp-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-isp)"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg></div><div class="infra-details"><div class="infra-value" id="infra-isp">${STATE.raw.isp}</div><div class="infra-label">${t("provider")}</div></div>`;
     const locCard = mkEl("div", "infra-card");
-    locCard.innerHTML = `<div class="infra-icon" id="infra-loc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-loc)"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div><div class="infra-details"><div class="infra-value" id="infra-loc">${STATE.raw.location}</div><div class="infra-label">Region</div></div>`;
+    locCard.innerHTML = `<div class="infra-icon" id="infra-loc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-loc)"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div><div class="infra-details"><div class="infra-value" id="infra-loc">${STATE.raw.location}</div><div class="infra-label">${t("region")}</div></div>`;
     const ping = mkEl("div", "infra-card");
-    ping.innerHTML = `<div class="infra-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-ping)"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg></div><div class="infra-details"><div class="infra-value" id="ping-value">Check Latency</div><div class="infra-label">Client to Server</div></div><div class="ping-action-wrap"><div class="ping-dot" id="ping-dot"></div><div class="icon-btn-mini" id="btn-ping" title="Check Ping"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></div></div>`;
+    ping.innerHTML = `<div class="infra-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-ping)"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg></div><div class="infra-details"><div class="infra-value" id="ping-value">${t("checkLatency")}</div><div class="infra-label">${t("clientToServer")}</div></div><div class="ping-action-wrap"><div class="ping-dot" id="ping-dot"></div><div class="icon-btn-mini" id="btn-ping" title="${t("checkLatency")}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></div></div>`;
     ping.querySelector("#btn-ping").onclick = () => checkPing();
     grid.appendChild(hosting);
     grid.appendChild(locCard);
@@ -397,21 +471,21 @@
   }
   function renderStatsGrid() {
     const wrap = mkEl("div", "span-12");
-    wrap.innerHTML = `<div class="nodes-header"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Server Monitor</div>`;
+    wrap.innerHTML = `<div class="nodes-header"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> ${t("serverMonitor")}</div>`;
     const grid = mkEl("div", "stats-grid-horizontal");
     grid.id = "stats-grid";
     const cpuCard = mkEl("div", "stat-card-mini clickable-card");
-    cpuCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-cpu)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">CPU Usage</div><div class="stat-mini-value"><span id="cpu-val">0</span>%</div></div>`;
+    cpuCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-cpu)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("cpuUsage")}</div><div class="stat-mini-value"><span id="cpu-val">0</span>%</div></div>`;
     cpuCard.onclick = () => showMetricsModal("cpu");
 
     const ramCard = mkEl("div", "stat-card-mini clickable-card");
-    ramCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-ram)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M4 12h16M4 18h16M8 2v20M12 2v20M16 2v20"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">Memory</div><div class="stat-mini-value"><span id="ram-val">0</span>%</div></div>`;
+    ramCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-ram)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M4 12h16M4 18h16M8 2v20M12 2v20M16 2v20"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("memory")}</div><div class="stat-mini-value"><span id="ram-val">0</span>%</div></div>`;
     ramCard.onclick = () => showMetricsModal("ram");
 
     const uploadCard = mkEl("div", "stat-card-mini");
-    uploadCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-up)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">Upload</div><div class="stat-mini-value" id="upload-val">0 KB/s</div></div>`;
+    uploadCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-up)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("upload")}</div><div class="stat-mini-value" id="upload-val">0 KB/s</div></div>`;
     const downloadCard = mkEl("div", "stat-card-mini");
-    downloadCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-down)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="8 12 12 16 16 12"/><line x1="12" y1="16" x2="12" y2="3"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">Download</div><div class="stat-mini-value" id="download-val">0 KB/s</div></div>`;
+    downloadCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-down)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="8 12 12 16 16 12"/><line x1="12" y1="16" x2="12" y2="3"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("download")}</div><div class="stat-mini-value" id="download-val">0 KB/s</div></div>`;
     grid.appendChild(cpuCard);
     grid.appendChild(ramCard);
     grid.appendChild(uploadCard);
