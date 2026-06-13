@@ -168,8 +168,13 @@ jobs:
       - name: Verify dist
         run: |
           echo "--- subpage.html in dist ---"
-          cat 3x-ui/web/dist/subpage.html
-          grep -c "cdn.jsdelivr.net" 3x-ui/web/dist/subpage.html && echo "✓ CDN links present" || echo "✗ CDN links MISSING"
+          if [ -f "3x-ui/internal/web/dist/subpage.html" ]; then
+            DIST_PATH="3x-ui/internal/web/dist/subpage.html"
+          else
+            DIST_PATH="3x-ui/web/dist/subpage.html"
+          fi
+          cat "$DIST_PATH"
+          grep -c "cdn.jsdelivr.net" "$DIST_PATH" && echo "✓ CDN links present" || echo "✗ CDN links MISSING"
 
       - name: Install Cross-Compilers
         run: |
