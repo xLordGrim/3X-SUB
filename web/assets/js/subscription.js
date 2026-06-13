@@ -545,10 +545,11 @@
           return "/";
         };
         const basePath = getBase();
-        const res = await fetch(
-          basePath + "assets/css/status.json?t=" + Date.now(),
-        );
-        if (res.ok) {
+        let res = await fetch(basePath + "sub_stats/status.json?t=" + Date.now()).catch(() => null);
+        if (!res || !res.ok) {
+          res = await fetch(basePath + "assets/css/status.json?t=" + Date.now()).catch(() => null);
+        }
+        if (res && res.ok) {
           const data = await res.json();
           const cpuEl = getEl("cpu-val"),
             ramEl = getEl("ram-val");

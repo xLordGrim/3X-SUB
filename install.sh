@@ -66,8 +66,21 @@ if [ "$(printf '%s\n' "3.0.0" "$RAW_VER" | sort -V | head -n1)" = "3.0.0" ]; the
     IS_V3=true
 fi
 
+# Determine if we are on v3.3.1+
+IS_V3_3_1=false
+if [ "$(printf '%s\n' "3.3.1" "$RAW_VER" | sort -V | head -n1)" = "3.3.1" ]; then
+    IS_V3_3_1=true
+fi
+
 # Set Stats file path depending on version
-if [ "$IS_V3" = true ]; then
+if [ "$IS_V3_3_1" = true ]; then
+    # Since our GitHub Action injects `engine.StaticFS(basePath+"sub_stats", http.Dir("sub_stats"))`
+    # into the v3.3.1+ custom binaries, we can safely write here without overriding the main assets routing.
+    STATS_FILE="$XUI_ROOT/sub_stats/status.json"
+    mkdir -p "$XUI_ROOT/sub_stats"
+    echo "{}" > "$STATS_FILE"
+elif [ "$IS_V3" = true ]; then
+    # Older v3.x.x versions don't have the sub_stats injected route, so we use the old method
     STATS_FILE="$XUI_ROOT/web/dist/assets/css/status.json"
     mkdir -p "$XUI_ROOT/web/dist/assets/css"
 else
