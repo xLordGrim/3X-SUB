@@ -79,7 +79,11 @@ jobs:
       - name: Detect 3x-ui version
         id: version
         run: |
-          XUI_VER=$(cat 3x-ui/config/version | tr -d '[:space:]')
+          if [ -f "3x-ui/internal/config/version" ]; then
+            XUI_VER=$(cat 3x-ui/internal/config/version | tr -d '[:space:]')
+          else
+            XUI_VER=$(cat 3x-ui/config/version | tr -d '[:space:]')
+          fi
           echo "xui_version=$XUI_VER" >> $GITHUB_OUTPUT
 
           BRANCH="${GITHUB_REF_NAME:-development}"
@@ -158,6 +162,17 @@ jobs:
           PYEOF
 
           cat 3x-ui/frontend/subpage.html
+
+      - name: Inject isolated sub_stats route into Go backend
+        run: |
+          WEB_GO_FILE=$(find 3x-ui -type f -name "web.go" | grep -v "/vendor/" | head -n 1)
+          if [ -n "$WEB_GO_FILE" ]; then
+            echo "Patching $WEB_GO_FILE to include sub_stats static route..."
+            sed -i 's/return engine, nil/engine.StaticFS(basePath+"sub_stats", http.Dir("sub_stats"))\n\treturn engine, nil/g' "$WEB_GO_FILE"
+            echo "OK: sub_stats route injected"
+          else
+            echo "WARNING: web.go not found! Cannot inject sub_stats route."
+          fi
 
       - name: Build Vue Frontend
         working-directory: 3x-ui/frontend
