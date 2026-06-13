@@ -78,6 +78,7 @@ if [ "$IS_V3_3_1" = true ]; then
     # into the v3.3.1+ custom binaries, we can safely write here without overriding the main assets routing.
     STATS_FILE="$XUI_ROOT/sub_stats/status.json"
     mkdir -p "$XUI_ROOT/sub_stats"
+    echo "{}" > "$STATS_FILE"
 elif [ "$IS_V3" = true ]; then
     # Older v3.x.x versions don't have the sub_stats injected route, so we use the old method
     STATS_FILE="$XUI_ROOT/web/dist/assets/css/status.json"

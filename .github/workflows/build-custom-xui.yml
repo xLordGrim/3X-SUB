@@ -168,7 +168,7 @@ jobs:
           WEB_GO_FILE=$(find 3x-ui -type f -name "web.go" | grep -v "/vendor/" | head -n 1)
           if [ -n "$WEB_GO_FILE" ]; then
             echo "Patching $WEB_GO_FILE to include sub_stats static route..."
-            sed -i 's/return engine, nil/engine.StaticFS(basePath+"sub_stats", http.Dir("sub_stats"))\n\treturn engine, nil/g' "$WEB_GO_FILE"
+            sed -i 's|return engine, nil|engine.StaticFS(basePath+"sub_stats", http.Dir("/usr/local/x-ui/sub_stats"))\n\treturn engine, nil|g' "$WEB_GO_FILE"
             echo "OK: sub_stats route injected"
           else
             echo "WARNING: web.go not found! Cannot inject sub_stats route."
