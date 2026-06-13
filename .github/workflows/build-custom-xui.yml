@@ -177,7 +177,7 @@ jobs:
           SUB_GO_FILE=$(find 3x-ui -type f -name "sub.go" | grep -v "/vendor/" | head -n 1)
           if [ -n "$SUB_GO_FILE" ]; then
             echo "Patching $SUB_GO_FILE to include sub_stats static route..."
-            sed -i 's|return engine, nil|if basePath, err := s.settingService.GetBasePath(); err == nil { engine.StaticFS(basePath+"sub_stats", http.Dir("/usr/local/x-ui/sub_stats")) }\n\treturn engine, nil|g' "$SUB_GO_FILE"
+            sed -i 's|return engine, nil|engine.StaticFS(basePath+"sub_stats", http.Dir("/usr/local/x-ui/sub_stats"))\n\treturn engine, nil|g' "$SUB_GO_FILE"
             echo "OK: sub_stats route injected into sub.go"
           else
             echo "WARNING: sub.go not found! Cannot inject sub_stats route into sub.go."
