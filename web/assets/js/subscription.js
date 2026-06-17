@@ -1317,11 +1317,16 @@
   function renderMetricsChart(type) {
     const isDark = STATE.theme === 'dark';
     const accentColor = type === 'cpu' ? '#6366f1' : '#ec4899';
+    const period = window.metricsPeriod || 'live';
+    window.currentChartPeriod = period;
+    
+    let xFormat = 'HH:mm';
+    if (period === 'live') xFormat = 'HH:mm:ss';
+    else if (period === 'd7' || period === 'd30') xFormat = 'dd MMM';
     
     // Extract initial data synchronously
     let initialData = [];
     if (window.lastStatsData) {
-      const period = window.metricsPeriod || 'live';
       let historyArr = [];
       if (window.lastStatsData.history && typeof window.lastStatsData.history === 'object' && !Array.isArray(window.lastStatsData.history)) {
         historyArr = window.lastStatsData.history[period] || [];
@@ -1393,7 +1398,7 @@
         tickAmount: 6,
         labels: { 
           datetimeUTC: false,
-          format: 'HH:mm',
+          format: xFormat,
           style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 600, fontFamily: 'Inter' } 
         },
         axisBorder: { show: false },
@@ -1445,6 +1450,21 @@
     
     const type = window.currentMetricType;
     const period = window.metricsPeriod || 'live';
+    
+    if (window.currentChartPeriod !== period) {
+      window.currentChartPeriod = period;
+      let xFormat = 'HH:mm';
+      if (period === 'live') xFormat = 'HH:mm:ss';
+      else if (period === 'd7' || period === 'd30') xFormat = 'dd MMM';
+      
+      window.metricsChart.updateOptions({
+        xaxis: {
+          labels: {
+            format: xFormat
+          }
+        }
+      }, false, false);
+    }
     
     // Support nested history object
     let historyArr = [];
