@@ -49,18 +49,6 @@ bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/install.
 bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/install.sh) --zh
 ```
 
-
-**🌐 Default Language Selection:**
-By default, the installer applies English. You can force a specific default language for your users by appending `--en`, `--zh`, or `--fa` to the command:
-
-```bash
-# Install with Farsi as the default language
-bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/install.sh) --fa
-
-# Install with Chinese as the default language
-bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/install.sh) --zh
-```
-
 ## 🧹 Uninstallation
 If you wish to return to the default 3X-UI subscribe, run:
 
