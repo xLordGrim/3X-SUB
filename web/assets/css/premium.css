@@ -1817,6 +1817,7 @@ body.premium-theme .premium-toast.show {
     gap: 16px;
     opacity: 1;
     box-shadow: var(--shadow-md);
+    min-width: 0;
 
 
     contain: layout style paint;
