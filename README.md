@@ -59,7 +59,7 @@ bash <(curl -Ls https://raw.githubusercontent.com/xLordGrim/3X-SUB/main/uninstal
 > This will update your x-ui panel to the latest version(no data loss)
 > 
 ## 👑 Author
-You can Contact me for issues and support
+Contact me for issues and support
 <a href="https://xlordgrim.t.me">𝙇𝙊𝙍𝘿 𝙂𝙍𝙄𝙈</a>
 ## 📄 License
 This project is licensed under the **Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**.
