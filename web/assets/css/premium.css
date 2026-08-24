@@ -48,9 +48,10 @@ body.premium-theme {
 }
 
 
-body.is-scrolling,
-body.is-scrolling * {
-    pointer-events: none !important;
+/* fix(ux): scope pointer-events:none to canvas only — prevents all buttons
+   from becoming unclickable during scroll events */
+body.is-scrolling #canvas-bg {
+    pointer-events: none;
 }
 
 
@@ -252,7 +253,8 @@ body.premium-theme.s-light.status-unlimited {
     border-radius: 50%;
     transform: translate(-50%, -50%) scale(0);
     pointer-events: none;
-    z-index: 9999;
+    /* fix(ux): lower from 9999 so modals/QR dialog stay visible during burst */
+    z-index: 1100;
     animation: burst-in-out 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     transform-origin: center;
 }
@@ -339,17 +341,11 @@ body.premium-theme::before {
     z-index: 0;
 }
 
-.bg-fx {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--gradient-overlay);
-    z-index: -2;
-    pointer-events: none;
-    overflow: hidden;
-}
+/* fix(css): removed .bg-fx — body.premium-theme::before already renders
+   var(--gradient-overlay). Having both stacked doubled the gradient intensity.
+   If a distinct secondary background effect is needed later, give it a separate
+   custom-property instead of reusing --gradient-overlay. */
+
 
 .app-container {
     max-width: 1200px;
@@ -2708,3 +2704,34 @@ body.lang-fa .lang-dropdown {
     font-weight: 600;
 }
 
+/* ─── fix(a11y): Respect prefers-reduced-motion ───────────────────────────
+   Disables the animated canvas background, theme-burst transition, and
+   bulk transition storm for users who prefer reduced motion (vestibular
+   disorders, epilepsy sensitivity, etc.)                                   */
+@media (prefers-reduced-motion: reduce) {
+    #canvas-bg {
+        display: none !important;
+    }
+
+    .theme-burst {
+        animation: none !important;
+        opacity: 0 !important;
+    }
+
+    .theme-transitioning,
+    .theme-transitioning *,
+    .theme-transitioning *:before,
+    .theme-transitioning *:after {
+        transition: none !important;
+    }
+
+    .node-card,
+    .stat-mini,
+    .infra-card,
+    .span-8,
+    .span-4,
+    .span-12 {
+        animation: none !important;
+        opacity: 1 !important;
+    }
+}

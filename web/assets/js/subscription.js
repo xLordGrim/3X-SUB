@@ -41,6 +41,7 @@
       dAgo: "d ago",
       expired: "Expired",
       active: "Active",
+      limited: "Limited",
       dataUsageMetrics: "Data Usage Metrics",
       testing: "Testing...",
       scanQR: "Scan this QR code to import configuration"
@@ -78,6 +79,7 @@
       dAgo: "天前",
       expired: "已过期",
       active: "活跃",
+      limited: "已限速",
       dataUsageMetrics: "流量使用统计",
       testing: "测试中...",
       scanQR: "扫描二维码导入配置"
@@ -115,6 +117,7 @@
       dAgo: "روز پیش",
       expired: "منقضی شده",
       active: "فعال",
+      limited: "محدود شده",
       dataUsageMetrics: "آمار استفاده از داده",
       testing: "در حال آزمایش...",
       scanQR: "برای وارد کردن پیکربندی این QR را اسکن کنید"
@@ -158,15 +161,15 @@
     } else if (depleted) {
       state = "depleted";
       colorVar = "var(--usage-depleted)";
-      label = "Limited";
+      label = t("limited");
     } else if (total === 0) {
       state = "unlimited";
       colorVar = "var(--accent)";
-      label = "Active";
+      label = t("active");
     } else {
       state = "active";
       colorVar = "var(--usage-active)";
-      label = "Active";
+      label = t("active");
     }
     const pct = total === 0 ? 0 : Math.min(100, (used / total) * 100);
     return {
@@ -200,6 +203,9 @@
 
     if (STATE.lang === "fa") {
       document.body.classList.add("lang-fa");
+      document.documentElement.dir = "rtl";
+    } else {
+      document.documentElement.dir = "ltr";
     }
 
     // Safe injection for legacy embedded templates
@@ -244,7 +250,10 @@
         }
       } else {
         const dataEl = getEl("subscription-data");
-        if (!dataEl) return;
+        if (!dataEl) {
+          document.body.innerHTML = `<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;color:var(--text-primary);background:var(--bg-main);"><div style="text-align:center;padding:20px;background:var(--bg-card);border-radius:12px;border:var(--border-subtle);"><h2>Could not load subscription data</h2><p>Please refresh the page or contact support.</p></div></div>`;
+          return;
+        }
         STATE.raw = {
           sid:
             dataEl.getAttribute("data-email") ||
@@ -272,9 +281,8 @@
     renderApp();
     applyTheme();
     startStatsPolling();
-    if (!window.statusLoop) {
-      window.statusLoop = setInterval(updateStatus, 60000);
-    }
+    if (window.statusLoop) clearInterval(window.statusLoop);
+    window.statusLoop = setInterval(updateStatus, 60000);
     if (!window.networkBg) {
       window.networkBg = new NeuralNetwork();
     }
@@ -345,6 +353,7 @@
     langBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
     langBtn.id = "lang-btn";
     langBtn.title = "Change Language";
+    langBtn.setAttribute("aria-label", "Change Language");
     
     const langDropdown = mkEl("div", "lang-dropdown");
     const langs = [
@@ -359,7 +368,16 @@
       item.onclick = (e) => {
         e.stopPropagation();
         localStorage.setItem("xui_lang", l.code);
-        location.reload();
+        STATE.lang = l.code;
+        if (STATE.lang === "fa") {
+          document.body.classList.add("lang-fa");
+          document.documentElement.dir = "rtl";
+        } else {
+          document.body.classList.remove("lang-fa");
+          document.documentElement.dir = "ltr";
+        }
+        langDropdown.classList.remove("show");
+        renderApp();
       };
       langDropdown.appendChild(item);
     });
@@ -391,6 +409,7 @@
       toggleTheme(e);
     };
     themeBtn.id = "theme-btn";
+    themeBtn.setAttribute("aria-label", "Toggle Theme");
     ctrls.appendChild(themeBtn);
     h.appendChild(profile);
     h.appendChild(ctrls);
@@ -415,8 +434,16 @@
     let expText = "∞";
     if (STATE.raw.expire > 0) {
       const diff = STATE.raw.expire - Date.now();
-      if (diff < 0) expText = "Expired";
-      else expText = Math.ceil(diff / (1000 * 60 * 60 * 24)) + "d";
+      if (diff < 0) {
+        expText = t("expired");
+      } else {
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const m = Math.floor((diff / 1000 / 60) % 60);
+        if (d > 0) expText = d + "d";
+        else if (h > 0) expText = h + "h";
+        else expText = m + "m";
+      }
     }
     const exp = mkEl("div", "stat-mini");
     exp.innerHTML = `<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-exp)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div><div class="stat-value">${expText}</div><div class="stat-label">${t("exp")}</div>`;
@@ -690,6 +717,7 @@
     toastEl.id = "toast";
     toastEl.style.top = "max(24px, env(safe-area-inset-top) + 24px)";
     toastEl.innerText = t("copied");
+    toastEl.setAttribute("aria-live", "polite");
     return toastEl;
   }
   function formatBytes(bytes) {
