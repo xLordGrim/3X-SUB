@@ -2736,3 +2736,128 @@ body.lang-fa .lang-dropdown {
         opacity: 1 !important;
     }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3X-SUB Extension Styles — v3.7+ Only
+   Loaded exclusively by subscription-v37.js on 3x-ui ≥ 3.7.0 installs.
+   Legacy v2.x and v3.0–v3.6 installations never load these classes.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── A: Announcement Banner ─────────────────────────────────────────────── */
+.ext-announce-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px 12px 20px;
+    background: rgba(245, 158, 11, 0.10);
+    border: 1px solid rgba(245, 158, 11, 0.28);
+    border-radius: var(--card-radius);
+    margin: 0 0 16px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    max-height: 300px;
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.35s ease, margin 0.35s ease;
+    animation: ext-fadein 0.4s ease;
+}
+.ext-announce-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+.ext-announce-text {
+    flex: 1;
+    word-break: break-word;
+}
+.ext-announce-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    transition: color 0.2s, background 0.2s;
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+.ext-announce-close:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── B: Live Online Badge ────────────────────────────────────────────────── */
+.ext-online-badge {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-card, #0f172a);
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+    z-index: 3;
+    pointer-events: none;
+}
+.ext-online-badge.ext-is-online {
+    background: var(--status-online);
+    box-shadow: 0 0 6px var(--status-online);
+    animation: ext-pulse-online 2.4s infinite;
+}
+.ext-online-badge.ext-is-offline {
+    background: var(--status-offline);
+    box-shadow: none;
+}
+
+/* ── H: Subscription Profile URL Card ───────────────────────────────────── */
+.ext-suburl-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--btn-radius);
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.ext-suburl-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.ext-suburl-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+.ext-suburl-value {
+    flex: 1;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    min-width: 0;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes ext-fadein {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ext-pulse-online {
+    0%, 100% { box-shadow: 0 0 4px var(--status-online); }
+    50%      { box-shadow: 0 0 11px var(--status-online); }
+}
+
+/* ── Reduced-Motion overrides for extension elements ────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .ext-announce-banner { animation: none; }
+    .ext-online-badge.ext-is-online { animation: none; }
+}
