@@ -96,7 +96,6 @@
   /* A — Announcement Banner */
   function mountAnnouncement(root) {
     if (!EXT.subAnnounce) return;
-    if (localStorage.getItem('xui_announce_dismissed') === EXT.subAnnounce) return;
     if (root.querySelector('#ext-announce')) return;
     var banner = document.createElement('div');
     banner.className = 'ext-announce-banner';
@@ -112,30 +111,7 @@
       '<div class="ext-announce-body">' +
         '<span class="ext-announce-tag">' + te('notice') + '</span>' +
         '<span class="ext-announce-text">' + escHtml(EXT.subAnnounce) + '</span>' +
-      '</div>' +
-      '<button class="ext-announce-close" aria-label="' + te('announceClose') + '" title="' + te('announceClose') + '">' +
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
-          '<line x1="18" y1="6" x2="6" y2="18"></line>' +
-          '<line x1="6" y1="6" x2="18" y2="18"></line>' +
-        '</svg>' +
-      '</button>';
-
-    banner.querySelector('.ext-announce-close').onclick = function() {
-      try { localStorage.setItem('xui_announce_dismissed', EXT.subAnnounce); } catch(e){}
-      banner.style.maxHeight = banner.scrollHeight + 'px';
-      banner.style.opacity = '1';
-      banner.style.transform = 'translateY(0)';
-      requestAnimationFrame(function(){
-        banner.style.maxHeight = '0';
-        banner.style.opacity = '0';
-        banner.style.paddingTop = '0';
-        banner.style.paddingBottom = '0';
-        banner.style.marginTop = '0';
-        banner.style.marginBottom = '0';
-        banner.style.transform = 'translateY(-10px)';
-      });
-      setTimeout(function(){ banner.remove(); }, 380);
-    };
+      '</div>';
 
     // Position after title/header and before the main grid
     var grid = root.querySelector('.dashboard-grid');
