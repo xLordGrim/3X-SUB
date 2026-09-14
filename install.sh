@@ -72,6 +72,13 @@ if [ "$(printf '%s\n' "3.3.1" "$RAW_VER" | sort -V | head -n1)" = "3.3.1" ]; the
     IS_V3_3_1=true
 fi
 
+# Determine if we are on v3.7.0+ (subscription extension features: isOnline, resetDay, subTitle, etc.)
+IS_V3_7=false
+if [ "$(printf '%s\n' "3.7.0" "$RAW_VER" | sort -V | head -n1)" = "3.7.0" ]; then
+    IS_V3_7=true
+fi
+echo -e "${BLUE}v3.7+ subscription extension: ${GREEN}${IS_V3_7}${NC}"
+
 # Set Stats file path depending on version
 if [ "$IS_V3_3_1" = true ]; then
     # Since our GitHub Action injects `engine.StaticFS(basePath+"sub_stats", http.Dir("sub_stats"))`
@@ -226,6 +233,52 @@ if [ "$IS_V3" = true ]; then
     
     # Clear ISP cache
     [[ -f "/usr/local/x-ui/isp_info.json" ]] && rm -f "/usr/local/x-ui/isp_info.json"
+
+    # ── v3.7+ Extension: subscription-v37.js ──────────────────────────────────
+    # Only deployed when the detected x-ui version is >= 3.7.0.
+    # The extension file adds new UI features (online badge, reset day, HWID limit,
+    # announcement banner, Jalali expiry, profile URL card) without touching
+    # subscription.js or legacy code paths.
+    if [ "$IS_V3_7" = true ]; then
+        echo -e "${BLUE}Deploying v3.7+ subscription extension...${NC}"
+
+        # Determine JS destination directory
+        # v3.3.1+ uses internal/web/dist for served assets
+        if [ -d "/usr/local/x-ui/internal/web/dist/assets/js" ]; then
+            EXT_JS_DIR="/usr/local/x-ui/internal/web/dist/assets/js"
+        else
+            EXT_JS_DIR="/usr/local/x-ui/web/dist/assets/js"
+        fi
+        mkdir -p "$EXT_JS_DIR"
+
+        # Download extension JS
+        curl -Ls "${REPO_URL}/web/assets/js/subscription-v37.js?v=$TIMESTAMP" \
+            -o "$EXT_JS_DIR/subscription-v37.js"
+
+        if [ -s "$EXT_JS_DIR/subscription-v37.js" ]; then
+            echo -e "${GREEN}✓ subscription-v37.js downloaded${NC}"
+        else
+            echo -e "${YELLOW}⚠  subscription-v37.js download failed — extension features will not be active${NC}"
+        fi
+
+        # Inject <script> tag into the compiled subpage.html (idempotent)
+        SUBPAGE_DIST=""
+        [[ -f "/usr/local/x-ui/internal/web/dist/subpage.html" ]] && SUBPAGE_DIST="/usr/local/x-ui/internal/web/dist/subpage.html"
+        [[ -z "$SUBPAGE_DIST" && -f "/usr/local/x-ui/web/dist/subpage.html" ]] && SUBPAGE_DIST="/usr/local/x-ui/web/dist/subpage.html"
+
+        if [ -n "$SUBPAGE_DIST" ]; then
+            if ! grep -q "subscription-v37.js" "$SUBPAGE_DIST"; then
+                # Insert after the existing subscription.js script tag
+                sed -i 's|\(<script src="[^"]*subscription\.js[^"]*"></script>\)|\1\n<script src="{{ .base_path }}assets/js/subscription-v37.js?{{ .cur_ver }}"></script>|' "$SUBPAGE_DIST"
+                echo -e "${GREEN}✓ v3.7+ extension injected into subpage.html${NC}"
+            else
+                echo -e "${YELLOW}⚠  Extension already present in subpage.html — skipped${NC}"
+            fi
+        else
+            echo -e "${YELLOW}⚠  Could not locate compiled subpage.html — extension JS downloaded but script tag not injected${NC}"
+        fi
+    fi
+    # ── End v3.7+ Extension ───────────────────────────────────────────────────
 
 
 else

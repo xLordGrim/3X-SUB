@@ -2736,3 +2736,295 @@ body.lang-fa .lang-dropdown {
         opacity: 1 !important;
     }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3X-SUB Extension Styles — v3.7+ Only
+   Loaded exclusively by subscription-v37.js on 3x-ui ≥ 3.7.0 installs.
+   Legacy v2.x and v3.0–v3.6 installations never load these classes.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── A: Announcement Banner ─────────────────────────────────────────────── */
+.ext-announce-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: var(--card-radius);
+    margin: -10px 0 24px 0;
+    max-height: 400px;
+    overflow: hidden;
+    transition: max-height 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.35s ease,
+                margin 0.35s ease,
+                padding 0.35s ease,
+                transform 0.35s ease;
+    animation: ext-fadein 0.45s var(--ease-out);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-sizing: border-box;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .ext-announce-banner {
+        margin: 0 0 20px 0;
+        padding: 12px 14px;
+        gap: 10px;
+    }
+}
+
+/* Theme styling for dark mode */
+body.s-dark .ext-announce-banner {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.04) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(245, 158, 11, 0.12) inset;
+    color: var(--text-primary);
+}
+
+/* Theme styling for light mode */
+body.s-light .ext-announce-banner {
+    background: linear-gradient(135deg, rgba(254, 243, 199, 0.85) 0%, rgba(253, 230, 138, 0.45) 100%);
+    border: 1px solid rgba(217, 119, 6, 0.28);
+    box-shadow: 0 4px 16px -2px rgba(217, 119, 6, 0.12);
+    color: #1e293b;
+}
+
+.ext-announce-icon-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(245, 158, 11, 0.18);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #fbbf24;
+    transition: transform 0.3s var(--ease-out);
+}
+
+body.s-light .ext-announce-icon-badge {
+    background: rgba(245, 158, 11, 0.22);
+    border-color: rgba(217, 119, 6, 0.4);
+    color: #b45309;
+}
+
+.ext-announce-banner:hover .ext-announce-icon-badge {
+    transform: scale(1.06);
+}
+
+.ext-announce-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ext-announce-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f59e0b;
+}
+
+body.s-light .ext-announce-tag {
+    color: #b45309;
+}
+
+.ext-announce-text {
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+body.s-light .ext-announce-text {
+    color: #1e293b;
+}
+
+.ext-announce-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s var(--ease-out);
+    padding: 0;
+}
+
+.ext-announce-close:hover {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: var(--text-primary);
+    transform: scale(1.05);
+}
+
+/* ── B: Live Online Badge ────────────────────────────────────────────────── */
+.ext-online-badge {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2.5px solid var(--bg-main, #020617);
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+    z-index: 3;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+.ext-online-badge.ext-is-online {
+    background: var(--status-online);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25), 0 0 8px var(--status-online);
+    animation: ext-pulse-online 2.5s infinite;
+}
+
+.ext-online-badge.ext-is-offline {
+    background: var(--status-offline);
+    box-shadow: none;
+}
+
+[dir="rtl"] .ext-online-badge {
+    right: auto;
+    left: -1px;
+}
+
+/* ── E & F: Stat-mini Grid Balancing ─────────────────────────────────────── */
+/* Ensure resetDay and hwidLimit fill the row when single/odd */
+.stat-mini-grid > div:nth-child(6):last-child {
+    grid-column: span 2;
+}
+
+.stat-mini-grid > div:last-child:nth-child(odd) {
+    grid-column: span 2;
+}
+
+/* ── H: Subscription Profile URL Card ───────────────────────────────────── */
+.ext-suburl-card {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.3s var(--ease-out);
+    position: relative;
+    overflow: hidden;
+}
+
+.ext-suburl-card:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 8px 24px -4px var(--accent-glow);
+    transform: translateY(-2px);
+}
+
+.ext-suburl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ext-suburl-label-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ext-suburl-icon {
+    color: var(--accent);
+}
+
+.ext-suburl-label {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+}
+
+.ext-suburl-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--accent);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    letter-spacing: 0.06em;
+}
+
+.ext-suburl-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 6px 8px 6px 12px;
+}
+
+body.s-light .ext-suburl-row {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+.ext-suburl-value {
+    flex: 1;
+    font-size: 0.78rem;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    min-width: 0;
+    opacity: 0.85;
+}
+
+.ext-suburl-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* ── Support Button in Header ───────────────────────────────────────────── */
+#ext-support-btn {
+    text-decoration: none;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes ext-fadein {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ext-pulse-online {
+    0%, 100% {
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25), 0 0 6px var(--status-online);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.4), 0 0 12px var(--status-online);
+    }
+}
+
+/* ── Reduced-Motion overrides for extension elements ────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .ext-announce-banner { animation: none; }
+    .ext-online-badge.ext-is-online { animation: none; }
+    .ext-suburl-card:hover { transform: none; }
+}
