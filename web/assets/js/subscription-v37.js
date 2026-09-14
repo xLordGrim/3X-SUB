@@ -47,19 +47,19 @@
       resetDay:'Reset Day',day:'Day',deviceLimit:'Device Limit',maxDevices:'Max',
       support:'Support',subscriptionUrl:'Subscription URL',
       onlineBadgeTitle:'Currently connected',offlineBadgeTitle:'Not connected',
-      announceClose:'Dismiss',copy:'Copy',
+      announceClose:'Dismiss',copy:'Copy',copied:'Copied!',notice:'Announcement',
     },
     zh: {
       resetDay:'重置日',day:'第',deviceLimit:'设备限制',maxDevices:'最多',
       support:'支持',subscriptionUrl:'订阅链接',
       onlineBadgeTitle:'当前已连接',offlineBadgeTitle:'未连接',
-      announceClose:'关闭',copy:'复制',
+      announceClose:'关闭',copy:'复制',copied:'已复制!',notice:'系统公告',
     },
     fa: {
       resetDay:'روز ریست',day:'روز',deviceLimit:'محدودیت دستگاه',maxDevices:'حداکثر',
       support:'پشتیبانی',subscriptionUrl:'لینک اشتراک',
       onlineBadgeTitle:'در حال اتصال',offlineBadgeTitle:'قطع',
-      announceClose:'رد کردن',copy:'کپی',
+      announceClose:'رد کردن',copy:'کپی',copied:'کپی شد!',notice:'اطلاعیه',
     },
   };
   function te(k) {
@@ -68,6 +68,15 @@
   }
 
   /* HELPERS */
+  function extShowToast(msg) {
+    var t = document.getElementById('toast');
+    if (t) {
+      t.innerText = msg;
+      t.classList.add('show');
+      if (t._timeout) clearTimeout(t._timeout);
+      t._timeout = setTimeout(function() { t.classList.remove('show'); }, 2000);
+    }
+  }
   function escHtml(s) {
     return String(s).replace(/[&<>"']/g, function(c) {
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -93,19 +102,51 @@
     banner.className = 'ext-announce-banner';
     banner.id = 'ext-announce';
     banner.innerHTML =
-      '<span class="ext-announce-icon">📢</span>'+
-      '<span class="ext-announce-text">'+escHtml(EXT.subAnnounce)+'</span>'+
-      '<button class="ext-announce-close" aria-label="'+te('announceClose')+'">✕</button>';
+      '<div class="ext-announce-icon-badge">' +
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M11 5L6 9H2v6h4l5 4V5z"></path>' +
+          '<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>' +
+          '<path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>' +
+        '</svg>' +
+      '</div>' +
+      '<div class="ext-announce-body">' +
+        '<span class="ext-announce-tag">' + te('notice') + '</span>' +
+        '<span class="ext-announce-text">' + escHtml(EXT.subAnnounce) + '</span>' +
+      '</div>' +
+      '<button class="ext-announce-close" aria-label="' + te('announceClose') + '" title="' + te('announceClose') + '">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<line x1="18" y1="6" x2="6" y2="18"></line>' +
+          '<line x1="6" y1="6" x2="18" y2="18"></line>' +
+        '</svg>' +
+      '</button>';
+
     banner.querySelector('.ext-announce-close').onclick = function() {
       try { localStorage.setItem('xui_announce_dismissed', EXT.subAnnounce); } catch(e){}
-      banner.style.maxHeight = banner.scrollHeight+'px';
-      banner.style.padding = '0 16px 0 20px';
-      banner.style.margin = '0';
-      requestAnimationFrame(function(){ banner.style.maxHeight='0'; banner.style.opacity='0'; });
+      banner.style.maxHeight = banner.scrollHeight + 'px';
+      banner.style.opacity = '1';
+      banner.style.transform = 'translateY(0)';
+      requestAnimationFrame(function(){
+        banner.style.maxHeight = '0';
+        banner.style.opacity = '0';
+        banner.style.paddingTop = '0';
+        banner.style.paddingBottom = '0';
+        banner.style.marginTop = '0';
+        banner.style.marginBottom = '0';
+        banner.style.transform = 'translateY(-10px)';
+      });
       setTimeout(function(){ banner.remove(); }, 380);
     };
+
+    // Position after title/header and before the main grid
+    var grid = root.querySelector('.dashboard-grid');
     var header = root.querySelector('.dashboard-header');
-    if (header) root.insertBefore(banner, header); else root.prepend(banner);
+    if (grid) {
+      root.insertBefore(banner, grid);
+    } else if (header && header.nextSibling) {
+      root.insertBefore(banner, header.nextSibling);
+    } else {
+      root.appendChild(banner);
+    }
   }
 
   /* B — Live Online Badge */
@@ -202,31 +243,46 @@
     card.id = 'ext-suburl-card';
     card.className = 'ext-suburl-card';
     card.innerHTML =
-      '<div class="ext-suburl-label">'+te('subscriptionUrl')+'</div>'+
-      '<div class="ext-suburl-row">'+
-        '<span class="ext-suburl-value" title="'+escHtml(url)+'">'+escHtml(url)+'</span>'+
-        '<button class="icon-btn-mini ext-suburl-copy" title="'+te('copy')+'" aria-label="'+te('copy')+'">'+
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'+
-        '</button>'+
-        '<button class="icon-btn-mini ext-suburl-qr" title="QR" aria-label="QR Code">'+
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'+
-        '</button>'+
+      '<div class="ext-suburl-header">' +
+        '<div class="ext-suburl-label-wrap">' +
+          '<svg class="ext-suburl-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>' +
+            '<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>' +
+          '</svg>' +
+          '<span class="ext-suburl-label">' + te('subscriptionUrl') + '</span>' +
+        '</div>' +
+        '<span class="ext-suburl-badge">SYNC LINK</span>' +
+      '</div>' +
+      '<div class="ext-suburl-row">' +
+        '<span class="ext-suburl-value" title="' + escHtml(url) + '">' + escHtml(url) + '</span>' +
+        '<div class="ext-suburl-actions">' +
+          '<button class="icon-btn-mini ext-suburl-copy" title="' + te('copy') + '" aria-label="' + te('copy') + '">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+          '</button>' +
+          '<button class="icon-btn-mini ext-suburl-qr" title="QR" aria-label="QR Code">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' +
+          '</button>' +
+        '</div>' +
       '</div>';
     card.querySelector('.ext-suburl-copy').onclick = function() {
       var btn = card.querySelector('.ext-suburl-copy');
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(url).then(function(){
-          btn.style.color='var(--usage-active)'; setTimeout(function(){ btn.style.color=''; },1500);
+          btn.style.color = 'var(--usage-active)';
+          extShowToast(te('copied'));
+          setTimeout(function(){ btn.style.color = ''; }, 1500);
         }).catch(function(){ extFallbackCopy(url, btn); });
       } else { extFallbackCopy(url, btn); }
     };
     card.querySelector('.ext-suburl-qr').onclick = function() {
       if (window.QRious) {
-        var modal=document.getElementById('qr-modal'),canv=document.getElementById('qr-canv'),titleEl=document.getElementById('qr-title');
+        var modal = document.getElementById('qr-modal'),
+            canv  = document.getElementById('qr-canv'),
+            titleEl = document.getElementById('qr-title');
         if (modal && canv) {
           if (titleEl) titleEl.textContent = te('subscriptionUrl');
           new QRious({ element: canv, value: url, size: 250 });
-          modal.style.opacity=''; modal.style.visibility=''; modal.style.pointerEvents='';
+          modal.style.opacity = ''; modal.style.visibility = ''; modal.style.pointerEvents = '';
           modal.classList.add('open');
         }
       }
