@@ -137,10 +137,21 @@
     if (!raw) return "User";
     try {
       let name = decodeURIComponent(raw);
+      // Strip unexpanded 3x-ui remark template tokens ({{TOKEN}} double-brace form)
+      // These appear as literal text if 3x-ui fails to expand them
+      name = name.replace(/\{\{[A-Z_]+\}\}/g, "");
+      // Strip known status/disabled prefixes
       name = name.replace(/^(⛔️|N\/A|\s|-)+/i, "");
-      name = name.replace(/-\s*\d+(\.\d+)?\s*([GMKT]B|[dhmy]|min|mo).*$/i, "");
-      // Emojis are fine to leave in the name. We only strip known status suffixes.
-      return name.trim() || "User";
+      // Strip data-size suffixes added by remark templates:
+      //   "- 5.3 GB", "| 10 GB", "(5 GB used)", "5.3GB/10GB", etc.
+      name = name.replace(/[\s\-|]+\d+(\.\d+)?\s*([GMKT]B)(\s*\/\s*\d+(\.\d+)?\s*[GMKT]B)?.*$/i, "");
+      // Strip time suffixes: "- 30d", "| 12h", "(5 days left)", etc.
+      name = name.replace(/[\s\-|()]+\d+\s*(days?|hours?|d|h|m|y|min|mo)\b.*$/i, "");
+      // Strip percentage suffixes: "- 53%", "| 80% used"
+      name = name.replace(/[\s\-|]+\d+(\.\d+)?%.*$/i, "");
+      // Clean up any dangling separators left behind
+      name = name.replace(/[\s\-|]+$/, "").trim();
+      return name || "User";
     } catch (e) {
       return raw;
     }
@@ -487,6 +498,19 @@
   function renderNode(link, idx) {
     let proto = link.split("://")[0].toUpperCase(),
       name = "Node " + (idx + 1);
+    // Human-readable display names for protocol badges
+    // proto is kept raw for link parsing; protoBadge is UI-only
+    const PROTO_DISPLAY = {
+      AWG:       "AmneziaWG",
+      AMNEZIA:   "AmneziaWG",
+      WIREGUARD: "WireGuard",
+      WG:        "WireGuard",
+      HY2:       "Hysteria2",
+      HYSTERIA2: "Hysteria2",
+      HY:        "Hysteria",
+      SS:        "Shadowsocks",
+    };
+    const protoBadge = PROTO_DISPLAY[proto] || proto;
     try {
       if (link.includes("#")) {
         name = cleanupName(link.split("#")[1]);
@@ -497,7 +521,7 @@
     } catch (e) {}
     const card = mkEl("div", "node-card");
     card.style.animationDelay = 0.3 + idx * 0.04 + "s";
-    card.innerHTML = `<div class="node-info"><span class="proto-badge">${proto}</span><span class="node-name">${name}</span></div><div class="node-actions" style="display:flex; gap:8px;"><div class="icon-btn-mini" id="btn-copy-${idx}" title="Copy Config"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div><div class="icon-btn-mini" id="btn-qr-${idx}" title="Show QR"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div></div>`;
+    card.innerHTML = `<div class="node-info"><span class="proto-badge">${protoBadge}</span><span class="node-name">${name}</span></div><div class="node-actions" style="display:flex; gap:8px;"><div class="icon-btn-mini" id="btn-copy-${idx}" title="Copy Config"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div><div class="icon-btn-mini" id="btn-qr-${idx}" title="Show QR"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div></div>`;
     card.querySelector(`#btn-copy-${idx}`).onclick = (e) => {
       e.stopPropagation();
       copy(link);
