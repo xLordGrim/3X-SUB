@@ -291,6 +291,19 @@
     }
     renderApp();
     applyTheme();
+    // Self-load the v3.7+ extension if not already present.
+    // Derives its URL from this script's own <script src>, so it works from
+    // any origin (CDN, server, local) without hardcoding a URL.
+    if (!document.querySelector('script[src*="subscription-v37.js"]')) {
+      const selfScript = document.querySelector('script[src*="subscription.js"]');
+      if (selfScript && selfScript.src) {
+        const extSrc = selfScript.src.replace("subscription.js", "subscription-v37.js");
+        const extScript = document.createElement("script");
+        extScript.src = extSrc;
+        extScript.defer = true;
+        document.head.appendChild(extScript);
+      }
+    }
     startStatsPolling();
     if (window.statusLoop) clearInterval(window.statusLoop);
     window.statusLoop = setInterval(updateStatus, 60000);
@@ -318,6 +331,9 @@
     app.appendChild(renderQRModal());
     app.appendChild(renderToast());
     document.body.appendChild(app);
+    if (typeof window.__MOUNT_V37__ === "function") {
+      window.__MOUNT_V37__(app);
+    }
     requestAnimationFrame(() => {
       setTimeout(() => {
         document.body.classList.add("ready");

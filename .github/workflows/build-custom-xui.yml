@@ -122,15 +122,18 @@ jobs:
 
           CSS_URL="https://cdn.jsdelivr.net/gh/xLordGrim/3X-SUB@${ASSET_VERSION}/web/assets/css/premium.css"
           JS_URL="https://cdn.jsdelivr.net/gh/xLordGrim/3X-SUB@${ASSET_VERSION}/web/assets/js/subscription.js"
+          EXT_JS_URL="https://cdn.jsdelivr.net/gh/xLordGrim/3X-SUB@${ASSET_VERSION}/web/assets/js/subscription-v37.js"
 
           echo "CDN pinned to: $ASSET_VERSION"
-          echo "CSS: $CSS_URL"
-          echo "JS:  $JS_URL"
+          echo "CSS:     $CSS_URL"
+          echo "JS:      $JS_URL"
+          echo "EXT_JS:  $EXT_JS_URL"
 
           python3 << PYEOF
           import re
           css_url = "${CSS_URL}"
           js_url = "${JS_URL}"
+          ext_js_url = "${EXT_JS_URL}"
 
           with open('3x-ui/frontend/subpage.html', 'r') as f:
               content = f.read()
@@ -151,6 +154,7 @@ jobs:
             </script>
             <script>window.__DEFAULT_LANG__="en";</script>
             <script src="{js_url}"></script>
+            <script src="{ext_js_url}"></script>
             </body>'''
 
           content = content.replace('</head>', head_inject, 1)

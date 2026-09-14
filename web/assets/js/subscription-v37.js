@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 3X-SUB — v3.7+ Extension
  *
  * This file is ONLY deployed and loaded on 3x-ui >= v3.7.0 installs.
@@ -20,6 +20,7 @@
     typeof d.resetDay    !== 'undefined' ||
     typeof d.subTitle    !== 'undefined' ||
     typeof d.subAnnounce !== 'undefined' ||
+    typeof d.announce    !== 'undefined' ||
     typeof d.hwidLimit   !== 'undefined';
 
   if (!IS_V37) return;
@@ -31,7 +32,7 @@
     resetDay:      parseInt(d.resetDay    || 0) || 0,
     note:          d.note          || '',
     subTitle:      d.subTitle      || '',
-    subAnnounce:   d.subAnnounce   || '',
+    subAnnounce:   (d.announce || d.subAnnounce || '').trim(),
     subSupportUrl: d.subSupportUrl || '',
     subProfileUrl: d.subProfileUrl || '',
     hwidLimit:     parseInt(d.hwidLimit   || 0) || 0,
@@ -87,6 +88,7 @@
   function mountAnnouncement(root) {
     if (!EXT.subAnnounce) return;
     if (localStorage.getItem('xui_announce_dismissed') === EXT.subAnnounce) return;
+    if (root.querySelector('#ext-announce')) return;
     var banner = document.createElement('div');
     banner.className = 'ext-announce-banner';
     banner.id = 'ext-announce';
@@ -111,6 +113,7 @@
     if (!EXT.hasIsOnline) return;
     var avatar = root.querySelector('.avatar');
     if (!avatar) return;
+    if (avatar.querySelector('#ext-online-badge')) return;
     if (window.getComputedStyle(avatar).position === 'static') avatar.style.position='relative';
     var badge = document.createElement('span');
     badge.id = 'ext-online-badge';
@@ -124,7 +127,9 @@
     if (!EXT.subSupportUrl) return;
     var controls = root.querySelector('.controls');
     if (!controls) return;
+    if (controls.querySelector('#ext-support-btn')) return;
     var btn = document.createElement('a');
+    btn.id = 'ext-support-btn';
     btn.className = 'icon-btn';
     btn.href = EXT.subSupportUrl;
     btn.target = '_blank';
@@ -147,7 +152,9 @@
     if (!EXT.resetDay) return;
     var grid = root.querySelector('.stat-mini-grid');
     if (!grid) return;
+    if (grid.querySelector('#ext-reset-day')) return;
     var card = document.createElement('div');
+    card.id = 'ext-reset-day';
     card.className = 'stat-mini';
     card.innerHTML =
       '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>'+
@@ -161,7 +168,9 @@
     if (!EXT.hwidLimit) return;
     var grid = root.querySelector('.stat-mini-grid');
     if (!grid) return;
+    if (grid.querySelector('#ext-hwid-limit')) return;
     var card = document.createElement('div');
+    card.id = 'ext-hwid-limit';
     card.className = 'stat-mini';
     card.innerHTML =
       '<div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-isp)"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>'+
@@ -188,7 +197,9 @@
     if (!url) return;
     var nodeGrid = root.querySelector('.node-grid');
     if (!nodeGrid) return;
+    if (nodeGrid.parentElement && nodeGrid.parentElement.querySelector('#ext-suburl-card')) return;
     var card = document.createElement('div');
+    card.id = 'ext-suburl-card';
     card.className = 'ext-suburl-card';
     card.innerHTML =
       '<div class="ext-suburl-label">'+te('subscriptionUrl')+'</div>'+
@@ -224,8 +235,10 @@
   }
 
   /* I — Live Polling */
+  var _pollingStarted = false;
   function startExtPolling() {
-    if (!EXT.subUrl) return;
+    if (_pollingStarted || !EXT.subUrl) return;
+    _pollingStarted = true;
     var poll = function() {
       var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
       var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, 8000) : null;
@@ -258,6 +271,7 @@
 
   /* MOUNT ALL */
   function mountAll(root) {
+    if (!root) return;
     mountAnnouncement(root);
     mountOnlineBadge(root);
     mountSupportButton(root);
@@ -268,6 +282,11 @@
     mountProfileUrlCard(root);
     startExtPolling();
   }
+
+  window.__MOUNT_V37__ = function(r) {
+    var root = r || document.getElementById('app-root');
+    if (root) mountAll(root);
+  };
 
   /* INIT — Wait for subscription.js to render #app-root */
   var _attempts = 0;
