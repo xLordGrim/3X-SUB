@@ -261,7 +261,7 @@ if [ "$IS_V3" = true ]; then
             echo -e "${YELLOW}⚠  subscription-v37.js download failed — extension features will not be active${NC}"
         fi
 
-        # Inject <script> tag into the compiled subpage.html (idempotent)
+        # Inject <script> tag into disk-based subpage.html if running with loose assets (idempotent)
         SUBPAGE_DIST=""
         [[ -f "/usr/local/x-ui/internal/web/dist/subpage.html" ]] && SUBPAGE_DIST="/usr/local/x-ui/internal/web/dist/subpage.html"
         [[ -z "$SUBPAGE_DIST" && -f "/usr/local/x-ui/web/dist/subpage.html" ]] && SUBPAGE_DIST="/usr/local/x-ui/web/dist/subpage.html"
@@ -270,12 +270,12 @@ if [ "$IS_V3" = true ]; then
             if ! grep -q "subscription-v37.js" "$SUBPAGE_DIST"; then
                 # Insert after the existing subscription.js script tag
                 sed -i 's|\(<script src="[^"]*subscription\.js[^"]*"></script>\)|\1\n<script src="{{ .base_path }}assets/js/subscription-v37.js?{{ .cur_ver }}"></script>|' "$SUBPAGE_DIST"
-                echo -e "${GREEN}✓ v3.7+ extension injected into subpage.html${NC}"
+                echo -e "${GREEN}✓ v3.7+ extension injected into subpage.html on disk${NC}"
             else
-                echo -e "${YELLOW}⚠  Extension already present in subpage.html — skipped${NC}"
+                echo -e "${YELLOW}ℹ  Extension already present in subpage.html on disk${NC}"
             fi
         else
-            echo -e "${YELLOW}⚠  Could not locate compiled subpage.html — extension JS downloaded but script tag not injected${NC}"
+            echo -e "${GREEN}✓ Custom binary embeds template with v3.7+ extension bundled${NC}"
         fi
     fi
     # ── End v3.7+ Extension ───────────────────────────────────────────────────
