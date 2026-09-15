@@ -21,12 +21,31 @@
     typeof d.subTitle    !== 'undefined' ||
     typeof d.subAnnounce !== 'undefined' ||
     typeof d.announce    !== 'undefined' ||
+    typeof d.emails      !== 'undefined' ||
     typeof d.hwidLimit   !== 'undefined';
 
   if (!IS_V37) return;
 
+  /* EMAIL EXTRACTION (v3.7+) */
+  function getEmail() {
+    if (d.emails && Array.isArray(d.emails) && d.emails.length > 0 && d.emails[0]) {
+      return String(d.emails[0]).trim();
+    }
+    if (typeof d.emails === 'string' && d.emails.trim()) {
+      return d.emails.trim();
+    }
+    if (d.email && typeof d.email === 'string' && d.email.trim()) {
+      return d.email.trim();
+    }
+    if (d.sId && typeof d.sId === 'string' && d.sId.includes('@')) {
+      return d.sId.trim();
+    }
+    return d.sId ? String(d.sId).trim() : '';
+  }
+
   /* DATA */
   var EXT = {
+    email:         getEmail(),
     isOnline:      d.isOnline === true,
     hasIsOnline:   typeof d.isOnline !== 'undefined',
     resetDay:      parseInt(d.resetDay    || 0) || 0,
@@ -163,11 +182,47 @@
     controls.appendChild(btn);
   }
 
-  /* D — Dynamic Page Title */
+  /* D — Dynamic Page Title & User Display (v3.7+) */
   function patchPageTitle(root) {
-    if (!EXT.subTitle) return;
-    var el = root.querySelector('.dashboard-title');
-    if (el) el.textContent = EXT.subTitle;
+    var email = EXT.email || getEmail();
+
+    // 1. Expand {{EMAIL}} / {{EMIAL}} / {{USERNAME}} variable in subTitle if present
+    if (EXT.subTitle) {
+      var expandedTitle = EXT.subTitle;
+      if (email) {
+        expandedTitle = expandedTitle.replace(/\{\{(EMAIL|EMIAL|USERNAME|USER)\}\}/gi, email);
+      } else {
+        expandedTitle = expandedTitle.replace(/\{\{(EMAIL|EMIAL|USERNAME|USER)\}\}/gi, '').trim();
+      }
+      var titleEl = root.querySelector('.dashboard-title');
+      if (titleEl && expandedTitle) {
+        titleEl.textContent = expandedTitle;
+      }
+      if (expandedTitle) {
+        document.title = expandedTitle;
+      }
+    }
+
+    // 2. In v3.7+, use the actual {{EMAIL}} variable for user title and avatar instead of regex
+    if (email) {
+      var userDisplay = root.querySelector('.username-display');
+      if (userDisplay) {
+        userDisplay.textContent = email;
+        userDisplay.setAttribute('data-text', email);
+      }
+      var avatar = root.querySelector('.avatar');
+      if (avatar) {
+        var firstChar = Array.from(email)[0];
+        if (firstChar) {
+          var badge = avatar.querySelector('#ext-online-badge');
+          avatar.textContent = firstChar.toUpperCase();
+          if (badge) avatar.appendChild(badge);
+        }
+      }
+      if (!EXT.subTitle) {
+        document.title = email + ' - 3X-SUB';
+      }
+    }
   }
 
   /* E — Traffic Reset Day Card */
@@ -311,10 +366,10 @@
   /* MOUNT ALL */
   function mountAll(root) {
     if (!root) return;
+    patchPageTitle(root);
     mountAnnouncement(root);
     mountOnlineBadge(root);
     mountSupportButton(root);
-    patchPageTitle(root);
     mountResetDayCard(root);
     mountHwidCard(root);
     patchJalaliExpiry(root);
