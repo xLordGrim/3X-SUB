@@ -38,7 +38,7 @@
     hwidLimit:     parseInt(d.hwidLimit   || 0) || 0,
     subUrl:        d.subUrl        || '',
     expire:        (parseInt(d.expire || 0) || 0) * 1000,
-    lang: localStorage.getItem('xui_lang') || window.__DEFAULT_LANG__ || 'en',
+    /* lang resolved dynamically in te() — not cached here */
   };
 
   /* I18N */
@@ -48,22 +48,28 @@
       support:'Support',subscriptionUrl:'Subscription URL',
       onlineBadgeTitle:'Currently connected',offlineBadgeTitle:'Not connected',
       announceClose:'Dismiss',copy:'Copy',copied:'Copied!',notice:'Announcement',
+      qr:'QR Code',
     },
     zh: {
       resetDay:'重置日',day:'第',deviceLimit:'设备限制',maxDevices:'最多',
       support:'支持',subscriptionUrl:'订阅链接',
       onlineBadgeTitle:'当前已连接',offlineBadgeTitle:'未连接',
       announceClose:'关闭',copy:'复制',copied:'已复制!',notice:'系统公告',
+      qr:'二维码',
     },
     fa: {
       resetDay:'روز ریست',day:'روز',deviceLimit:'محدودیت دستگاه',maxDevices:'حداکثر',
       support:'پشتیبانی',subscriptionUrl:'لینک اشتراک',
       onlineBadgeTitle:'در حال اتصال',offlineBadgeTitle:'قطع',
       announceClose:'رد کردن',copy:'کپی',copied:'کپی شد!',notice:'اطلاعیه',
+      qr:'کد QR',
     },
   };
+  /* fix(i18n): read lang from localStorage on every call so language switches
+     are reflected immediately — EXT.lang was frozen at script-load time       */
   function te(k) {
-    var l = EXT_I18N[EXT.lang] || EXT_I18N.en;
+    var lang = localStorage.getItem('xui_lang') || window.__DEFAULT_LANG__ || 'en';
+    var l = EXT_I18N[lang] || EXT_I18N.en;
     return l[k] || EXT_I18N.en[k] || k;
   }
 
@@ -198,7 +204,8 @@
 
   /* G — Jalali Expiry Date (Farsi only) */
   function patchJalaliExpiry(root) {
-    if (EXT.lang !== 'fa') return;
+    var lang = localStorage.getItem('xui_lang') || window.__DEFAULT_LANG__ || 'en';
+    if (lang !== 'fa') return;
     if (!EXT.expire || EXT.expire < Date.now()) return;
     var minis = root.querySelectorAll('.stat-mini');
     var expCard = null;
@@ -235,7 +242,7 @@
           '<button class="icon-btn-mini ext-suburl-copy" title="' + te('copy') + '" aria-label="' + te('copy') + '">' +
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
           '</button>' +
-          '<button class="icon-btn-mini ext-suburl-qr" title="QR" aria-label="QR Code">' +
+          '<button class="icon-btn-mini ext-suburl-qr" title="' + te('qr') + '" aria-label="' + te('qr') + '">' +
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' +
           '</button>' +
         '</div>' +

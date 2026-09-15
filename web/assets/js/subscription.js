@@ -44,7 +44,16 @@
       limited: "Limited",
       dataUsageMetrics: "Data Usage Metrics",
       testing: "Testing...",
-      scanQR: "Scan this QR code to import configuration"
+      scanQR: "Scan this QR code to import configuration",
+      cpuHistory: "CPU Usage History",
+      ramHistory: "Memory Usage History",
+      tabLive: "Live (10m)",
+      tab1h: "1 Hour",
+      tab24h: "24 Hours",
+      tab7d: "7 Days",
+      tab30d: "30 Days",
+      syncAnalytics: "Synchronizing Analytics...",
+      detecting: "Detecting..."
     },
     zh: {
       title: "我的订阅",
@@ -82,7 +91,16 @@
       limited: "已限速",
       dataUsageMetrics: "流量使用统计",
       testing: "测试中...",
-      scanQR: "扫描二维码导入配置"
+      scanQR: "扫描二维码导入配置",
+      cpuHistory: "CPU使用历史",
+      ramHistory: "内存使用历史",
+      tabLive: "实时 (10分)",
+      tab1h: "1小时",
+      tab24h: "24小时",
+      tab7d: "7天",
+      tab30d: "30天",
+      syncAnalytics: "正在同步数据...",
+      detecting: "检测中..."
     },
     fa: {
       title: "اشتراک من",
@@ -120,7 +138,16 @@
       limited: "محدود شده",
       dataUsageMetrics: "آمار استفاده از داده",
       testing: "در حال آزمایش...",
-      scanQR: "برای وارد کردن پیکربندی این QR را اسکن کنید"
+      scanQR: "برای وارد کردن پیکربندی این QR را اسکن کنید",
+      cpuHistory: "تاریخچه مصرف پردازنده",
+      ramHistory: "تاریخچه مصرف حافظه",
+      tabLive: "زنده (۱۰ دقیقه)",
+      tab1h: "۱ ساعت",
+      tab24h: "۲۴ ساعت",
+      tab7d: "۷ روز",
+      tab30d: "۳۰ روز",
+      syncAnalytics: "همگام‌سازی آمار...",
+      detecting: "در حال شناسایی..."
     },
   };
   function t(key) {
@@ -314,6 +341,11 @@
   function renderApp() {
     // Remove 'ready' first so animation chain replays on re-render (language switch etc.)
     document.body.classList.remove("ready");
+    if (STATE.raw && STATE.raw.sid) {
+      document.title = cleanupName(STATE.raw.sid) + " - " + t("title");
+    } else {
+      document.title = t("title");
+    }
     const old = getEl("app-root");
     if (old) old.remove();
     const app = mkEl("div", "app-container");
@@ -416,9 +448,14 @@
       langDropdown.classList.toggle("show");
     };
 
-    document.addEventListener("click", () => {
-      langDropdown.classList.remove("show");
-    });
+    if (!window._langDropdownGlobalBound) {
+      window._langDropdownGlobalBound = true;
+      document.addEventListener("click", () => {
+        document.querySelectorAll(".lang-dropdown.show").forEach((el) => {
+          el.classList.remove("show");
+        });
+      });
+    }
 
     langWrap.appendChild(langBtn);
     langWrap.appendChild(langDropdown);
@@ -539,7 +576,7 @@
     } catch (e) {}
     const card = mkEl("div", "node-card");
     card.style.animationDelay = 0.3 + idx * 0.04 + "s";
-    card.innerHTML = `<div class="node-info"><span class="proto-badge">${protoBadge}</span><span class="node-name">${name}</span></div><div class="node-actions" style="display:flex; gap:8px;"><div class="icon-btn-mini" id="btn-copy-${idx}" title="Copy Config"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div><div class="icon-btn-mini" id="btn-qr-${idx}" title="Show QR"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div></div>`;
+    card.innerHTML = `<div class="node-info"><span class="proto-badge">${protoBadge}</span><span class="node-name">${name}</span></div><div class="node-actions" style="display:flex; gap:8px;"><div class="icon-btn-mini" id="btn-copy-${idx}" title="${t("copy")}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div><div class="icon-btn-mini" id="btn-qr-${idx}" title="${t("qr")}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div></div>`;
     card.querySelector(`#btn-copy-${idx}`).onclick = (e) => {
       e.stopPropagation();
       copy(link);
@@ -555,9 +592,11 @@
     wrap.innerHTML = `<div class="nodes-header" style="margin-top:20px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19L19 19C20.1046 19 21 18.1046 21 17C21 15.8954 20.1046 15 19 15L18.1 15C17.55 12.15 15.05 10 12 10C9.6 10 7.55 11.35 6.55 13.35C4.55 13.7 3 15.45 3 17.5C3 19.433 4.567 21 6.5 21L7.5 21"></path></svg> ${t("infraInsights")}</div>`;
     const grid = mkEl("div", "infra-grid");
     const hosting = mkEl("div", "infra-card");
-    hosting.innerHTML = `<div class="infra-icon" id="infra-isp-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-isp)"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg></div><div class="infra-details"><div class="infra-value" id="infra-isp">${STATE.raw.isp}</div><div class="infra-label">${t("provider")}</div></div>`;
+    const ispText = (STATE.raw.isp === "Detecting..." || !STATE.raw.isp) ? t("detecting") : STATE.raw.isp;
+    const locText = (STATE.raw.location === "Detecting..." || !STATE.raw.location) ? t("detecting") : STATE.raw.location;
+    hosting.innerHTML = `<div class="infra-icon" id="infra-isp-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-isp)"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg></div><div class="infra-details"><div class="infra-value" id="infra-isp">${ispText}</div><div class="infra-label">${t("provider")}</div></div>`;
     const locCard = mkEl("div", "infra-card");
-    locCard.innerHTML = `<div class="infra-icon" id="infra-loc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-loc)"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div><div class="infra-details"><div class="infra-value" id="infra-loc">${STATE.raw.location}</div><div class="infra-label">${t("region")}</div></div>`;
+    locCard.innerHTML = `<div class="infra-icon" id="infra-loc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-loc)"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div><div class="infra-details"><div class="infra-value" id="infra-loc">${locText}</div><div class="infra-label">${t("region")}</div></div>`;
     const ping = mkEl("div", "infra-card");
     ping.innerHTML = `<div class="infra-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--theme-ping)"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg></div><div class="infra-details"><div class="infra-value" id="ping-value">${t("checkLatency")}</div><div class="infra-label">${t("clientToServer")}</div></div><div class="ping-action-wrap"><div class="ping-dot" id="ping-dot"></div><div class="icon-btn-mini" id="btn-ping" title="${t("checkLatency")}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></div></div>`;
     ping.querySelector("#btn-ping").onclick = () => checkPing();
@@ -1301,9 +1340,20 @@
       document.body.appendChild(overlay);
     }
 
-    const title = type === 'cpu' ? 'CPU Usage History' : 'Memory Usage History';
+    const title = type === 'cpu' ? t('cpuHistory') : t('ramHistory');
     const iconColor = type === 'cpu' ? 'var(--theme-cpu)' : 'var(--theme-ram)';
     
+    // Clear any pending render timeout or active chart
+    if (window._metricsRenderTimeout) {
+      clearTimeout(window._metricsRenderTimeout);
+      window._metricsRenderTimeout = null;
+    }
+    window._chartReady = false;
+    if (window.metricsChart) {
+      try { window.metricsChart.destroy(); } catch(e){}
+      window.metricsChart = null;
+    }
+
     overlay.innerHTML = `
       <div class="metrics-modal">
         <div class="metrics-modal-header">
@@ -1322,16 +1372,16 @@
           </div>
         </div>
         <div class="metrics-tabs">
-          <div class="metrics-tab active" data-period="live">Live (10m)</div>
-          <div class="metrics-tab" data-period="h1">1 Hour</div>
-          <div class="metrics-tab" data-period="h24">24 Hours</div>
-          <div class="metrics-tab" data-period="d7">7 Days</div>
-          <div class="metrics-tab" data-period="d30">30 Days</div>
+          <div class="metrics-tab active" data-period="live">${t("tabLive")}</div>
+          <div class="metrics-tab" data-period="h1">${t("tab1h")}</div>
+          <div class="metrics-tab" data-period="h24">${t("tab24h")}</div>
+          <div class="metrics-tab" data-period="d7">${t("tab7d")}</div>
+          <div class="metrics-tab" data-period="d30">${t("tab30d")}</div>
         </div>
         <div class="metrics-chart-container">
           <div id="metrics-loader" class="metrics-loader">
             <div class="metrics-spinner"></div>
-            <span style="margin-top:10px">Synchronizing Analytics...</span>
+            <span style="margin-top:10px">${t("syncAnalytics")}</span>
           </div>
           <div id="metrics-chart"></div>
         </div>
@@ -1361,8 +1411,11 @@
       };
     });
 
-    // Wait for the 500ms CSS entrance animation to finish before rendering ApexCharts to prevent UI jank
-    setTimeout(() => renderMetricsChart(type), 550);
+    // Wait for the CSS entrance animation to finish before rendering ApexCharts
+    window._metricsRenderTimeout = setTimeout(() => {
+      window._metricsRenderTimeout = null;
+      renderMetricsChart(type);
+    }, 550);
   }
 
   window.closeMetricsModal = function() {
@@ -1370,18 +1423,22 @@
     const bg = getEl("canvas-bg");
     if (bg && bg._network) bg._network.paused = false;
 
+    if (window._metricsRenderTimeout) {
+      clearTimeout(window._metricsRenderTimeout);
+      window._metricsRenderTimeout = null;
+    }
     const overlay = getEl('metrics-overlay');
     if (overlay) overlay.classList.remove('active');
     window.currentMetricType = null;
     window.metricsPeriod = null;
+    window._chartReady = false;
     if (window.metricsChart) {
       const chartToDestroy = window.metricsChart;
       window.metricsChart = null;
-      // Destroy chart after CSS fade-out animation finishes to prevent layout thrashing
-      setTimeout(() => {
-        try { chartToDestroy.destroy(); } catch(e){}
-      }, 500);
+      try { chartToDestroy.destroy(); } catch(e){}
     }
+    const chartContainer = document.querySelector("#metrics-chart");
+    if (chartContainer) chartContainer.innerHTML = "";
   };
 
   function renderMetricsChart(type) {
@@ -1421,12 +1478,11 @@
         animations: { 
           enabled: true, 
           easing: 'easeinout', 
-          speed: 800,
+          speed: 500,
           animateGradually: {
-              enabled: true,
-              delay: 150
+              enabled: false
           },
-          dynamicAnimation: { enabled: true, speed: 350 }
+          dynamicAnimation: { enabled: true, speed: 400 }
         },
         dropShadow: {
           enabled: true,
@@ -1505,18 +1561,28 @@
 
     const container = document.querySelector("#metrics-chart");
     if (container) {
-      window.metricsChart = new ApexCharts(container, options);
-      window.metricsChart.render().then(() => {
-        if (initialData.length > 0) {
-          const loader = getEl('metrics-loader');
-          if (loader) loader.classList.add('hidden');
+      container.innerHTML = "";
+      if (window.metricsChart) {
+        try { window.metricsChart.destroy(); } catch(e){}
+        window.metricsChart = null;
+      }
+      window._chartReady = false;
+      const chartInstance = new ApexCharts(container, options);
+      window.metricsChart = chartInstance;
+      chartInstance.render().then(() => {
+        if (window.metricsChart === chartInstance) {
+          window._chartReady = true;
+          if (initialData.length > 0) {
+            const loader = getEl('metrics-loader');
+            if (loader) loader.classList.add('hidden');
+          }
         }
       });
     }
   }
 
   function updateChartWithData(data) {
-    if (!window.metricsChart || !window.currentMetricType) return;
+    if (!window.metricsChart || !window.currentMetricType || !window._chartReady) return;
     
     const type = window.currentMetricType;
     const period = window.metricsPeriod || 'live';
@@ -1553,7 +1619,7 @@
     window.metricsChart.updateSeries([{
       name: type.toUpperCase(),
       data: chartData
-    }], true);
+    }], false);
 
     const loader = getEl('metrics-loader');
     if (loader && !loader.classList.contains('hidden')) {
