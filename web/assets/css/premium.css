@@ -391,17 +391,7 @@ body.premium-theme.ready .dashboard-header {
     }
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translate3d(0, -20px, 0);
-    }
-
-    to {
-        opacity: 1;
-        transform: translate3d(0, 0, 0);
-    }
-}
+/* @keyframes slideDown defined once later in the file (canonical) */
 
 .user-profile {
     display: flex;
@@ -815,7 +805,7 @@ body.s-dark .icon-btn {
 
 body.premium-theme .glass-panel {
     background: var(--bg-card, var(--card-bg));
-    backdrop-filter: var(--glass-blur);
+    backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--card-border);
     border-radius: var(--card-radius);
     padding: 24px;
@@ -842,21 +832,22 @@ body.premium-theme .span-4 {
     background: var(--bg-card, var(--card-bg));
     border-radius: 24px;
     padding: 24px;
-    transition: all 0.3s var(--ease-out);
-
+    /* fix(ghost): use explicit props — 'transition:all' fights the cardFadeIn animation
+       causing opacity/transform to snap back on mobile mid-animation             */
+    transition: border-color 0.3s var(--ease-out),
+                box-shadow 0.3s var(--ease-out),
+                background 0.3s var(--ease-out);
 
     border: 1px solid var(--card-border);
     box-shadow:
         0 1px 3px rgba(0, 0, 0, 0.12),
         0 4px 12px rgba(0, 0, 0, 0.08);
 
-
+    /* fix(ghost): start invisible; body.ready triggers the fade animation */
     opacity: 0;
-    will-change: transform, opacity;
-    transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-
-    contain: layout style paint;
+    /* fix(ghost): removed contain:layout style paint — paint containment clips
+       children that animate via opacity/transform, causing them to stay
+       invisible on mobile browsers when the compositor isolates the layer     */
 }
 
 body.premium-theme.ready .span-12,
@@ -864,6 +855,11 @@ body.premium-theme.ready .span-8,
 body.premium-theme.ready .span-4 {
     animation: cardFadeIn 0.6s var(--ease-out) forwards;
 }
+
+/* Stagger delays scoped to the entry animation only (under .ready) */
+body.premium-theme.ready .span-12 { animation-delay: 0.3s; }
+body.premium-theme.ready .span-8  { animation-delay: 0.1s; }
+body.premium-theme.ready .span-4  { animation-delay: 0.2s; }
 
 .span-12::before,
 .span-8::before,
@@ -905,12 +901,10 @@ body.s-dark .span-4 {
 
 .span-12 {
     grid-column: span 12;
-    animation-delay: 0.3s;
 }
 
 .span-8 {
     grid-column: span 8;
-    animation-delay: 0.1s;
 }
 
 .span-6 {
@@ -919,20 +913,9 @@ body.s-dark .span-4 {
 
 .span-4 {
     grid-column: span 4;
-    animation-delay: 0.2s;
 }
 
-@keyframes cardFadeIn {
-    from {
-        opacity: 0;
-        transform: translate3d(0, 30px, 0) scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) scale(1);
-    }
-}
+/* @keyframes cardFadeIn defined once later in the file (canonical) */
 
 
 @media (max-width: 900px) {
@@ -1319,6 +1302,11 @@ body.premium-theme .node-card {
     border: 1px solid var(--card-border);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     opacity: 0;
+    /* fix(ghost): explicit transition prevents 'all' from overriding cardFadeIn */
+    transition: background 0.3s var(--ease-out),
+                border-color 0.3s var(--ease-out),
+                box-shadow 0.3s var(--ease-out),
+                transform 0.3s var(--ease-out);
 }
 
 body.premium-theme.ready .node-card {
@@ -1815,12 +1803,9 @@ body.premium-theme .premium-toast.show {
     opacity: 1;
     box-shadow: var(--shadow-md);
     min-width: 0;
-
-
-    contain: layout style paint;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    will-change: transform;
+    /* fix(ghost): removed contain:layout style paint, translateZ(0), backface-visibility,
+       will-change — these created a triple stacking context that caused child elements
+       to be clipped/invisible on mobile devices                                         */
     transition:
         transform 0.3s var(--ease-out),
         border-color 0.3s var(--ease-out),
@@ -2751,17 +2736,17 @@ body.lang-fa .lang-dropdown {
     gap: 14px;
     padding: 14px 18px;
     border-radius: var(--card-radius);
-    margin: -10px 0 24px 0;
-    max-height: 400px;
-    overflow: hidden;
-    transition: max-height 0.38s cubic-bezier(0.16, 1, 0.3, 1),
-                opacity 0.35s ease,
-                margin 0.35s ease,
-                padding 0.35s ease,
-                transform 0.35s ease;
-    animation: ext-fadein 0.45s var(--ease-out);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    /* fix(ghost): removed negative margin-top (-10px) which clips into overflow:hidden
+       ancestors and causes sibling repaint issues on mobile.
+       Removed overflow:hidden which clipped icon badge on some mobile browsers.
+       Removed backdrop-filter:blur(20px) hardcode — now uses CSS var so it's
+       consistent with the design system and avoids forcing a GPU compositor layer
+       that can cause sibling elements to ghost on mobile Safari/Chrome.         */
+    margin: 0 0 24px 0;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    animation: ext-fadein 0.45s var(--ease-out) forwards;
+    backdrop-filter: blur(var(--glass-blur, 12px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
     box-sizing: border-box;
     width: 100%;
 }
@@ -2912,8 +2897,8 @@ body.s-light .ext-announce-text {
 /* ── H: Subscription Profile URL Card ───────────────────────────────────── */
 .ext-suburl-card {
     background: var(--card-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--card-border);
     border-radius: 16px;
     padding: 14px 18px;
@@ -2921,7 +2906,9 @@ body.s-light .ext-announce-text {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    transition: all 0.3s var(--ease-out);
+    transition: border-color 0.3s var(--ease-out),
+                box-shadow 0.3s var(--ease-out),
+                transform 0.3s var(--ease-out);
     position: relative;
     overflow: hidden;
 }

@@ -312,6 +312,8 @@
     }
   }
   function renderApp() {
+    // Remove 'ready' first so animation chain replays on re-render (language switch etc.)
+    document.body.classList.remove("ready");
     const old = getEl("app-root");
     if (old) old.remove();
     const app = mkEl("div", "app-container");
