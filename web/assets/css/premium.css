@@ -678,12 +678,14 @@ body.s-dark .icon-btn {
     transition: 0s;
 }
 
-.icon-btn:hover {
-    background: rgba(var(--node-color, 255, 255, 255), 0.12);
-    border-color: var(--accent);
-    color: var(--accent);
-    transform: translate3d(0, -3px, 0);
-    box-shadow: 0 8px 25px var(--accent-glow);
+@media (hover: hover) and (pointer: fine) {
+    .icon-btn:hover {
+        background: rgba(var(--node-color, 255, 255, 255), 0.12);
+        border-color: var(--accent);
+        color: var(--accent);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px var(--accent-glow);
+    }
 }
 
 .lang-select {
@@ -821,10 +823,12 @@ body.premium-theme.ready .glass-panel {
     animation: fadeUp 0.6s var(--ease-out) forwards;
 }
 
-.glass-panel:hover {
-    transform: translateY(-4px) translateZ(0);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 15px var(--accent-glow);
-    border-color: var(--accent);
+@media (hover: hover) and (pointer: fine) {
+    .glass-panel:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 15px var(--accent-glow);
+        border-color: var(--accent);
+    }
 }
 
 
@@ -894,12 +898,18 @@ body.s-dark .span-4 {
         0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-.span-12:hover,
-.span-8:hover,
-.span-4:hover {
-    transform: translate3d(0, -4px, 0);
-    border-color: var(--accent) !important;
-    box-shadow: 0 10px 40px var(--accent-glow) !important;
+@media (hover: hover) and (pointer: fine) {
+    .span-8:hover,
+    .span-4:hover {
+        transform: translateY(-4px);
+        border-color: var(--accent) !important;
+        box-shadow: 0 10px 40px var(--accent-glow) !important;
+    }
+
+    .span-12:hover {
+        border-color: var(--accent) !important;
+        box-shadow: 0 10px 40px var(--accent-glow) !important;
+    }
 }
 
 .span-12 {
@@ -1473,10 +1483,8 @@ body.s-dark .node-card {
     width: 90%;
     max-width: 400px;
     padding: 30px;
-    transform: translate3d(0, 40px, 0) scale(0.95);
-    transition: all 0.5s var(--ease-out);
-    will-change: transform, opacity;
-    backface-visibility: hidden;
+    transform: translateY(40px) scale(0.95);
+    transition: transform 0.4s var(--ease-out), opacity 0.4s var(--ease-out);
     box-shadow: var(--shadow-xl);
 }
 
@@ -1646,14 +1654,15 @@ body.premium-theme .premium-toast.show {
     }
 }
 
+/* fix(ghost): 2D translateY animation avoids GPU layer texture exhaustion */
 @keyframes fadeUp {
     from {
-        transform: translate3d(0, 20px, 0);
+        transform: translateY(20px);
         opacity: 0;
     }
 
     to {
-        transform: translate3d(0, 0, 0);
+        transform: translateY(0);
         opacity: 1;
     }
 }
@@ -1825,11 +1834,22 @@ body.premium-theme .premium-toast.show {
 
 
 
-body.premium-theme .infra-card:hover {
-    transform: translateY(-4px);
-    background: rgba(var(--node-color, 255, 255, 255), 0.08);
-    border-color: var(--accent);
-    box-shadow: 0 10px 40px var(--accent-glow);
+@media (hover: hover) and (pointer: fine) {
+    body.premium-theme .infra-card:hover {
+        transform: translateY(-4px);
+        background: rgba(var(--node-color, 255, 255, 255), 0.08);
+        border-color: var(--accent);
+        box-shadow: 0 10px 40px var(--accent-glow);
+    }
+
+    .infra-card:hover .infra-icon {
+        background: rgba(var(--node-color, 255, 255, 255), 0.15);
+        transform: scale(1.05);
+    }
+}
+
+.infra-card:active {
+    transform: scale(0.99);
 }
 
 .infra-icon {
@@ -1842,12 +1862,7 @@ body.premium-theme .infra-card:hover {
     justify-content: center;
     flex-shrink: 0;
     font-size: 1.2rem;
-    transition: all 0.3s var(--ease-out);
-}
-
-.infra-card:hover .infra-icon {
-    background: rgba(var(--node-color, 255, 255, 255), 0.15);
-    transform: scale(1.05);
+    transition: background 0.3s var(--ease-out), transform 0.3s var(--ease-out);
 }
 
 body.s-light .infra-icon {
@@ -2016,20 +2031,30 @@ body.s-light .icon-btn-mini:hover {
     display: flex;
     align-items: center;
     gap: 12px;
-    transition: all 0.3s var(--ease-out);
+    transition:
+        border-color 0.3s var(--ease-out),
+        background 0.3s var(--ease-out),
+        box-shadow 0.3s var(--ease-out),
+        transform 0.3s var(--ease-out);
     box-shadow: var(--shadow-sm);
 }
 
-.stat-card-mini:hover {
-    border-color: var(--accent);
-    transform: translateY(-4px);
-    background: rgba(var(--node-color, 255, 255, 255), 0.08);
-    box-shadow: 0 10px 35px var(--accent-glow);
+@media (hover: hover) and (pointer: fine) {
+    .stat-card-mini:hover {
+        border-color: var(--accent);
+        transform: translateY(-4px);
+        background: rgba(var(--node-color, 255, 255, 255), 0.08);
+        box-shadow: 0 10px 35px var(--accent-glow);
+    }
+
+    .stat-card-mini:hover .stat-mini-icon {
+        transform: scale(1.15);
+        opacity: 1;
+    }
 }
 
-.stat-card-mini:hover .stat-mini-icon {
-    transform: scale(1.15);
-    opacity: 1;
+.stat-card-mini:active {
+    transform: scale(0.99);
 }
 
 .stat-mini-icon {
@@ -2125,14 +2150,34 @@ body.s-light .icon-btn-mini:hover {
     gap: 8px;
     min-height: 90px;
     height: 100%;
-    transition: all 0.3s var(--ease-out);
+    transition:
+        border-color 0.3s var(--ease-out),
+        background 0.3s var(--ease-out),
+        box-shadow 0.3s var(--ease-out),
+        transform 0.3s var(--ease-out);
 }
 
-.stat-mini:hover {
-    border-color: var(--accent);
-    transform: translateY(-4px);
-    background: rgba(var(--node-color, 255, 255, 255), 0.08);
-    box-shadow: 0 10px 25px var(--accent-glow);
+@media (hover: hover) and (pointer: fine) {
+    .stat-mini:hover {
+        border-color: var(--accent);
+        transform: translateY(-4px);
+        background: rgba(var(--node-color, 255, 255, 255), 0.08);
+        box-shadow: 0 10px 25px var(--accent-glow);
+    }
+
+    .stat-mini:hover .stat-icon {
+        background: var(--accent);
+        color: white !important;
+        transform: scale(1.1);
+    }
+
+    .stat-mini:hover .stat-icon svg {
+        color: white !important;
+    }
+}
+
+.stat-mini:active {
+    transform: scale(0.99);
 }
 
 .stat-icon {
@@ -2143,17 +2188,7 @@ body.s-light .icon-btn-mini:hover {
     justify-content: center;
     background: rgba(var(--node-color, 255, 255, 255), 0.1);
     border-radius: 12px;
-    transition: all 0.3s ease;
-}
-
-.stat-mini:hover .stat-icon {
-    background: var(--accent);
-    color: white !important;
-    transform: scale(1.1);
-}
-
-.stat-mini:hover .stat-icon svg {
-    color: white !important;
+    transition: background 0.3s ease, transform 0.3s ease, color 0.3s ease;
 }
 
 .stat-value {
@@ -2348,9 +2383,12 @@ body.s-light .span-4::after {
 /* --- PREMIUM METRICS DASHBOARD --- */
 .clickable-card {
     cursor: pointer;
-    transition: all 0.4s var(--ease-out) !important;
+    transition:
+        transform 0.3s var(--ease-out),
+        background 0.3s var(--ease-out),
+        border-color 0.3s var(--ease-out),
+        box-shadow 0.3s var(--ease-out);
     position: relative;
-    overflow: hidden;
 }
 
 .clickable-card::after {
@@ -2362,22 +2400,29 @@ body.s-light .span-4::after {
     color: var(--accent);
     opacity: 0;
     transform: translateY(5px);
-    transition: all 0.3s var(--ease-out);
+    transition: opacity 0.3s var(--ease-out), transform 0.3s var(--ease-out);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    pointer-events: none;
 }
 
-.clickable-card:hover {
-    transform: translateY(-5px) scale(1.02);
-    background: var(--card-hover) !important;
-    border-color: var(--accent) !important;
-    box-shadow: 0 12px 30px var(--accent-glow) !important;
+@media (hover: hover) and (pointer: fine) {
+    .clickable-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        background: var(--card-hover) !important;
+        border-color: var(--accent) !important;
+        box-shadow: 0 12px 30px var(--accent-glow) !important;
+    }
+
+    .clickable-card:hover::after {
+        opacity: 0.7;
+        transform: translateY(0);
+    }
 }
 
-.clickable-card:hover::after {
-    opacity: 0.7;
-    transform: translateY(0);
+.clickable-card:active {
+    transform: scale(0.99);
 }
 
 .metrics-modal-overlay {
@@ -2926,13 +2971,18 @@ body.s-light .ext-announce-text {
                 box-shadow 0.3s var(--ease-out),
                 transform 0.3s var(--ease-out);
     position: relative;
-    overflow: hidden;
 }
 
-.ext-suburl-card:hover {
-    border-color: rgba(99, 102, 241, 0.4);
-    box-shadow: 0 8px 24px -4px var(--accent-glow);
-    transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+    .ext-suburl-card:hover {
+        border-color: rgba(99, 102, 241, 0.4);
+        box-shadow: 0 8px 24px -4px var(--accent-glow);
+        transform: translateY(-2px);
+    }
+}
+
+.ext-suburl-card:active {
+    transform: scale(0.99);
 }
 
 .ext-suburl-header {
@@ -3029,5 +3079,13 @@ body.s-light .ext-suburl-row {
 @media (prefers-reduced-motion: reduce) {
     .ext-announce-banner { animation: none; }
     .ext-online-badge.ext-is-online { animation: none; }
-    .ext-suburl-card:hover { transform: none; }
+    .ext-suburl-card:hover,
+    .stat-mini:hover,
+    .stat-card-mini:hover,
+    .clickable-card:hover,
+    .infra-card:hover,
+    .span-8:hover,
+    .span-4:hover {
+        transform: none;
+    }
 }
