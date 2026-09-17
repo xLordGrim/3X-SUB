@@ -53,7 +53,8 @@
       tab7d: "7 Days",
       tab30d: "30 Days",
       syncAnalytics: "Synchronizing Analytics...",
-      detecting: "Detecting..."
+      detecting: "Detecting...",
+      viewGraph: "View Graph"
     },
     zh: {
       title: "我的订阅",
@@ -100,7 +101,8 @@
       tab7d: "7天",
       tab30d: "30天",
       syncAnalytics: "正在同步数据...",
-      detecting: "检测中..."
+      detecting: "检测中...",
+      viewGraph: "查看图表"
     },
     fa: {
       title: "اشتراک من",
@@ -147,7 +149,8 @@
       tab7d: "۷ روز",
       tab30d: "۳۰ روز",
       syncAnalytics: "همگام‌سازی آمار...",
-      detecting: "در حال شناسایی..."
+      detecting: "در حال شناسایی...",
+      viewGraph: "مشاهده نمودار"
     },
   };
   function t(key) {
@@ -575,7 +578,6 @@
       }
     } catch (e) {}
     const card = mkEl("div", "node-card");
-    card.style.animationDelay = 0.3 + idx * 0.04 + "s";
     card.innerHTML = `<div class="node-info"><span class="proto-badge">${protoBadge}</span><span class="node-name">${name}</span></div><div class="node-actions" style="display:flex; gap:8px;"><div class="icon-btn-mini" id="btn-copy-${idx}" title="${t("copy")}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div><div class="icon-btn-mini" id="btn-qr-${idx}" title="${t("qr")}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div></div>`;
     card.querySelector(`#btn-copy-${idx}`).onclick = (e) => {
       e.stopPropagation();
@@ -612,11 +614,13 @@
     const grid = mkEl("div", "stats-grid-horizontal");
     grid.id = "stats-grid";
     const cpuCard = mkEl("div", "stat-card-mini clickable-card");
-    cpuCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-cpu)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("cpuUsage")}</div><div class="stat-mini-value"><span id="cpu-val">0</span>%</div></div>`;
+    cpuCard.setAttribute("title", t("viewGraph"));
+    cpuCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-cpu)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("cpuUsage")}</div><div class="stat-mini-value"><span id="cpu-val">0</span>%</div></div><div class="stat-mini-action" aria-label="${t("viewGraph")}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>`;
     cpuCard.onclick = () => showMetricsModal("cpu");
 
     const ramCard = mkEl("div", "stat-card-mini clickable-card");
-    ramCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-ram)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M4 12h16M4 18h16M8 2v20M12 2v20M16 2v20"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("memory")}</div><div class="stat-mini-value"><span id="ram-val">0</span>%</div></div>`;
+    ramCard.setAttribute("title", t("viewGraph"));
+    ramCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-ram)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M4 12h16M4 18h16M8 2v20M12 2v20M16 2v20"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("memory")}</div><div class="stat-mini-value"><span id="ram-val">0</span>%</div></div><div class="stat-mini-action" aria-label="${t("viewGraph")}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>`;
     ramCard.onclick = () => showMetricsModal("ram");
 
     const uploadCard = mkEl("div", "stat-card-mini");

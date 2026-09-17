@@ -678,12 +678,14 @@ body.s-dark .icon-btn {
     transition: 0s;
 }
 
-.icon-btn:hover {
-    background: rgba(var(--node-color, 255, 255, 255), 0.12);
-    border-color: var(--accent);
-    color: var(--accent);
-    transform: translate3d(0, -3px, 0);
-    box-shadow: 0 8px 25px var(--accent-glow);
+@media (hover: hover) and (pointer: fine) {
+    .icon-btn:hover {
+        background: rgba(var(--node-color, 255, 255, 255), 0.12);
+        border-color: var(--accent);
+        color: var(--accent);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px var(--accent-glow);
+    }
 }
 
 .lang-select {
@@ -736,9 +738,12 @@ body.s-dark .icon-btn {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.3s var(--ease-out);
+    transition: background 0.25s var(--ease-out),
+                border-color 0.25s var(--ease-out),
+                box-shadow 0.25s var(--ease-out),
+                transform 0.25s var(--ease-out);
     position: relative;
-    overflow: hidden;
+    z-index: 2;
 }
 
 .sys-card {
@@ -818,10 +823,12 @@ body.premium-theme.ready .glass-panel {
     animation: fadeUp 0.6s var(--ease-out) forwards;
 }
 
-.glass-panel:hover {
-    transform: translateY(-4px) translateZ(0);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 15px var(--accent-glow);
-    border-color: var(--accent);
+@media (hover: hover) and (pointer: fine) {
+    .glass-panel:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 15px var(--accent-glow);
+        border-color: var(--accent);
+    }
 }
 
 
@@ -891,12 +898,18 @@ body.s-dark .span-4 {
         0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-.span-12:hover,
-.span-8:hover,
-.span-4:hover {
-    transform: translate3d(0, -4px, 0);
-    border-color: var(--accent) !important;
-    box-shadow: 0 10px 40px var(--accent-glow) !important;
+@media (hover: hover) and (pointer: fine) {
+    .span-8:hover,
+    .span-4:hover {
+        transform: translateY(-4px);
+        border-color: var(--accent) !important;
+        box-shadow: 0 10px 40px var(--accent-glow) !important;
+    }
+
+    .span-12:hover {
+        border-color: var(--accent) !important;
+        box-shadow: 0 10px 40px var(--accent-glow) !important;
+    }
 }
 
 .span-12 {
@@ -1301,16 +1314,14 @@ body.premium-theme .node-card {
     justify-content: space-between;
     border: 1px solid var(--card-border);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    opacity: 0;
-    /* fix(ghost): explicit transition prevents 'all' from overriding cardFadeIn */
-    transition: background 0.3s var(--ease-out),
-                border-color 0.3s var(--ease-out),
-                box-shadow 0.3s var(--ease-out),
-                transform 0.3s var(--ease-out);
-}
-
-body.premium-theme.ready .node-card {
-    animation: cardFadeIn 0.5s var(--ease-out) forwards;
+    /* fix(ghost): cards inherit visibility from parent container; no opacity:0 or nested cardFadeIn */
+    opacity: 1;
+    position: relative;
+    z-index: 2;
+    transition: background 0.25s var(--ease-out),
+                border-color 0.25s var(--ease-out),
+                box-shadow 0.25s var(--ease-out),
+                transform 0.25s var(--ease-out);
 }
 
 body.s-dark .node-card {
@@ -1319,22 +1330,30 @@ body.s-dark .node-card {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.node-card:hover {
-    background: rgba(var(--node-color, 255, 255, 255), 0.08);
-    transform: translate3d(0, -4px, 0);
-    border-color: var(--accent);
-    box-shadow: 0 10px 30px var(--accent-glow);
+@media (hover: hover) and (pointer: fine) {
+    .node-card:hover {
+        background: rgba(var(--node-color, 255, 255, 255), 0.08);
+        transform: translateY(-4px);
+        border-color: var(--accent);
+        box-shadow: 0 10px 30px var(--accent-glow);
+    }
+
+    body.s-dark .node-card:hover {
+        background: rgba(var(--node-color, 255, 255, 255), 0.1);
+        box-shadow: 0 10px 35px var(--accent-glow);
+    }
 }
 
-body.s-dark .node-card:hover {
-    background: rgba(var(--node-color, 255, 255, 255), 0.1);
-    box-shadow: 0 10px 35px var(--accent-glow);
+.node-card:active {
+    transform: scale(0.99);
 }
 
 .node-info {
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
+    flex: 1;
 }
 
 .proto-badge {
@@ -1345,6 +1364,7 @@ body.s-dark .node-card:hover {
     text-transform: uppercase;
     background: rgba(255, 255, 255, 0.1);
     color: var(--text-secondary);
+    flex-shrink: 0;
 }
 
 .node-name {
@@ -1353,7 +1373,7 @@ body.s-dark .node-card:hover {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 140px;
+    min-width: 0;
 }
 
 .icon-btn-mini {
@@ -1463,10 +1483,8 @@ body.s-dark .node-card:hover {
     width: 90%;
     max-width: 400px;
     padding: 30px;
-    transform: translate3d(0, 40px, 0) scale(0.95);
-    transition: all 0.5s var(--ease-out);
-    will-change: transform, opacity;
-    backface-visibility: hidden;
+    transform: translateY(40px) scale(0.95);
+    transition: transform 0.4s var(--ease-out), opacity 0.4s var(--ease-out);
     box-shadow: var(--shadow-xl);
 }
 
@@ -1636,26 +1654,28 @@ body.premium-theme .premium-toast.show {
     }
 }
 
+/* fix(ghost): 2D translateY animation avoids GPU layer texture exhaustion */
 @keyframes fadeUp {
     from {
-        transform: translate3d(0, 20px, 0);
+        transform: translateY(20px);
         opacity: 0;
     }
 
     to {
-        transform: translate3d(0, 0, 0);
+        transform: translateY(0);
         opacity: 1;
     }
 }
 
+/* fix(ghost): 2D translateY animation avoids GPU layer texture exhaustion on tall containers */
 @keyframes cardFadeIn {
     from {
-        transform: translate3d(0, 30px, 0) scale(0.98);
+        transform: translateY(16px);
         opacity: 0;
     }
 
     to {
-        transform: translate3d(0, 0, 0) scale(1);
+        transform: translateY(0);
         opacity: 1;
     }
 }
@@ -1814,11 +1834,22 @@ body.premium-theme .premium-toast.show {
 
 
 
-body.premium-theme .infra-card:hover {
-    transform: translateY(-4px);
-    background: rgba(var(--node-color, 255, 255, 255), 0.08);
-    border-color: var(--accent);
-    box-shadow: 0 10px 40px var(--accent-glow);
+@media (hover: hover) and (pointer: fine) {
+    body.premium-theme .infra-card:hover {
+        transform: translateY(-4px);
+        background: rgba(var(--node-color, 255, 255, 255), 0.08);
+        border-color: var(--accent);
+        box-shadow: 0 10px 40px var(--accent-glow);
+    }
+
+    .infra-card:hover .infra-icon {
+        background: rgba(var(--node-color, 255, 255, 255), 0.15);
+        transform: scale(1.05);
+    }
+}
+
+.infra-card:active {
+    transform: scale(0.99);
 }
 
 .infra-icon {
@@ -1831,12 +1862,7 @@ body.premium-theme .infra-card:hover {
     justify-content: center;
     flex-shrink: 0;
     font-size: 1.2rem;
-    transition: all 0.3s var(--ease-out);
-}
-
-.infra-card:hover .infra-icon {
-    background: rgba(var(--node-color, 255, 255, 255), 0.15);
-    transform: scale(1.05);
+    transition: background 0.3s var(--ease-out), transform 0.3s var(--ease-out);
 }
 
 body.s-light .infra-icon {
@@ -2005,20 +2031,30 @@ body.s-light .icon-btn-mini:hover {
     display: flex;
     align-items: center;
     gap: 12px;
-    transition: all 0.3s var(--ease-out);
+    transition:
+        border-color 0.3s var(--ease-out),
+        background 0.3s var(--ease-out),
+        box-shadow 0.3s var(--ease-out),
+        transform 0.3s var(--ease-out);
     box-shadow: var(--shadow-sm);
 }
 
-.stat-card-mini:hover {
-    border-color: var(--accent);
-    transform: translateY(-4px);
-    background: rgba(var(--node-color, 255, 255, 255), 0.08);
-    box-shadow: 0 10px 35px var(--accent-glow);
+@media (hover: hover) and (pointer: fine) {
+    .stat-card-mini:hover {
+        border-color: var(--accent);
+        transform: translateY(-4px);
+        background: rgba(var(--node-color, 255, 255, 255), 0.08);
+        box-shadow: 0 10px 35px var(--accent-glow);
+    }
+
+    .stat-card-mini:hover .stat-mini-icon {
+        transform: scale(1.15);
+        opacity: 1;
+    }
 }
 
-.stat-card-mini:hover .stat-mini-icon {
-    transform: scale(1.15);
-    opacity: 1;
+.stat-card-mini:active {
+    transform: scale(0.99);
 }
 
 .stat-mini-icon {
@@ -2086,6 +2122,17 @@ body.s-light .icon-btn-mini:hover {
         white-space: nowrap;
         letter-spacing: -0.02em;
     }
+
+    .stat-mini-action {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+    }
+
+    .stat-mini-action svg {
+        width: 12px;
+        height: 12px;
+    }
 }
 
 
@@ -2114,14 +2161,34 @@ body.s-light .icon-btn-mini:hover {
     gap: 8px;
     min-height: 90px;
     height: 100%;
-    transition: all 0.3s var(--ease-out);
+    transition:
+        border-color 0.3s var(--ease-out),
+        background 0.3s var(--ease-out),
+        box-shadow 0.3s var(--ease-out),
+        transform 0.3s var(--ease-out);
 }
 
-.stat-mini:hover {
-    border-color: var(--accent);
-    transform: translateY(-4px);
-    background: rgba(var(--node-color, 255, 255, 255), 0.08);
-    box-shadow: 0 10px 25px var(--accent-glow);
+@media (hover: hover) and (pointer: fine) {
+    .stat-mini:hover {
+        border-color: var(--accent);
+        transform: translateY(-4px);
+        background: rgba(var(--node-color, 255, 255, 255), 0.08);
+        box-shadow: 0 10px 25px var(--accent-glow);
+    }
+
+    .stat-mini:hover .stat-icon {
+        background: var(--accent);
+        color: white !important;
+        transform: scale(1.1);
+    }
+
+    .stat-mini:hover .stat-icon svg {
+        color: white !important;
+    }
+}
+
+.stat-mini:active {
+    transform: scale(0.99);
 }
 
 .stat-icon {
@@ -2132,17 +2199,7 @@ body.s-light .icon-btn-mini:hover {
     justify-content: center;
     background: rgba(var(--node-color, 255, 255, 255), 0.1);
     border-radius: 12px;
-    transition: all 0.3s ease;
-}
-
-.stat-mini:hover .stat-icon {
-    background: var(--accent);
-    color: white !important;
-    transform: scale(1.1);
-}
-
-.stat-mini:hover .stat-icon svg {
-    color: white !important;
+    transition: background 0.3s ease, transform 0.3s ease, color 0.3s ease;
 }
 
 .stat-value {
@@ -2293,7 +2350,6 @@ body.s-light .icon-btn-mini:hover {
 
 .span-12, .span-8, .span-4 {
     position: relative;
-    overflow: hidden;
 }
 
 .span-12::after,
@@ -2302,20 +2358,24 @@ body.s-light .icon-btn-mini:hover {
     content: '';
     position: absolute;
     inset: 0;
+    border-radius: inherit;
     pointer-events: none;
-    z-index: 10;
+    /* fix(ghost): z-index:0 ensures ambient glow is strictly behind cards (z-index:2),
+       preventing continuous 3D overlay from occluding or culling children on mobile */
+    z-index: 0;
     background: radial-gradient(
         circle at 50% 50%,
         color-mix(in srgb, var(--accent) 5%, transparent) 0%,
         transparent 70%
     );
-    opacity: 0.5;
+    opacity: 0.3;
     animation: premium-breathing-glow 4s infinite ease-in-out;
 }
 
+/* fix(ghost): 2D opacity-only pulsing stops continuous 3D GPU layer thrashing on tall grids */
 @keyframes premium-breathing-glow {
-    0%, 100% { transform: translate3d(-10%, -10%, 0) scale(1); opacity: 0.3; }
-    50% { transform: translate3d(10%, 10%, 0) scale(1.2); opacity: 0.6; }
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.45; }
 }
 
 body.s-light .span-12::after,
@@ -2334,36 +2394,59 @@ body.s-light .span-4::after {
 /* --- PREMIUM METRICS DASHBOARD --- */
 .clickable-card {
     cursor: pointer;
-    transition: all 0.4s var(--ease-out) !important;
+    transition:
+        transform 0.3s var(--ease-out),
+        background 0.3s var(--ease-out),
+        border-color 0.3s var(--ease-out),
+        box-shadow 0.3s var(--ease-out);
     position: relative;
-    overflow: hidden;
 }
 
-.clickable-card::after {
-    content: 'Click to view history';
-    position: absolute;
-    bottom: 8px;
-    right: 12px;
-    font-size: 10px;
+.stat-mini-action {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--accent);
-    opacity: 0;
-    transform: translateY(5px);
-    transition: all 0.3s var(--ease-out);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    margin-left: auto;
+    border: 1px solid var(--card-border);
+    transition: all 0.2s var(--ease-out);
+    opacity: 0.85;
 }
 
-.clickable-card:hover {
-    transform: translateY(-5px) scale(1.02);
-    background: var(--card-hover) !important;
-    border-color: var(--accent) !important;
-    box-shadow: 0 12px 30px var(--accent-glow) !important;
+@media (hover: hover) and (pointer: fine) {
+    .clickable-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        background: var(--card-hover) !important;
+        border-color: var(--accent) !important;
+        box-shadow: 0 12px 30px var(--accent-glow) !important;
+    }
+
+    .clickable-card:hover .stat-mini-action {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+        box-shadow: 0 4px 14px var(--accent-glow);
+        transform: scale(1.08);
+        opacity: 1;
+    }
 }
 
-.clickable-card:hover::after {
-    opacity: 0.7;
-    transform: translateY(0);
+.clickable-card:active {
+    transform: scale(0.99);
+}
+
+.clickable-card:active .stat-mini-action {
+    transform: scale(0.95);
+}
+
+body.s-light .stat-mini-action {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
 }
 
 .metrics-modal-overlay {
@@ -2490,31 +2573,69 @@ body.modal-open {
 
 .metrics-tabs {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    gap: 6px;
     margin-bottom: 24px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    width: fit-content;
+    max-width: 100%;
     flex-shrink: 0;
 }
 
+.metrics-tabs::-webkit-scrollbar {
+    display: none;
+}
+
 .metrics-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 8px 16px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 800;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
     color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--card-border);
+    background: transparent;
+    border: 1px solid transparent;
     cursor: pointer;
+    white-space: nowrap;
+    flex: 1 0 auto;
+    text-align: center;
+    line-height: 1.2;
     transition: all 0.2s ease;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .metrics-tab:hover:not(.active) {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.06);
+    }
 }
 
 .metrics-tab.active {
     background: var(--accent);
     color: white;
     border-color: var(--accent);
-    box-shadow: 0 8px 20px var(--accent-glow);
+    box-shadow: 0 4px 14px var(--accent-glow);
+}
+
+body.s-light .metrics-tabs {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+body.s-light .metrics-tab:hover:not(.active) {
+    background: rgba(0, 0, 0, 0.05);
 }
 
 @media (max-width: 600px) {
@@ -2526,24 +2647,47 @@ body.modal-open {
         border-radius: 24px;
         border: 1px solid var(--card-border);
     }
+    .metrics-modal-title {
+        gap: 10px;
+        min-width: 0;
+        flex: 1;
+    }
+    .metrics-modal-title h2 {
+        font-size: 1.1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .metrics-modal-close {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+    }
     .metrics-chart-container {
         min-height: 250px;
         height: 100%;
         margin-top: 10px;
     }
     .metrics-tabs {
-        gap: 6px;
-        justify-content: center;
+        width: 100%;
+        gap: 4px;
+        padding: 3px;
+        margin-bottom: 16px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        box-sizing: border-box;
     }
     .metrics-tab {
-        padding: 8px 12px;
+        padding: 7px 11px;
         font-size: 0.65rem;
-        flex: 1;
-        text-align: center;
-        min-width: 80px;
+        flex: 1 0 auto;
+        min-width: max-content;
+        letter-spacing: 0.02em;
     }
     .metrics-modal-header {
-        margin-bottom: 20px;
+        margin-bottom: 16px;
     }
 }
 
@@ -2622,8 +2766,20 @@ body.lang-fa .icon-btn-mini {
     margin-left: 0;
 }
 
+body.lang-fa .stat-mini-action,
+[dir="rtl"] .stat-mini-action {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+body.lang-fa .metrics-tabs,
+[dir="rtl"] .metrics-tabs {
+    direction: rtl;
+}
+
 body.lang-fa .metrics-modal-close {
     margin-right: auto;
+    margin-left: 0;
 }
 
 /* Language Dropdown Styles */
@@ -2711,6 +2867,8 @@ body.lang-fa .lang-dropdown {
         transition: none !important;
     }
 
+    .glass-panel,
+    .dashboard-header,
     .node-card,
     .stat-mini,
     .infra-card,
@@ -2910,13 +3068,18 @@ body.s-light .ext-announce-text {
                 box-shadow 0.3s var(--ease-out),
                 transform 0.3s var(--ease-out);
     position: relative;
-    overflow: hidden;
 }
 
-.ext-suburl-card:hover {
-    border-color: rgba(99, 102, 241, 0.4);
-    box-shadow: 0 8px 24px -4px var(--accent-glow);
-    transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+    .ext-suburl-card:hover {
+        border-color: rgba(99, 102, 241, 0.4);
+        box-shadow: 0 8px 24px -4px var(--accent-glow);
+        transform: translateY(-2px);
+    }
+}
+
+.ext-suburl-card:active {
+    transform: scale(0.99);
 }
 
 .ext-suburl-header {
@@ -3013,5 +3176,13 @@ body.s-light .ext-suburl-row {
 @media (prefers-reduced-motion: reduce) {
     .ext-announce-banner { animation: none; }
     .ext-online-badge.ext-is-online { animation: none; }
-    .ext-suburl-card:hover { transform: none; }
+    .ext-suburl-card:hover,
+    .stat-mini:hover,
+    .stat-card-mini:hover,
+    .clickable-card:hover,
+    .infra-card:hover,
+    .span-8:hover,
+    .span-4:hover {
+        transform: none;
+    }
 }
