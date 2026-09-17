@@ -736,9 +736,12 @@ body.s-dark .icon-btn {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: all 0.3s var(--ease-out);
+    transition: background 0.25s var(--ease-out),
+                border-color 0.25s var(--ease-out),
+                box-shadow 0.25s var(--ease-out),
+                transform 0.25s var(--ease-out);
     position: relative;
-    overflow: hidden;
+    z-index: 2;
 }
 
 .sys-card {
@@ -1301,16 +1304,14 @@ body.premium-theme .node-card {
     justify-content: space-between;
     border: 1px solid var(--card-border);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    opacity: 0;
-    /* fix(ghost): explicit transition prevents 'all' from overriding cardFadeIn */
-    transition: background 0.3s var(--ease-out),
-                border-color 0.3s var(--ease-out),
-                box-shadow 0.3s var(--ease-out),
-                transform 0.3s var(--ease-out);
-}
-
-body.premium-theme.ready .node-card {
-    animation: cardFadeIn 0.5s var(--ease-out) forwards;
+    /* fix(ghost): cards inherit visibility from parent container; no opacity:0 or nested cardFadeIn */
+    opacity: 1;
+    position: relative;
+    z-index: 2;
+    transition: background 0.25s var(--ease-out),
+                border-color 0.25s var(--ease-out),
+                box-shadow 0.25s var(--ease-out),
+                transform 0.25s var(--ease-out);
 }
 
 body.s-dark .node-card {
@@ -1319,22 +1320,30 @@ body.s-dark .node-card {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.node-card:hover {
-    background: rgba(var(--node-color, 255, 255, 255), 0.08);
-    transform: translate3d(0, -4px, 0);
-    border-color: var(--accent);
-    box-shadow: 0 10px 30px var(--accent-glow);
+@media (hover: hover) and (pointer: fine) {
+    .node-card:hover {
+        background: rgba(var(--node-color, 255, 255, 255), 0.08);
+        transform: translateY(-4px);
+        border-color: var(--accent);
+        box-shadow: 0 10px 30px var(--accent-glow);
+    }
+
+    body.s-dark .node-card:hover {
+        background: rgba(var(--node-color, 255, 255, 255), 0.1);
+        box-shadow: 0 10px 35px var(--accent-glow);
+    }
 }
 
-body.s-dark .node-card:hover {
-    background: rgba(var(--node-color, 255, 255, 255), 0.1);
-    box-shadow: 0 10px 35px var(--accent-glow);
+.node-card:active {
+    transform: scale(0.99);
 }
 
 .node-info {
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
+    flex: 1;
 }
 
 .proto-badge {
@@ -1345,6 +1354,7 @@ body.s-dark .node-card:hover {
     text-transform: uppercase;
     background: rgba(255, 255, 255, 0.1);
     color: var(--text-secondary);
+    flex-shrink: 0;
 }
 
 .node-name {
@@ -1353,7 +1363,7 @@ body.s-dark .node-card:hover {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 140px;
+    min-width: 0;
 }
 
 .icon-btn-mini {
@@ -1648,14 +1658,15 @@ body.premium-theme .premium-toast.show {
     }
 }
 
+/* fix(ghost): 2D translateY animation avoids GPU layer texture exhaustion on tall containers */
 @keyframes cardFadeIn {
     from {
-        transform: translate3d(0, 30px, 0) scale(0.98);
+        transform: translateY(16px);
         opacity: 0;
     }
 
     to {
-        transform: translate3d(0, 0, 0) scale(1);
+        transform: translateY(0);
         opacity: 1;
     }
 }
@@ -2293,7 +2304,6 @@ body.s-light .icon-btn-mini:hover {
 
 .span-12, .span-8, .span-4 {
     position: relative;
-    overflow: hidden;
 }
 
 .span-12::after,
@@ -2302,20 +2312,24 @@ body.s-light .icon-btn-mini:hover {
     content: '';
     position: absolute;
     inset: 0;
+    border-radius: inherit;
     pointer-events: none;
-    z-index: 10;
+    /* fix(ghost): z-index:0 ensures ambient glow is strictly behind cards (z-index:2),
+       preventing continuous 3D overlay from occluding or culling children on mobile */
+    z-index: 0;
     background: radial-gradient(
         circle at 50% 50%,
         color-mix(in srgb, var(--accent) 5%, transparent) 0%,
         transparent 70%
     );
-    opacity: 0.5;
+    opacity: 0.3;
     animation: premium-breathing-glow 4s infinite ease-in-out;
 }
 
+/* fix(ghost): 2D opacity-only pulsing stops continuous 3D GPU layer thrashing on tall grids */
 @keyframes premium-breathing-glow {
-    0%, 100% { transform: translate3d(-10%, -10%, 0) scale(1); opacity: 0.3; }
-    50% { transform: translate3d(10%, 10%, 0) scale(1.2); opacity: 0.6; }
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.45; }
 }
 
 body.s-light .span-12::after,
@@ -2711,6 +2725,8 @@ body.lang-fa .lang-dropdown {
         transition: none !important;
     }
 
+    .glass-panel,
+    .dashboard-header,
     .node-card,
     .stat-mini,
     .infra-card,
