@@ -2122,6 +2122,17 @@ body.s-light .icon-btn-mini:hover {
         white-space: nowrap;
         letter-spacing: -0.02em;
     }
+
+    .stat-mini-action {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+    }
+
+    .stat-mini-action svg {
+        width: 12px;
+        height: 12px;
+    }
 }
 
 
@@ -2391,20 +2402,20 @@ body.s-light .span-4::after {
     position: relative;
 }
 
-.clickable-card::after {
-    content: 'Click to view history';
-    position: absolute;
-    bottom: 8px;
-    right: 12px;
-    font-size: 10px;
+.stat-mini-action {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--accent);
-    opacity: 0;
-    transform: translateY(5px);
-    transition: opacity 0.3s var(--ease-out), transform 0.3s var(--ease-out);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    pointer-events: none;
+    flex-shrink: 0;
+    margin-left: auto;
+    border: 1px solid var(--card-border);
+    transition: all 0.2s var(--ease-out);
+    opacity: 0.85;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -2415,14 +2426,27 @@ body.s-light .span-4::after {
         box-shadow: 0 12px 30px var(--accent-glow) !important;
     }
 
-    .clickable-card:hover::after {
-        opacity: 0.7;
-        transform: translateY(0);
+    .clickable-card:hover .stat-mini-action {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+        box-shadow: 0 4px 14px var(--accent-glow);
+        transform: scale(1.08);
+        opacity: 1;
     }
 }
 
 .clickable-card:active {
     transform: scale(0.99);
+}
+
+.clickable-card:active .stat-mini-action {
+    transform: scale(0.95);
+}
+
+body.s-light .stat-mini-action {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
 }
 
 .metrics-modal-overlay {
@@ -2549,31 +2573,69 @@ body.modal-open {
 
 .metrics-tabs {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    gap: 6px;
     margin-bottom: 24px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    width: fit-content;
+    max-width: 100%;
     flex-shrink: 0;
 }
 
+.metrics-tabs::-webkit-scrollbar {
+    display: none;
+}
+
 .metrics-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 8px 16px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 800;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
     color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--card-border);
+    background: transparent;
+    border: 1px solid transparent;
     cursor: pointer;
+    white-space: nowrap;
+    flex: 1 0 auto;
+    text-align: center;
+    line-height: 1.2;
     transition: all 0.2s ease;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .metrics-tab:hover:not(.active) {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.06);
+    }
 }
 
 .metrics-tab.active {
     background: var(--accent);
     color: white;
     border-color: var(--accent);
-    box-shadow: 0 8px 20px var(--accent-glow);
+    box-shadow: 0 4px 14px var(--accent-glow);
+}
+
+body.s-light .metrics-tabs {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+body.s-light .metrics-tab:hover:not(.active) {
+    background: rgba(0, 0, 0, 0.05);
 }
 
 @media (max-width: 600px) {
@@ -2585,24 +2647,47 @@ body.modal-open {
         border-radius: 24px;
         border: 1px solid var(--card-border);
     }
+    .metrics-modal-title {
+        gap: 10px;
+        min-width: 0;
+        flex: 1;
+    }
+    .metrics-modal-title h2 {
+        font-size: 1.1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .metrics-modal-close {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+    }
     .metrics-chart-container {
         min-height: 250px;
         height: 100%;
         margin-top: 10px;
     }
     .metrics-tabs {
-        gap: 6px;
-        justify-content: center;
+        width: 100%;
+        gap: 4px;
+        padding: 3px;
+        margin-bottom: 16px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        box-sizing: border-box;
     }
     .metrics-tab {
-        padding: 8px 12px;
+        padding: 7px 11px;
         font-size: 0.65rem;
-        flex: 1;
-        text-align: center;
-        min-width: 80px;
+        flex: 1 0 auto;
+        min-width: max-content;
+        letter-spacing: 0.02em;
     }
     .metrics-modal-header {
-        margin-bottom: 20px;
+        margin-bottom: 16px;
     }
 }
 
@@ -2681,8 +2766,20 @@ body.lang-fa .icon-btn-mini {
     margin-left: 0;
 }
 
+body.lang-fa .stat-mini-action,
+[dir="rtl"] .stat-mini-action {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+body.lang-fa .metrics-tabs,
+[dir="rtl"] .metrics-tabs {
+    direction: rtl;
+}
+
 body.lang-fa .metrics-modal-close {
     margin-right: auto;
+    margin-left: 0;
 }
 
 /* Language Dropdown Styles */
