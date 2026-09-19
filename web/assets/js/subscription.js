@@ -54,7 +54,12 @@
       tab30d: "30 Days",
       syncAnalytics: "Synchronizing Analytics...",
       detecting: "Detecting...",
-      viewGraph: "View Graph"
+      viewGraph: "View Graph",
+      contactSupport: "Contact Support",
+      contactSupportDesc: "Need assistance or have questions? Proceed to open our official support channel.",
+      proceed: "Proceed",
+      cancel: "Cancel",
+      disabled: "Disabled"
     },
     zh: {
       title: "我的订阅",
@@ -102,7 +107,12 @@
       tab30d: "30天",
       syncAnalytics: "正在同步数据...",
       detecting: "检测中...",
-      viewGraph: "查看图表"
+      viewGraph: "查看图表",
+      contactSupport: "联系支持",
+      contactSupportDesc: "需要帮助或有任何疑问？点击继续以前往官方支持渠道。",
+      proceed: "继续",
+      cancel: "取消",
+      disabled: "已禁用"
     },
     fa: {
       title: "اشتراک من",
@@ -150,7 +160,12 @@
       tab30d: "۳۰ روز",
       syncAnalytics: "همگام‌سازی آمار...",
       detecting: "در حال شناسایی...",
-      viewGraph: "مشاهده نمودار"
+      viewGraph: "مشاهده نمودار",
+      contactSupport: "تماس با پشتیبانی",
+      contactSupportDesc: "به راهنمایی نیاز دارید یا سؤالی دارید؟ برای ورود به کانال پشتیبانی روی دکمه زیر کلیک کنید.",
+      proceed: "ادامه",
+      cancel: "انصراف",
+      disabled: "غیرفعال"
     },
   };
   function t(key) {
@@ -188,14 +203,19 @@
   }
   function getStatusInfo() {
     const now = Date.now();
-    const total = STATE.raw.total || 0;
-    const used = (STATE.raw.up || 0) + (STATE.raw.down || 0);
-    const expired = STATE.raw.expire > 0 && now > STATE.raw.expire;
+    const total = (STATE.raw && STATE.raw.total) || 0;
+    const used = ((STATE.raw && STATE.raw.up) || 0) + ((STATE.raw && STATE.raw.down) || 0);
+    const disabled = STATE.raw && STATE.raw.enabled === false;
+    const expired = STATE.raw && STATE.raw.expire > 0 && now > STATE.raw.expire;
     const depleted = total > 0 && used >= total;
     let state = "active",
-      colorVar = "--usage-active",
+      colorVar = "var(--usage-active)",
       label = t("active");
-    if (expired) {
+    if (disabled) {
+      state = "disabled";
+      colorVar = "var(--usage-disabled)";
+      label = t("disabled");
+    } else if (expired) {
       state = "warn";
       colorVar = "var(--usage-expired)";
       label = t("expired");
@@ -214,7 +234,8 @@
     }
     const pct = total === 0 ? 0 : Math.min(100, (used / total) * 100);
     return {
-      active: !expired && !depleted,
+      active: !disabled && !expired && !depleted,
+      disabled,
       expired,
       depleted,
       label,
@@ -278,6 +299,7 @@
           isp: "Detecting...",
           location: "Detecting...",
           serverIp: "Self",
+          enabled: typeof d.enabled !== "undefined" ? !!d.enabled : (typeof d.enable !== "undefined" ? !!d.enable : true),
         };
         STATE.subUrl = STATE.raw.subUrl;
         
@@ -309,6 +331,7 @@
           isp: "Detecting...",
           location: "Detecting...",
           serverIp: dataEl.getAttribute("data-ip") || "Self",
+          enabled: dataEl.getAttribute("data-enabled") !== null ? dataEl.getAttribute("data-enabled") === "true" : (dataEl.getAttribute("data-status") === "disabled" ? false : true),
         };
         STATE.subUrl = STATE.raw.subUrl;
       }
@@ -615,12 +638,12 @@
     grid.id = "stats-grid";
     const cpuCard = mkEl("div", "stat-card-mini clickable-card");
     cpuCard.setAttribute("title", t("viewGraph"));
-    cpuCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-cpu)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("cpuUsage")}</div><div class="stat-mini-value"><span id="cpu-val">0</span>%</div></div><div class="stat-mini-action" aria-label="${t("viewGraph")}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>`;
+    cpuCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-cpu)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("cpuUsage")}</div><div class="stat-mini-value"><span id="cpu-val">0</span>%</div></div>`;
     cpuCard.onclick = () => showMetricsModal("cpu");
 
     const ramCard = mkEl("div", "stat-card-mini clickable-card");
     ramCard.setAttribute("title", t("viewGraph"));
-    ramCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-ram)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M4 12h16M4 18h16M8 2v20M12 2v20M16 2v20"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("memory")}</div><div class="stat-mini-value"><span id="ram-val">0</span>%</div></div><div class="stat-mini-action" aria-label="${t("viewGraph")}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>`;
+    ramCard.innerHTML = `<div class="stat-mini-icon" style="color:var(--theme-ram)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M4 12h16M4 18h16M8 2v20M12 2v20M16 2v20"/></svg></div><div class="stat-mini-content"><div class="stat-mini-label">${t("memory")}</div><div class="stat-mini-value"><span id="ram-val">0</span>%</div></div>`;
     ramCard.onclick = () => showMetricsModal("ram");
 
     const uploadCard = mkEl("div", "stat-card-mini");
@@ -1267,6 +1290,7 @@
       "status-warn",
       "status-depleted",
       "status-unlimited",
+      "status-disabled",
     );
     document.body.classList.add(STATE.theme === "dark" ? "s-dark" : "s-light");
     document.body.classList.add(`status-${s.state}`);

@@ -22,7 +22,9 @@
     typeof d.subAnnounce !== 'undefined' ||
     typeof d.announce    !== 'undefined' ||
     typeof d.emails      !== 'undefined' ||
-    typeof d.hwidLimit   !== 'undefined';
+    typeof d.hwidLimit   !== 'undefined' ||
+    typeof d.enabled     !== 'undefined' ||
+    typeof d.enable      !== 'undefined';
 
   if (!IS_V37) return;
 
@@ -44,15 +46,17 @@
   }
 
   /* DATA */
+  var dataEl = typeof document !== 'undefined' ? document.getElementById('subscription-data') : null;
   var EXT = {
     email:         getEmail(),
+    enabled:       typeof d.enabled !== 'undefined' ? d.enabled === true : (typeof d.enable !== 'undefined' ? d.enable === true : (dataEl ? dataEl.getAttribute('data-enabled') !== 'false' && dataEl.getAttribute('data-status') !== 'disabled' : true)),
     isOnline:      d.isOnline === true,
     hasIsOnline:   typeof d.isOnline !== 'undefined',
     resetDay:      parseInt(d.resetDay    || 0) || 0,
     note:          d.note          || '',
     subTitle:      d.subTitle      || '',
     subAnnounce:   (d.announce || d.subAnnounce || '').trim(),
-    subSupportUrl: d.subSupportUrl || '',
+    subSupportUrl: d.subSupportUrl || (dataEl ? (dataEl.getAttribute('data-sub-support-url') || dataEl.getAttribute('data-support-url') || '') : '') || '',
     subProfileUrl: d.subProfileUrl || '',
     hwidLimit:     parseInt(d.hwidLimit   || 0) || 0,
     subUrl:        d.subUrl        || '',
@@ -68,6 +72,10 @@
       onlineBadgeTitle:'Currently connected',offlineBadgeTitle:'Not connected',
       announceClose:'Dismiss',copy:'Copy',copied:'Copied!',notice:'Announcement',
       qr:'QR Code',
+      contactSupport:'Contact Support',
+      contactSupportDesc:'Need assistance or have questions? Proceed to open our official support channel.',
+      proceed:'Proceed',cancel:'Cancel',close:'Close',
+      disabled:'Disabled',
     },
     zh: {
       resetDay:'重置日',day:'第',deviceLimit:'设备限制',maxDevices:'最多',
@@ -75,6 +83,10 @@
       onlineBadgeTitle:'当前已连接',offlineBadgeTitle:'未连接',
       announceClose:'关闭',copy:'复制',copied:'已复制!',notice:'系统公告',
       qr:'二维码',
+      contactSupport:'联系支持',
+      contactSupportDesc:'需要帮助或有任何疑问？点击继续以前往官方支持渠道。',
+      proceed:'继续',cancel:'取消',close:'关闭',
+      disabled:'已禁用',
     },
     fa: {
       resetDay:'روز ریست',day:'روز',deviceLimit:'محدودیت دستگاه',maxDevices:'حداکثر',
@@ -82,6 +94,10 @@
       onlineBadgeTitle:'در حال اتصال',offlineBadgeTitle:'قطع',
       announceClose:'رد کردن',copy:'کپی',copied:'کپی شد!',notice:'اطلاعیه',
       qr:'کد QR',
+      contactSupport:'تماس با پشتیبانی',
+      contactSupportDesc:'به راهنمایی نیاز دارید یا سؤالی دارید؟ برای ورود به کانال پشتیبانی روی دکمه زیر کلیک کنید.',
+      proceed:'ادامه',cancel:'انصراف',close:'بستن',
+      disabled:'غیرفعال',
     },
   };
   /* fix(i18n): read lang from localStorage on every call so language switches
@@ -164,7 +180,132 @@
     avatar.appendChild(badge);
   }
 
-  /* C — Support URL Button */
+  /* C — Support URL Button & Mini Window */
+  function formatSupportDisplay(url) {
+    if (!url) return '';
+    try {
+      if (url.indexOf('mailto:') === 0) return url.replace('mailto:', '');
+      if (url.indexOf('tg://resolve?domain=') === 0) return '@' + url.split('=').pop();
+      var u = new URL(url);
+      var host = u.hostname.replace(/^www\./i, '');
+      var path = (u.pathname === '/' ? '' : u.pathname) + (u.search || '');
+      return host + (path.length > 28 ? path.substring(0, 25) + '...' : path);
+    } catch(e) {
+      return url.replace(/^https?:\/\//i, '').replace(/^www\./i, '');
+    }
+  }
+
+  function getOrCreateSupportModal() {
+    var overlay = document.getElementById('ext-support-modal-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'ext-support-modal-overlay';
+      overlay.className = 'ext-support-modal-overlay';
+      overlay.onclick = function(e) {
+        if (e.target === overlay) closeSupportModal();
+      };
+      document.body.appendChild(overlay);
+    }
+    return overlay;
+  }
+
+  function renderSupportModalContent(overlay) {
+    var displayUrl = formatSupportDisplay(EXT.subSupportUrl);
+    overlay.innerHTML =
+      '<div class="ext-support-modal" role="dialog" aria-modal="true" aria-labelledby="ext-support-modal-title">' +
+        '<div class="ext-support-modal-header">' +
+          '<div class="ext-support-modal-icon-badge">' +
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+              '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>' +
+            '</svg>' +
+          '</div>' +
+          '<h3 class="ext-support-modal-title" id="ext-support-modal-title">' + te('contactSupport') + '</h3>' +
+          '<button type="button" class="ext-support-modal-close" aria-label="' + te('close') + '">' +
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+              '<line x1="18" y1="6" x2="6" y2="18"></line>' +
+              '<line x1="6" y1="6" x2="18" y2="18"></line>' +
+            '</svg>' +
+          '</button>' +
+        '</div>' +
+        '<div class="ext-support-modal-body">' +
+          '<p class="ext-support-modal-desc">' + te('contactSupportDesc') + '</p>' +
+          (displayUrl ? (
+            '<div class="ext-support-link-card">' +
+              '<div class="ext-support-link-icon">' +
+                '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                  '<circle cx="12" cy="12" r="10"></circle>' +
+                  '<line x1="2" y1="12" x2="22" y2="12"></line>' +
+                  '<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>' +
+                '</svg>' +
+              '</div>' +
+              '<div class="ext-support-link-text" title="' + escHtml(EXT.subSupportUrl) + '">' + escHtml(displayUrl) + '</div>' +
+            '</div>'
+          ) : '') +
+        '</div>' +
+        '<div class="ext-support-modal-actions">' +
+          '<button type="button" class="ext-support-btn-cancel">' + te('cancel') + '</button>' +
+          '<a href="' + escHtml(EXT.subSupportUrl) + '" target="_blank" rel="noopener noreferrer" class="ext-support-btn-proceed">' +
+            '<span>' + te('proceed') + '</span>' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+              '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>' +
+              '<polyline points="15 3 21 3 21 9"></polyline>' +
+              '<line x1="10" y1="14" x2="21" y2="3"></line>' +
+            '</svg>' +
+          '</a>' +
+        '</div>' +
+      '</div>';
+
+    var closeBtn = overlay.querySelector('.ext-support-modal-close');
+    if (closeBtn) closeBtn.onclick = closeSupportModal;
+
+    var cancelBtn = overlay.querySelector('.ext-support-btn-cancel');
+    if (cancelBtn) cancelBtn.onclick = closeSupportModal;
+
+    var proceedBtn = overlay.querySelector('.ext-support-btn-proceed');
+    if (proceedBtn) {
+      proceedBtn.onclick = function() {
+        setTimeout(closeSupportModal, 200);
+      };
+    }
+  }
+
+  function openSupportModal() {
+    if (!EXT.subSupportUrl) return;
+    var overlay = getOrCreateSupportModal();
+    renderSupportModalContent(overlay);
+
+    document.body.classList.add('modal-open');
+    var bg = document.getElementById('canvas-bg');
+    if (bg && bg._network) bg._network.paused = true;
+
+    requestAnimationFrame(function() {
+      overlay.classList.add('active');
+      var proceedBtn = overlay.querySelector('.ext-support-btn-proceed');
+      if (proceedBtn) proceedBtn.focus();
+    });
+  }
+
+  function closeSupportModal() {
+    var overlay = document.getElementById('ext-support-modal-overlay');
+    if (overlay) {
+      overlay.classList.remove('active');
+    }
+    if (!document.querySelector('.metrics-modal-overlay.active')) {
+      document.body.classList.remove('modal-open');
+      var bg = document.getElementById('canvas-bg');
+      if (bg && bg._network) bg._network.paused = false;
+    }
+  }
+
+  window.openSupportModal = openSupportModal;
+  window.closeSupportModal = closeSupportModal;
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      closeSupportModal();
+    }
+  });
+
   function mountSupportButton(root) {
     if (!EXT.subSupportUrl) return;
     var controls = root.querySelector('.controls');
@@ -176,9 +317,13 @@
     btn.href = EXT.subSupportUrl;
     btn.target = '_blank';
     btn.rel = 'noopener noreferrer';
-    btn.title = te('support');
-    btn.setAttribute('aria-label', te('support'));
+    btn.title = te('contactSupport');
+    btn.setAttribute('aria-label', te('contactSupport'));
     btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      openSupportModal();
+    });
     controls.appendChild(btn);
   }
 
@@ -340,6 +485,9 @@
         .then(function(res){ if (timer) clearTimeout(timer); return res.ok ? res.json() : null; })
         .then(function(data) {
           if (!data) return;
+          if (data.subSupportUrl) EXT.subSupportUrl = data.subSupportUrl;
+          if (typeof data.enabled !== 'undefined') EXT.enabled = data.enabled === true;
+          else if (typeof data.enable !== 'undefined') EXT.enabled = data.enable === true;
           EXT.isOnline = !!data.isOnline;
           var badge = document.getElementById('ext-online-badge');
           if (badge) {

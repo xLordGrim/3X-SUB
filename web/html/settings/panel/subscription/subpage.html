@@ -141,7 +141,7 @@
     data-remained="{{ .remained }}" data-expire="{{ .expire }}" data-lastonline="{{ .lastOnline }}"
     data-downloadbyte="{{ .downloadByte }}" data-uploadbyte="{{ .uploadByte }}" data-totalbyte="{{ .totalByte }}"
     data-datepicker="{{ .datepicker }}" data-isp="Detecting..." data-location="Unknown Region"
-    data-ip="Self"></template>
+    data-ip="Self" data-enabled="{{ .enabled }}"></template>
 <textarea id="subscription-links" style="display:none">{{ range .result }}{{ . }}
 {{ end }}</textarea>
 <script src="{{ .base_path }}assets/js/subscription.js?{{ .cur_ver }}"></script>
