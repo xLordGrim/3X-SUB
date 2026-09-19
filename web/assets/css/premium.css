@@ -2020,6 +2020,7 @@ body.s-light .icon-btn-mini:hover {
     gap: var(--grid-gap);
     margin-top: 12px;
     width: 100%;
+    align-items: stretch;
 }
 
 .stat-card-mini {
@@ -2031,6 +2032,9 @@ body.s-light .icon-btn-mini:hover {
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
+    height: 100%;
+    box-sizing: border-box;
     transition:
         border-color 0.3s var(--ease-out),
         background 0.3s var(--ease-out),
@@ -2080,6 +2084,9 @@ body.s-light .icon-btn-mini:hover {
     letter-spacing: 0.05em;
     margin-bottom: 3px;
     font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .stat-mini-value {
@@ -2102,10 +2109,12 @@ body.s-light .icon-btn-mini:hover {
     .stats-grid-horizontal {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
+        align-items: stretch;
     }
 
     .stat-card-mini {
         padding: 12px;
+        min-height: 56px;
     }
 
     .stat-mini-icon {
@@ -2121,17 +2130,6 @@ body.s-light .icon-btn-mini:hover {
         font-size: 0.95rem; 
         white-space: nowrap;
         letter-spacing: -0.02em;
-    }
-
-    .stat-mini-action {
-        width: 24px;
-        height: 24px;
-        border-radius: 6px;
-    }
-
-    .stat-mini-action svg {
-        width: 12px;
-        height: 12px;
     }
 }
 
@@ -2402,22 +2400,6 @@ body.s-light .span-4::after {
     position: relative;
 }
 
-.stat-mini-action {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent);
-    flex-shrink: 0;
-    margin-left: auto;
-    border: 1px solid var(--card-border);
-    transition: all 0.2s var(--ease-out);
-    opacity: 0.85;
-}
-
 @media (hover: hover) and (pointer: fine) {
     .clickable-card:hover {
         transform: translateY(-5px) scale(1.02);
@@ -2425,28 +2407,10 @@ body.s-light .span-4::after {
         border-color: var(--accent) !important;
         box-shadow: 0 12px 30px var(--accent-glow) !important;
     }
-
-    .clickable-card:hover .stat-mini-action {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-        box-shadow: 0 4px 14px var(--accent-glow);
-        transform: scale(1.08);
-        opacity: 1;
-    }
 }
 
 .clickable-card:active {
     transform: scale(0.99);
-}
-
-.clickable-card:active .stat-mini-action {
-    transform: scale(0.95);
-}
-
-body.s-light .stat-mini-action {
-    background: rgba(0, 0, 0, 0.04);
-    border-color: rgba(0, 0, 0, 0.08);
 }
 
 .metrics-modal-overlay {
@@ -2764,12 +2728,6 @@ body.lang-fa .status-indicator-wrap {
 
 body.lang-fa .icon-btn-mini {
     margin-left: 0;
-}
-
-body.lang-fa .stat-mini-action,
-[dir="rtl"] .stat-mini-action {
-    margin-left: 0;
-    margin-right: auto;
 }
 
 body.lang-fa .metrics-tabs,
