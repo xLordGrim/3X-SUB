@@ -58,7 +58,8 @@
       contactSupport: "Contact Support",
       contactSupportDesc: "Need assistance or have questions? Proceed to open our official support channel.",
       proceed: "Proceed",
-      cancel: "Cancel"
+      cancel: "Cancel",
+      disabled: "Disabled"
     },
     zh: {
       title: "我的订阅",
@@ -110,7 +111,8 @@
       contactSupport: "联系支持",
       contactSupportDesc: "需要帮助或有任何疑问？点击继续以前往官方支持渠道。",
       proceed: "继续",
-      cancel: "取消"
+      cancel: "取消",
+      disabled: "已禁用"
     },
     fa: {
       title: "اشتراک من",
@@ -162,7 +164,8 @@
       contactSupport: "تماس با پشتیبانی",
       contactSupportDesc: "به راهنمایی نیاز دارید یا سؤالی دارید؟ برای ورود به کانال پشتیبانی روی دکمه زیر کلیک کنید.",
       proceed: "ادامه",
-      cancel: "انصراف"
+      cancel: "انصراف",
+      disabled: "غیرفعال"
     },
   };
   function t(key) {
@@ -200,14 +203,19 @@
   }
   function getStatusInfo() {
     const now = Date.now();
-    const total = STATE.raw.total || 0;
-    const used = (STATE.raw.up || 0) + (STATE.raw.down || 0);
-    const expired = STATE.raw.expire > 0 && now > STATE.raw.expire;
+    const total = (STATE.raw && STATE.raw.total) || 0;
+    const used = ((STATE.raw && STATE.raw.up) || 0) + ((STATE.raw && STATE.raw.down) || 0);
+    const disabled = STATE.raw && STATE.raw.enabled === false;
+    const expired = STATE.raw && STATE.raw.expire > 0 && now > STATE.raw.expire;
     const depleted = total > 0 && used >= total;
     let state = "active",
-      colorVar = "--usage-active",
+      colorVar = "var(--usage-active)",
       label = t("active");
-    if (expired) {
+    if (disabled) {
+      state = "disabled";
+      colorVar = "var(--usage-disabled)";
+      label = t("disabled");
+    } else if (expired) {
       state = "warn";
       colorVar = "var(--usage-expired)";
       label = t("expired");
@@ -226,7 +234,8 @@
     }
     const pct = total === 0 ? 0 : Math.min(100, (used / total) * 100);
     return {
-      active: !expired && !depleted,
+      active: !disabled && !expired && !depleted,
+      disabled,
       expired,
       depleted,
       label,
@@ -290,6 +299,7 @@
           isp: "Detecting...",
           location: "Detecting...",
           serverIp: "Self",
+          enabled: typeof d.enabled !== "undefined" ? !!d.enabled : (typeof d.enable !== "undefined" ? !!d.enable : true),
         };
         STATE.subUrl = STATE.raw.subUrl;
         
@@ -321,6 +331,7 @@
           isp: "Detecting...",
           location: "Detecting...",
           serverIp: dataEl.getAttribute("data-ip") || "Self",
+          enabled: dataEl.getAttribute("data-enabled") !== null ? dataEl.getAttribute("data-enabled") === "true" : (dataEl.getAttribute("data-status") === "disabled" ? false : true),
         };
         STATE.subUrl = STATE.raw.subUrl;
       }
@@ -1279,6 +1290,7 @@
       "status-warn",
       "status-depleted",
       "status-unlimited",
+      "status-disabled",
     );
     document.body.classList.add(STATE.theme === "dark" ? "s-dark" : "s-light");
     document.body.classList.add(`status-${s.state}`);

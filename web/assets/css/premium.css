@@ -9,6 +9,7 @@
     --usage-active: #10b981;
     --usage-depleted: #ff1111;
     --usage-expired: #f59e0b;
+    --usage-disabled: #94a3b8;
 
     --grid-gap: 20px;
     --card-radius: 20px;
@@ -65,6 +66,7 @@ body.premium-theme.s-dark {
     --usage-active: #10b981;
     --usage-depleted: #ff3344;
     --usage-expired: #f59e0b;
+    --usage-disabled: #94a3b8;
 
     --card-bg: rgba(15, 23, 42, 0.6);
     --card-border: rgba(255, 255, 255, 0.08);
@@ -147,6 +149,22 @@ body.premium-theme.s-dark.status-unlimited {
     --line-color: 56, 189, 248;
 }
 
+body.premium-theme.s-dark.status-disabled {
+    --accent: #cbd5e1;
+    --accent-glow: rgba(203, 213, 225, 0.2);
+    --accent-hover: #ffffff;
+    --gradient-overlay: radial-gradient(circle at top right, rgba(203, 213, 225, 0.08), transparent 45%);
+    --bg-main: #0b0f17;
+    --bg-card: rgba(15, 23, 42, 0.85);
+    --bg-sec: #0f172a;
+    --card-bg: rgba(15, 23, 42, 0.7);
+    --card-border: rgba(203, 213, 225, 0.2);
+    --usage-active: #94a3b8;
+    --usage-disabled: #cbd5e1;
+    --node-color: 203, 213, 225;
+    --line-color: 100, 116, 139;
+}
+
 body.premium-theme.s-light {
     --bg-main: #f8fafc;
     --bg-card: rgba(255, 255, 255, 0.7);
@@ -156,8 +174,8 @@ body.premium-theme.s-light {
 
     --usage-active: #059669;
     --usage-depleted: #e11d48;
-
     --usage-expired: #d97706;
+    --usage-disabled: #64748b;
 
     --card-bg: rgba(255, 255, 255, 0.7);
     --card-border: rgba(0, 0, 0, 0.04);
@@ -241,6 +259,23 @@ body.premium-theme.s-light.status-unlimited {
     --usage-active: var(--accent);
     --node-color: 8, 145, 178;
     --line-color: 3, 105, 161;
+}
+
+body.premium-theme.s-light.status-disabled,
+body.premium-theme.status-disabled.s-light {
+    --accent: #475569;
+    --accent-glow: rgba(71, 85, 105, 0.15);
+    --accent-hover: #1e293b;
+    --gradient-overlay: radial-gradient(circle at top right, rgba(148, 163, 184, 0.08), transparent 40%);
+    --bg-main: #f1f5f9;
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --bg-sec: #e2e8f0;
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --card-border: rgba(148, 163, 184, 0.25);
+    --usage-active: #64748b;
+    --usage-disabled: #475569;
+    --node-color: 100, 116, 139;
+    --line-color: 203, 213, 225;
 }
 
 .theme-burst {
@@ -1162,15 +1197,31 @@ body.status-depleted .progress-bar::after {
 }
 
 body.status-warn .progress-bar .bloom,
-body.status-depleted .progress-bar .bloom {
+body.status-depleted .progress-bar .bloom,
+body.status-disabled .progress-bar .bloom {
     display: none !important;
 }
 
 body.status-warn .progress-bar::before,
-body.status-depleted .progress-bar::before {
+body.status-depleted .progress-bar::before,
+body.status-disabled .progress-bar::before {
     opacity: 0.3;
     filter: blur(6px);
     box-shadow: none;
+}
+
+body.status-disabled .progress-bar {
+    background:
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 0%, transparent 45%),
+        linear-gradient(90deg, #64748b 0%, #94a3b8 50%, #cbd5e1 100%);
+    box-shadow:
+        0 0 15px var(--accent-glow),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+body.status-disabled .progress-bar::after {
+    opacity: 0.1;
 }
 
 @keyframes fluid-flow {
@@ -1967,6 +2018,10 @@ body.s-light .infra-icon {
 
 .text-status-depleted {
     color: var(--usage-depleted);
+}
+
+.text-status-disabled {
+    color: var(--usage-disabled);
 }
 
 

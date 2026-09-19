@@ -22,7 +22,9 @@
     typeof d.subAnnounce !== 'undefined' ||
     typeof d.announce    !== 'undefined' ||
     typeof d.emails      !== 'undefined' ||
-    typeof d.hwidLimit   !== 'undefined';
+    typeof d.hwidLimit   !== 'undefined' ||
+    typeof d.enabled     !== 'undefined' ||
+    typeof d.enable      !== 'undefined';
 
   if (!IS_V37) return;
 
@@ -47,6 +49,7 @@
   var dataEl = typeof document !== 'undefined' ? document.getElementById('subscription-data') : null;
   var EXT = {
     email:         getEmail(),
+    enabled:       typeof d.enabled !== 'undefined' ? d.enabled === true : (typeof d.enable !== 'undefined' ? d.enable === true : (dataEl ? dataEl.getAttribute('data-enabled') !== 'false' && dataEl.getAttribute('data-status') !== 'disabled' : true)),
     isOnline:      d.isOnline === true,
     hasIsOnline:   typeof d.isOnline !== 'undefined',
     resetDay:      parseInt(d.resetDay    || 0) || 0,
@@ -72,6 +75,7 @@
       contactSupport:'Contact Support',
       contactSupportDesc:'Need assistance or have questions? Proceed to open our official support channel.',
       proceed:'Proceed',cancel:'Cancel',close:'Close',
+      disabled:'Disabled',
     },
     zh: {
       resetDay:'重置日',day:'第',deviceLimit:'设备限制',maxDevices:'最多',
@@ -82,6 +86,7 @@
       contactSupport:'联系支持',
       contactSupportDesc:'需要帮助或有任何疑问？点击继续以前往官方支持渠道。',
       proceed:'继续',cancel:'取消',close:'关闭',
+      disabled:'已禁用',
     },
     fa: {
       resetDay:'روز ریست',day:'روز',deviceLimit:'محدودیت دستگاه',maxDevices:'حداکثر',
@@ -92,6 +97,7 @@
       contactSupport:'تماس با پشتیبانی',
       contactSupportDesc:'به راهنمایی نیاز دارید یا سؤالی دارید؟ برای ورود به کانال پشتیبانی روی دکمه زیر کلیک کنید.',
       proceed:'ادامه',cancel:'انصراف',close:'بستن',
+      disabled:'غیرفعال',
     },
   };
   /* fix(i18n): read lang from localStorage on every call so language switches
@@ -480,6 +486,8 @@
         .then(function(data) {
           if (!data) return;
           if (data.subSupportUrl) EXT.subSupportUrl = data.subSupportUrl;
+          if (typeof data.enabled !== 'undefined') EXT.enabled = data.enabled === true;
+          else if (typeof data.enable !== 'undefined') EXT.enabled = data.enable === true;
           EXT.isOnline = !!data.isOnline;
           var badge = document.getElementById('ext-online-badge');
           if (badge) {
