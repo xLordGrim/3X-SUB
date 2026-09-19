@@ -54,7 +54,11 @@
       tab30d: "30 Days",
       syncAnalytics: "Synchronizing Analytics...",
       detecting: "Detecting...",
-      viewGraph: "View Graph"
+      viewGraph: "View Graph",
+      contactSupport: "Contact Support",
+      contactSupportDesc: "Need assistance or have questions? Proceed to open our official support channel.",
+      proceed: "Proceed",
+      cancel: "Cancel"
     },
     zh: {
       title: "我的订阅",
@@ -102,7 +106,11 @@
       tab30d: "30天",
       syncAnalytics: "正在同步数据...",
       detecting: "检测中...",
-      viewGraph: "查看图表"
+      viewGraph: "查看图表",
+      contactSupport: "联系支持",
+      contactSupportDesc: "需要帮助或有任何疑问？点击继续以前往官方支持渠道。",
+      proceed: "继续",
+      cancel: "取消"
     },
     fa: {
       title: "اشتراک من",
@@ -150,7 +158,11 @@
       tab30d: "۳۰ روز",
       syncAnalytics: "همگام‌سازی آمار...",
       detecting: "در حال شناسایی...",
-      viewGraph: "مشاهده نمودار"
+      viewGraph: "مشاهده نمودار",
+      contactSupport: "تماس با پشتیبانی",
+      contactSupportDesc: "به راهنمایی نیاز دارید یا سؤالی دارید؟ برای ورود به کانال پشتیبانی روی دکمه زیر کلیک کنید.",
+      proceed: "ادامه",
+      cancel: "انصراف"
     },
   };
   function t(key) {
