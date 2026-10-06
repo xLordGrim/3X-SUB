@@ -76,7 +76,7 @@ jobs:
           path: 3x-ui
           ref: ${{ needs.check-update.outputs.xui_tag }}
 
-      - name: Detect 3x-ui version
+      - name: Detect 3x-ui version & toolchains
         id: version
         run: |
           if [ -f "3x-ui/internal/config/version" ]; then
@@ -98,19 +98,43 @@ jobs:
           fi
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
 
-          echo "--- Version Info ---"
+          # Dynamically detect Node.js version with backward compatibility fallbacks
+          if [ -f "3x-ui/.nvmrc" ]; then
+            NODE_VER=$(cat 3x-ui/.nvmrc | tr -d '[:space:]')
+          elif [ -f "3x-ui/frontend/package.json" ]; then
+            NODE_VER=$(grep -oP '"node":\s*">\=\K[0-9]+' 3x-ui/frontend/package.json || echo "")
+            if [ -z "$NODE_VER" ]; then
+              NODE_VER="22"
+            fi
+          else
+            NODE_VER="22"
+          fi
+          echo "node_version=$NODE_VER" >> $GITHUB_OUTPUT
+
+          # Dynamically detect Go version with backward compatibility fallbacks
+          if [ -f "3x-ui/go.mod" ]; then
+            GO_VER=$(grep -E '^go [0-9]' 3x-ui/go.mod | awk '{print $2}' | tr -d '[:space:]')
+          else
+            GO_VER="1.22"
+          fi
+          echo "go_version=$GO_VER" >> $GITHUB_OUTPUT
+
+          echo "--- Toolchain & Version Info ---"
           echo "3x-ui version: $XUI_VER"
-          echo "Branch: $BRANCH"
+          echo "Branch:        $BRANCH"
+          echo "Resolved Node: $NODE_VER"
+          echo "Resolved Go:   $GO_VER"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: ${{ steps.version.outputs.node_version }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: ${{ steps.version.outputs.go_version }}
+          check-latest: true
 
       - name: Inject 3X-SUB Theme (external CDN links)
         run: |
@@ -130,18 +154,32 @@ jobs:
           echo "EXT_JS:  $EXT_JS_URL"
 
           python3 << PYEOF
-          import re
+          import re, os
           css_url = "${CSS_URL}"
           js_url = "${JS_URL}"
           ext_js_url = "${EXT_JS_URL}"
 
-          with open('3x-ui/frontend/subpage.html', 'r') as f:
+          subpage_path = '3x-ui/frontend/subpage.html'
+          legacy_subpage_path = '3x-ui/web/html/settings/panel/subscription/subpage.html'
+
+          target_file = None
+          if os.path.exists(subpage_path):
+              target_file = subpage_path
+          elif os.path.exists(legacy_subpage_path):
+              target_file = legacy_subpage_path
+
+          if not target_file:
+              print("WARNING: subpage.html not found, skipping patching")
+              exit(0)
+
+          with open(target_file, 'r', encoding='utf-8') as f:
               content = f.read()
 
-          # Strip stock Vue app tags to prevent 404 errors
-          content = re.sub(r'<script type="module"[^>]*src="[^"]*subpage[^"]*"[^>]*></script>\s*', '', content)
-          content = re.sub(r'<link rel="modulepreload"[^>]*>\s*', '', content)
-          content = re.sub(r'<link rel="stylesheet" crossorigin[^>]*>\s*', '', content)
+          if target_file == subpage_path:
+              # Strip stock Vue/React app tags to prevent 404 errors
+              content = re.sub(r'<script type="module"[^>]*src="[^"]*subpage[^"]*"[^>]*></script>\s*', '', content)
+              content = re.sub(r'<link rel="modulepreload"[^>]*>\s*', '', content)
+              content = re.sub(r'<link rel="stylesheet" crossorigin[^>]*>\s*', '', content)
 
           # Inject CDN links
           head_inject = f'<link rel="stylesheet" href="{css_url}">\n  </head>'
@@ -157,52 +195,79 @@ jobs:
             <script src="{ext_js_url}"></script>
             </body>'''
 
-          content = content.replace('</head>', head_inject, 1)
-          content = content.replace('</body>', body_inject, 1)
+          if '</head>' in content:
+              content = content.replace('</head>', head_inject, 1)
+          else:
+              content = head_inject + content
 
-          with open('3x-ui/frontend/subpage.html', 'w') as f:
+          if '</body>' in content:
+              content = content.replace('</body>', body_inject, 1)
+          else:
+              content = content + body_inject
+
+          with open(target_file, 'w', encoding='utf-8') as f:
               f.write(content)
-          print("OK: subpage.html patched")
+          print(f"OK: {target_file} patched")
           PYEOF
 
-          cat 3x-ui/frontend/subpage.html
+          if [ -f "3x-ui/frontend/subpage.html" ]; then
+            cat 3x-ui/frontend/subpage.html
+          fi
 
       - name: Inject isolated sub_stats route into Go backend
         run: |
           WEB_GO_FILE=$(find 3x-ui -type f -name "web.go" | grep -v "/vendor/" | head -n 1)
           if [ -n "$WEB_GO_FILE" ]; then
-            echo "Patching $WEB_GO_FILE to include sub_stats static route..."
-            sed -i 's|return engine, nil|engine.StaticFS(basePath+"sub_stats", http.Dir("/usr/local/x-ui/sub_stats"))\n\treturn engine, nil|g' "$WEB_GO_FILE"
-            echo "OK: sub_stats route injected into web.go"
+            if grep -q 'sub_stats' "$WEB_GO_FILE"; then
+              echo "sub_stats already present in $WEB_GO_FILE"
+            else
+              echo "Patching $WEB_GO_FILE to include sub_stats static route..."
+              sed -i 's|return engine, nil|engine.StaticFS(basePath+"sub_stats", http.Dir("/usr/local/x-ui/sub_stats"))\n\treturn engine, nil|g' "$WEB_GO_FILE"
+              echo "OK: sub_stats route injected into web.go"
+            fi
           else
             echo "WARNING: web.go not found! Cannot inject sub_stats route."
           fi
 
           SUB_GO_FILE=$(find 3x-ui -type f -name "sub.go" | grep -v "/vendor/" | head -n 1)
           if [ -n "$SUB_GO_FILE" ]; then
-            echo "Patching $SUB_GO_FILE to include sub_stats static route..."
-            sed -i 's|return engine, nil|engine.StaticFS(basePath+"sub_stats", http.Dir("/usr/local/x-ui/sub_stats"))\n\treturn engine, nil|g' "$SUB_GO_FILE"
-            echo "OK: sub_stats route injected into sub.go"
+            if grep -q 'sub_stats' "$SUB_GO_FILE"; then
+              echo "sub_stats already present in $SUB_GO_FILE"
+            else
+              echo "Patching $SUB_GO_FILE to include sub_stats static route..."
+              sed -i 's|return engine, nil|engine.StaticFS(basePath+"sub_stats", http.Dir("/usr/local/x-ui/sub_stats"))\n\treturn engine, nil|g' "$SUB_GO_FILE"
+              echo "OK: sub_stats route injected into sub.go"
+            fi
           else
             echo "WARNING: sub.go not found! Cannot inject sub_stats route into sub.go."
           fi
 
-      - name: Build Vue Frontend
-        working-directory: 3x-ui/frontend
+      - name: Build Frontend
         run: |
-          npm ci
-          npm run build
+          if [ -d "3x-ui/frontend" ]; then
+            cd 3x-ui/frontend
+            npm ci || npm install
+            npm run build
+          else
+            echo "No frontend/ directory found (legacy 3x-ui), skipping frontend build."
+          fi
 
       - name: Verify dist
         run: |
           echo "--- subpage.html in dist ---"
+          DIST_PATH=""
           if [ -f "3x-ui/internal/web/dist/subpage.html" ]; then
             DIST_PATH="3x-ui/internal/web/dist/subpage.html"
-          else
+          elif [ -f "3x-ui/web/dist/subpage.html" ]; then
             DIST_PATH="3x-ui/web/dist/subpage.html"
           fi
-          cat "$DIST_PATH"
-          grep -c "cdn.jsdelivr.net" "$DIST_PATH" && echo "✓ CDN links present" || echo "✗ CDN links MISSING"
+
+          if [ -n "$DIST_PATH" ]; then
+            cat "$DIST_PATH"
+            grep -c "cdn.jsdelivr.net" "$DIST_PATH" && echo "✓ CDN links present" || echo "✗ CDN links MISSING"
+          else
+            echo "Notice: dist/subpage.html not found, skipping."
+          fi
 
       - name: Install Cross-Compilers
         run: |
